@@ -1,0 +1,15 @@
+{
+  "name": "performotion-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "echo \"No build step required\"",
+    "dev": "npx serve -l 4321 ."
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

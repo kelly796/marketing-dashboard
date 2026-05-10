@@ -1,0 +1,33 @@
+# Update 3: Add Email Lists Data Structure to MOCK
+
+Find this line in email.hq section:
+      openTrend: makeTrend(26.4, 6, 0.06),
+      clickTrend: makeTrend(3.8, 6, 0.08),
+      subsTrend: makeTrend(1840, 6, 0.02),
+      sentTrend: [1680, 1700, 1720, 1750, 1790, 1840],
+
+Add after it:
+      lists: [
+        { 
+          id: 'hq_main', 
+          name: 'HQ – Main Newsletter', 
+          subscribers: 1480,
+          openRate: 28.2,
+          clickRate: 4.2,
+          clickToWebsiteRate: 2.8,
+          lastCampaign: { name: 'May Newsletter', sent: '2026-05-05' },
+          engagementTrend: makeTrend(28.2, 6, 0.05)
+        },
+        { 
+          id: 'hq_patient', 
+          name: 'HQ – Patient Care Updates', 
+          subscribers: 360,
+          openRate: 22.1,
+          clickRate: 2.8,
+          clickToWebsiteRate: 1.5,
+          lastCampaign: { name: 'April Update', sent: '2026-04-15' },
+          engagementTrend: makeTrend(22.1, 6, 0.04)
+        },
+      ],
+
+Similar for email.online section.

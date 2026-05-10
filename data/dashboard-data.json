@@ -1,0 +1,35 @@
+{
+  "lastUpdated": "2026-05-09T00:00:00.000Z",
+  "services": {
+    "meta": {
+      "reach": 0,
+      "engagement": 0,
+      "impressions": 0
+    },
+    "activeCampaign": {
+      "contacts": 0,
+      "openRate": 0,
+      "clickRate": 0
+    },
+    "ga4": {
+      "sessions": 0,
+      "users": 0,
+      "conversionRate": 0
+    },
+    "youtube": {
+      "views": 0,
+      "subscribers": 0,
+      "watchTime": 0
+    },
+    "halaxy": {
+      "revenue": 0,
+      "orders": 0,
+      "aov": 0
+    },
+    "gsc": {
+      "impressions": 0,
+      "ctr": 0,
+      "avgPosition": 0
+    }
+  }
+}
