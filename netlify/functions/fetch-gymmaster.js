@@ -28,7 +28,7 @@
  *  Netlify env vars, this function will return live data automatically.
  */
 
-const GM_BASE = 'https://performotion.gymmasteronline.com/portal/api';
+const GM_BASE = 'https://performotion.gymmasteronline.com/api';
 
 exports.handler = async () => {
   const apiKey = process.env.GYMMASTER_API_KEY;
@@ -41,11 +41,13 @@ exports.handler = async () => {
   }
 
   try {
-    // Fetch all data in parallel — GymMaster API uses ?key= query param auth
+    // Members is the primary endpoint (confirmed valid). Revenue and checkins
+    // are attempted but failures are swallowed — the function still returns
+    // useful member data if those endpoints aren't available.
     const [membersData, revenueData, checkinData] = await Promise.all([
       gmGet('/members', apiKey),
-      gmGet('/revenue', apiKey),
-      gmGet('/checkins', apiKey),
+      gmGet('/revenue',  apiKey).catch(() => []),
+      gmGet('/checkins', apiKey).catch(() => []),
     ]);
 
     const now = Date.now();

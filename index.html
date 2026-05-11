@@ -2002,13 +2002,11 @@ BUILDERS['bookings'] = function buildTab7() {
       </div>
 
       <!-- Blueprint integration note -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.85rem 1rem;font-size:.78rem;color:#64748b;line-height:1.6">
-        <strong style="color:#1B2A4A">Dashboard Integration Note:</strong>
-        The Booking Blueprint at <code style="background:#e2e8f0;border-radius:3px;padding:1px 4px">playful-kashata-9390c0.netlify.app</code>
-        is a separate Netlify site with no shared backend or API — direct data flow between dashboards is not currently possible.
-        <strong>Manual workaround:</strong> export Gym Master reports as CSV and upload to this dashboard, or point both dashboards at the same
-        <code style="background:#e2e8f0;border-radius:3px;padding:1px 4px">GYMMASTER_API_KEY</code> environment variable once
-        <code style="background:#e2e8f0;border-radius:3px;padding:1px 4px">fetch-gymmaster.js</code> is deployed to this site's Netlify functions.
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.85rem 1rem;font-size:.78rem;color:#166534;line-height:1.6">
+        <strong style="color:#166534">✓ GymMaster Connected:</strong>
+        Live membership data is pulled directly from the GymMaster API via <code style="background:#dcfce7;border-radius:3px;padding:1px 4px">GYMMASTER_API_KEY</code>.
+        Revenue and check-in data will appear once those endpoints are confirmed with GymMaster support.
+        The Booking Blueprint at <code style="background:#dcfce7;border-radius:3px;padding:1px 4px">playful-kashata-9390c0.netlify.app</code> remains a separate site.
       </div>
     </div>`;
   document.getElementById('tab-bookings').appendChild(gmEl);
