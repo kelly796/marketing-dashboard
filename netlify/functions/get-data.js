@@ -75,6 +75,16 @@ exports.handler = async (event) => {
       ...halaxyKeys,
     };
 
+    // If nothing loaded (all env vars missing), tell the browser so it falls
+    // back to data/dashboard-data.json or MOCK rather than caching empty data.
+    const hasAnyData = email || gymmaster || metaData || ytData || ga4Data || gscData || halaxyData;
+    if (!hasAnyData) {
+      return {
+        statusCode: 503,
+        body: JSON.stringify({ error: 'No API credentials configured' }),
+      };
+    }
+
     return {
       statusCode: 200,
       headers: {
