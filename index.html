@@ -2509,9 +2509,14 @@ async function refreshData() {
   try {
     const r = await fetch('/.netlify/functions/update-dashboard', { method:'POST' });
     if (r.ok) {
-      D = await r.json();
-      DATA_SOURCE = 'Live';
-      localStorage.setItem(LS_KEY, JSON.stringify(D));
+      const payload = await r.json();
+      const fresh = payload.data || payload;
+      if (fresh && (fresh.email || fresh.gymmaster || fresh.meta || fresh.instagramHQ ||
+          fresh.youtube || fresh.ga4 || fresh.seo || fresh.bookings)) {
+        D = fresh;
+        DATA_SOURCE = 'Live';
+        localStorage.setItem(LS_KEY, JSON.stringify(D));
+      }
     }
   } catch(e) {}
   Object.keys(BUILT).forEach(k => { delete BUILT[k]; });
@@ -3161,7 +3166,12 @@ const MOCK = {
 async function loadData() {
   const cached = localStorage.getItem(LS_KEY);
   if (cached) {
-    try { D = JSON.parse(cached); DATA_SOURCE = 'Cached'; return; } catch(e) {}
+    try {
+      const parsed = JSON.parse(cached);
+      const hasData = parsed && (parsed.email || parsed.gymmaster || parsed.meta ||
+        parsed.instagramHQ || parsed.youtube || parsed.ga4 || parsed.seo || parsed.bookings);
+      if (hasData) { D = parsed; DATA_SOURCE = 'Cached'; return; }
+    } catch(e) {}
   }
   try {
     const r = await fetch('/.netlify/functions/get-data');
