@@ -41,14 +41,7 @@ exports.handler = async () => {
   }
 
   try {
-    // Members is the primary endpoint (confirmed valid). Revenue and checkins
-    // are attempted but failures are swallowed — the function still returns
-    // useful member data if those endpoints aren't available.
-    const [membersData, revenueData, checkinData] = await Promise.all([
-      gmGet('/members', apiKey),
-      gmGet('/revenue',  apiKey).catch(() => []),
-      gmGet('/checkins', apiKey).catch(() => []),
-    ]);
+    const membersData = await gmGet('/members', apiKey);
 
     const now = Date.now();
     const d30 = now - 30 * 24 * 60 * 60 * 1000;
@@ -87,26 +80,6 @@ exports.handler = async () => {
       ? +((prevActive.length / (prevActive.length + prevChurned.length)) * 100).toFixed(1)
       : 100;
 
-    // ── REVENUE ───────────────────────────────────────────────────────────────
-    const revenueItems    = revenueData.revenue || revenueData || [];
-    const revenue30d      = revenueItems
-      .filter(r => new Date(r.date || r.createdAt).getTime() > d30)
-      .reduce((s, r) => s + Number(r.amount || 0), 0);
-    const revenue60_30    = revenueItems
-      .filter(r => { const t = new Date(r.date || r.createdAt).getTime(); return t > d60 && t <= d30; })
-      .reduce((s, r) => s + Number(r.amount || 0), 0);
-
-    const overdueItems    = revenueItems.filter(r => r.status === 'overdue' || r.status === 'unpaid');
-    const overdueRevenue  = overdueItems.reduce((s, r) => s + Number(r.amount || 0), 0);
-    const overdueCount    = overdueItems.length;
-
-    // ── RENEWALS THIS WEEK ────────────────────────────────────────────────────
-    const d7 = now - 7 * 24 * 60 * 60 * 1000;
-    const renewalsThisWeek = revenueItems.filter(r =>
-      (r.type === 'renewal' || r.description === 'Membership Renewal') &&
-      new Date(r.date || r.createdAt).getTime() > d7
-    ).length;
-
     // ── MEMBERSHIP TYPE BREAKDOWN ─────────────────────────────────────────────
     const COLOURS = ['#2ABFBF', '#1B2A4A', '#D4B896', '#94a3b8', '#10B981', '#f59e0b'];
     const typeCounts = {};
@@ -123,31 +96,7 @@ exports.handler = async () => {
         colour: COLOURS[i % COLOURS.length],
       }));
 
-    // ── AT-RISK MEMBERS (inactive 14+ days) ───────────────────────────────────
-    const checkins        = checkinData.checkins || checkinData || [];
-    const lastCheckinMap  = {};
-    for (const c of checkins) {
-      const memberId = String(c.memberId || c.member_id);
-      const t = new Date(c.date || c.checkInTime).getTime();
-      if (!lastCheckinMap[memberId] || t > lastCheckinMap[memberId]) {
-        lastCheckinMap[memberId] = t;
-      }
-    }
-
-    const atRiskList = activeMembers
-      .map(m => {
-        const lastSeen = lastCheckinMap[String(m.id || m.memberId)];
-        const daysInactive = lastSeen ? Math.floor((now - lastSeen) / 86400000) : 999;
-        return { m, daysInactive };
-      })
-      .filter(({ daysInactive }) => daysInactive >= 14)
-      .sort((a, b) => b.daysInactive - a.daysInactive)
-      .slice(0, 8)
-      .map(({ m, daysInactive }) => ({
-        name: [m.firstName || m.first_name, m.lastName || m.last_name].filter(Boolean).join(' ') || m.name || 'Unknown',
-        daysInactive,
-        membership: m.membershipType || m.membership || 'Member',
-      }));
+    const atRiskList = [];
 
     // ── AVG MEMBER LIFETIME ───────────────────────────────────────────────────
     const membersWithDuration = allMembers.filter(m => m.joinDate || m.startDate);
@@ -204,11 +153,11 @@ exports.handler = async () => {
         avgMemberLifetime,
         retentionRate,
         retentionRatePrev:  prevRetention,
-        membershipRevenue:  Math.round(revenue30d),
-        membershipRevenuePrev: Math.round(revenue60_30),
-        overdueRevenue:     Math.round(overdueRevenue),
-        overdueCount,
-        renewalsThisWeek,
+        membershipRevenue:     0,
+        membershipRevenuePrev: 0,
+        overdueRevenue:        0,
+        overdueCount:          0,
+        renewalsThisWeek:      0,
         growthTrend,
         membershipTypes,
         cancellationReasons: cancellationReasons.length ? cancellationReasons : [{ reason: 'No data', pct: 100 }],
