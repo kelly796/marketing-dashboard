@@ -2,15 +2,19 @@
  * Update Dashboard
  *
  * Called when the user clicks the Refresh button in the dashboard header.
- * Fetches fresh data from all sources and returns it so the browser can
- * update localStorage and re-render.
+ * Fetches fresh data from all sources in parallel and returns the merged result
+ * so the browser can update localStorage and re-render.
  *
  * The browser calls: POST /.netlify/functions/update-dashboard
  */
 
-const { handler: fetchAC }        = require('./fetch-activecampaign');
+const { handler: fetchAC }       = require('./fetch-activecampaign');
 const { handler: fetchGymMaster } = require('./fetch-gymmaster');
 const { handler: fetchMeta }      = require('./fetch-meta');
+const { handler: fetchYouTube }   = require('./fetch-youtube');
+const { handler: fetchGA4 }       = require('./fetch-ga4');
+const { handler: fetchGSC }       = require('./fetch-gsc');
+const { handler: fetchHalaxy }    = require('./fetch-halaxy');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -20,42 +24,44 @@ exports.handler = async (event) => {
   const results = {};
   const errors  = [];
 
-  // Run all fetches in parallel
-  const [acRes, gmRes, metaRes] = await Promise.allSettled([
+  const [acRes, gmRes, metaRes, ytRes, ga4Res, gscRes, halaxyRes] = await Promise.allSettled([
     fetchAC(event),
     fetchGymMaster(event),
     fetchMeta(event),
+    fetchYouTube(event),
+    fetchGA4(event),
+    fetchGSC(event),
+    fetchHalaxy(event),
   ]);
 
-  // ── ACTIVECAMPAIGN ──────────────────────────────────────────────────────────
-  if (acRes.status === 'fulfilled' && acRes.value.statusCode === 200) {
-    try { results.email = JSON.parse(acRes.value.body); }
-    catch (e) { errors.push(`AC parse: ${e.message}`); }
-  } else {
-    errors.push(`AC: ${acRes.reason?.message || acRes.value?.body || 'unknown error'}`);
+  function absorb(result, label, apply) {
+    if (result.status === 'fulfilled' && result.value.statusCode === 200) {
+      try { apply(JSON.parse(result.value.body)); }
+      catch (e) { errors.push(`${label} parse: ${e.message}`); }
+    } else {
+      const msg = result.reason?.message || result.value?.body || 'unknown error';
+      errors.push(`${label}: ${msg}`);
+    }
   }
 
-  // ── GYMMASTER ────────────────────────────────────────────────────────────────
-  if (gmRes.status === 'fulfilled' && gmRes.value.statusCode === 200) {
-    try { results.gymmaster = JSON.parse(gmRes.value.body); }
-    catch (e) { errors.push(`GymMaster parse: ${e.message}`); }
-  } else {
-    errors.push(`GymMaster: ${gmRes.reason?.message || gmRes.value?.body || 'unknown error'}`);
-  }
-
-  // ── META / INSTAGRAM / FACEBOOK ─────────────────────────────────────────────
-  if (metaRes.status === 'fulfilled' && metaRes.value.statusCode === 200) {
-    try {
-      const metaData = JSON.parse(metaRes.value.body);
-      // Spread instagramHQ, instagramOnline, facebook, meta as top-level keys
-      if (metaData.instagramHQ)     results.instagramHQ     = metaData.instagramHQ;
-      if (metaData.instagramOnline) results.instagramOnline = metaData.instagramOnline;
-      if (metaData.facebook)        results.facebook        = metaData.facebook;
-      if (metaData.meta)            results.meta            = metaData.meta;
-    } catch (e) { errors.push(`Meta parse: ${e.message}`); }
-  } else {
-    errors.push(`Meta: ${metaRes.reason?.message || metaRes.value?.body || 'unknown error'}`);
-  }
+  absorb(acRes,     'ActiveCampaign', d => { results.email = d; });
+  absorb(gmRes,     'GymMaster',      d => { results.gymmaster = d; });
+  absorb(metaRes,   'Meta',           d => {
+    if (d.instagramHQ)     results.instagramHQ     = d.instagramHQ;
+    if (d.instagramOnline) results.instagramOnline = d.instagramOnline;
+    if (d.facebook)        results.facebook        = d.facebook;
+    if (d.meta)            results.meta            = d.meta;
+  });
+  absorb(ytRes,     'YouTube',        d => { if (d.subscribers) results.youtube = d; });
+  absorb(ga4Res,    'GA4',            d => {
+    if (d.ga4)         results.ga4         = d.ga4;
+    if (d.ga4Countries) results.ga4Countries = d.ga4Countries;
+  });
+  absorb(gscRes,    'GSC',            d => { if (d.seo)  results.seo  = d.seo; });
+  absorb(halaxyRes, 'Halaxy',         d => {
+    if (d.bookings) results.bookings = d.bookings;
+    if (d.halaxy)   results.halaxy   = d.halaxy;
+  });
 
   const data = {
     lastUpdated: new Date().toISOString(),
