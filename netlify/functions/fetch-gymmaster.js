@@ -28,7 +28,7 @@
  *  Netlify env vars, this function will return live data automatically.
  */
 
-const GM_BASE = 'https://performotion.gymmasteronline.com/api';
+const GM_BASE = 'https://performotion.gymmasteronline.com/portal/api';
 
 exports.handler = async () => {
   const apiKey = process.env.GYMMASTER_API_KEY;

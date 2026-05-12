@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meta Token Generator — PerforMotion</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1822;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #1B2A4A;
+      border: 1px solid #2a3f6a;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .logo-mark {
+      width: 36px;
+      height: 36px;
+      background: #2ABFBF;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: #1B2A4A;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-sub {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    /* ── Scope list ─────────────────────────────────────────────────────── */
+    .scope-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .scope-badge {
+      background: rgba(42,191,191,0.12);
+      border: 1px solid rgba(42,191,191,0.3);
+      color: #2ABFBF;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: #2ABFBF;
+      color: #1B2A4A;
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      color: #e2e8f0;
+      border: 1px solid #2a3f6a;
+    }
+
+    .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+
+    .btn-success {
+      background: #10b981;
+      color: #ffffff;
+    }
+
+    .btn-success:hover:not(:disabled) { opacity: 0.9; }
+
+    /* ── Token result section ────────────────────────────────────────────── */
+    #result-section {
+      display: none;
+      margin-top: 28px;
+    }
+
+    .result-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .token-box-wrap {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .token-box {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid #2a3f6a;
+      border-radius: 8px;
+      padding: 12px 44px 12px 14px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      color: #94a3b8;
+      word-break: break-all;
+      line-height: 1.5;
+      min-height: 64px;
+      resize: none;
+      white-space: pre-wrap;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(42,191,191,0.15);
+      border: 1px solid rgba(42,191,191,0.3);
+      border-radius: 6px;
+      color: #2ABFBF;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .copy-btn:hover { background: rgba(42,191,191,0.25); }
+    .copy-btn.copied { color: #10b981; border-color: #10b981; background: rgba(16,185,129,0.15); }
+
+    .token-meta {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+
+    .token-meta span {
+      color: #f59e0b;
+      font-weight: 600;
+    }
+
+    /* ── Exchange section ────────────────────────────────────────────────── */
+    #exchange-section {
+      display: none;
+      background: rgba(42,191,191,0.05);
+      border: 1px solid rgba(42,191,191,0.2);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    #exchange-section h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2ABFBF;
+      margin-bottom: 6px;
+    }
+
+    #exchange-section p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* ── Status messages ─────────────────────────────────────────────────── */
+    .status-msg {
+      display: none;
+      font-size: 13px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    .status-error {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+    }
+
+    .status-success {
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: #6ee7b7;
+    }
+
+    /* ── Divider ─────────────────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: #2a3f6a;
+      margin: 28px 0;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    .footer-note {
+      font-size: 12px;
+      color: #475569;
+      text-align: center;
+      margin-top: 24px;
+      line-height: 1.6;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(27,42,74,0.3);
+      border-top-color: #1B2A4A;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="logo">
+    <div class="logo-mark">P</div>
+    <div>
+      <div class="logo-text">PerforMotion</div>
+      <div class="logo-sub">Marketing Dashboard</div>
+    </div>
+  </div>
+
+  <!-- ── Connect section ──────────────────────────────────────────────── -->
+  <div id="connect-section">
+    <h1>Meta Token Generator</h1>
+    <p class="subtitle">
+      Connect your Meta account to generate an access token for Instagram,
+      Facebook Pages, and Meta Ads data in the dashboard.
+    </p>
+
+    <div class="scope-list">
+      <span class="scope-badge">instagram_basic</span>
+      <span class="scope-badge">instagram_manage_insights</span>
+      <span class="scope-badge">pages_read_engagement</span>
+      <span class="scope-badge">pages_show_list</span>
+      <span class="scope-badge">ads_read</span>
+      <span class="scope-badge">ads_management</span>
+    </div>
+
+    <button class="btn btn-primary" id="connect-btn" onclick="connectMeta()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/>
+      </svg>
+      Connect to Meta
+    </button>
+  </div>
+
+  <!-- ── Token result section ─────────────────────────────────────────── -->
+  <div id="result-section">
+    <h1>Token Retrieved</h1>
+    <p class="subtitle">
+      Your short-lived token is below. Use "Exchange for Long-Lived Token"
+      to get a 60-day token, then save it to the dashboard.
+    </p>
+
+    <p class="result-label">Access Token</p>
+    <div class="token-box-wrap">
+      <textarea class="token-box" id="token-display" readonly rows="3"></textarea>
+      <button class="copy-btn" id="copy-btn" onclick="copyToken()">Copy</button>
+    </div>
+    <p class="token-meta" id="token-meta"></p>
+
+    <!-- ── Long-lived token exchange ────────────────────────────────── -->
+    <div id="exchange-section">
+      <h3>Upgrade to Long-Lived Token (60 days)</h3>
+      <p>
+        Short-lived tokens expire in ~1 hour. Exchange it for a 60-day
+        long-lived token using your app secret stored securely in Netlify.
+      </p>
+      <button class="btn btn-secondary" id="exchange-btn" onclick="exchangeToken()">
+        Exchange for Long-Lived Token
+      </button>
+    </div>
+
+    <div id="exchange-status" class="status-msg"></div>
+
+    <div class="divider"></div>
+
+    <button class="btn btn-success" id="save-btn" onclick="saveToDashboard()">
+      Save to Dashboard
+    </button>
+
+    <div id="save-status" class="status-msg"></div>
+  </div>
+
+  <!-- ── Error section ─────────────────────────────────────────────────── -->
+  <div id="error-section" style="display:none">
+    <h1>Authorisation Failed</h1>
+    <p class="subtitle" id="error-msg">Something went wrong with the Meta login.</p>
+    <button class="btn btn-secondary" onclick="location.href=location.pathname" style="margin-top:16px">
+      Try Again
+    </button>
+  </div>
+
+  <p class="footer-note">
+    This page runs entirely in your browser.<br>
+    Tokens are only stored in your browser's localStorage.
+  </p>
+
+</div>
+
+<script>
+  const CLIENT_ID    = '975503045267299';
+  const REDIRECT_URI = 'https://poetic-zuccutto-6b0288.netlify.app/meta-auth.html';
+  const SCOPES       = [
+    'instagram_basic',
+    'instagram_manage_insights',
+    'pages_read_engagement',
+    'pages_show_list',
+    'ads_read',
+    'ads_management',
+  ].join(',');
+
+  let currentToken = null;
+
+  // ── On load: check URL for token or error ────────────────────────────────
+  window.addEventListener('load', () => {
+    const hash   = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const search = new URLSearchParams(window.location.search);
+
+    if (search.get('error')) {
+      showError(search.get('error_description') || search.get('error'));
+      return;
+    }
+
+    if (params.get('access_token')) {
+      const token   = params.get('access_token');
+      const expires = params.get('expires_in');
+      handleToken(token, expires ? Number(expires) : null, false);
+      // Clean the hash from the URL without reloading
+      history.replaceState(null, '', window.location.pathname);
+      return;
+    }
+
+    // Default: show connect button
+    document.getElementById('connect-section').style.display = 'block';
+  });
+
+  // ── Redirect to Meta OAuth ───────────────────────────────────────────────
+  function connectMeta() {
+    const btn = document.getElementById('connect-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Redirecting…';
+
+    const url = 'https://www.facebook.com/dialog/oauth'
+      + `?client_id=${CLIENT_ID}`
+      + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`
+      + `&scope=${encodeURIComponent(SCOPES)}`
+      + `&response_type=token`;
+
+    window.location.href = url;
+  }
+
+  // ── Handle a received token ──────────────────────────────────────────────
+  function handleToken(token, expiresIn, isLongLived) {
+    currentToken = token;
+
+    document.getElementById('connect-section').style.display = 'none';
+    document.getElementById('result-section').style.display  = 'block';
+    document.getElementById('token-display').value = token;
+
+    const meta = document.getElementById('token-meta');
+    if (isLongLived) {
+      meta.innerHTML = 'Type: <span>Long-lived (~60 days)</span>';
+      document.getElementById('exchange-section').style.display = 'none';
+    } else {
+      const mins = expiresIn ? Math.round(expiresIn / 60) : 60;
+      meta.innerHTML = `Type: <span>Short-lived (~${mins} minutes)</span> — exchange it below for a 60-day token`;
+      document.getElementById('exchange-section').style.display = 'block';
+    }
+  }
+
+  // ── Copy token ───────────────────────────────────────────────────────────
+  function copyToken() {
+    const box = document.getElementById('token-display');
+    const btn = document.getElementById('copy-btn');
+    navigator.clipboard.writeText(box.value).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // ── Exchange short-lived → long-lived via Netlify function ───────────────
+  async function exchangeToken() {
+    const btn = document.getElementById('exchange-btn');
+    const status = document.getElementById('exchange-status');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="border-top-color:#e2e8f0"></span> Exchanging…';
+    status.style.display = 'none';
+
+    try {
+      const res  = await fetch(`/api/exchange-token?short_lived_token=${encodeURIComponent(currentToken)}`);
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `Server error ${res.status}`);
+      }
+
+      handleToken(data.access_token, data.expires_in, true);
+
+      status.className = 'status-msg status-success';
+      status.textContent = 'Token upgraded to long-lived (60 days). Save it to the dashboard below.';
+      status.style.display = 'block';
+
+    } catch (err) {
+      status.className = 'status-msg status-error';
+      status.textContent = `Exchange failed: ${err.message}`;
+      status.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Retry Exchange';
+    }
+  }
+
+  // ── Save to dashboard localStorage ──────────────────────────────────────
+  function saveToDashboard() {
+    const btn    = document.getElementById('save-btn');
+    const status = document.getElementById('save-status');
+
+    if (!currentToken) return;
+
+    try {
+      localStorage.setItem('meta_access_token', currentToken);
+
+      btn.textContent = 'Saved!';
+      btn.disabled    = true;
+
+      status.className     = 'status-msg status-success';
+      status.innerHTML     = 'Token saved to localStorage as <code>meta_access_token</code>. '
+        + 'You can now copy it into your Netlify environment variables as <code>META_ACCESS_TOKEN</code>.';
+      status.style.display = 'block';
+
+    } catch (err) {
+      status.className     = 'status-msg status-error';
+      status.textContent   = `Could not save: ${err.message}`;
+      status.style.display = 'block';
+    }
+  }
+
+  // ── Show error ───────────────────────────────────────────────────────────
+  function showError(msg) {
+    document.getElementById('connect-section').style.display = 'none';
+    document.getElementById('error-section').style.display   = 'block';
+    document.getElementById('error-msg').textContent = msg;
+  }
+</script>
+
+</body>
+</html>
