@@ -10,6 +10,7 @@
     "dev": "npx serve -l 4321 ."
   },
   "dependencies": {
+    "google-auth-library": "^9.15.1",
     "node-fetch": "^3.3.2"
   }
 }
