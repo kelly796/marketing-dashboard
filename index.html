@@ -516,27 +516,6 @@
                     </div>
                 </div>
 
-                <!-- Halaxy Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Halaxy</h2>
-                        <span class="card-badge">Live</span>
-                    </div>
-                    <div class="card-content">
-                        <div class="metric">
-                            <span class="metric-label">Revenue</span>
-                            <span class="metric-value sand">--</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">Orders</span>
-                            <span class="metric-value teal">--</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">AOV</span>
-                            <span class="metric-value">--</span>
-                        </div>
-                    </div>
-                </div>
             </section>
         </div>
     </main>
@@ -558,46 +537,34 @@ function calcHealthScore() {
   const ig_on_eng = (D.instagramOnline || MOCK.instagramOnline).engagementRate;
   const meta_cpl  = (D.meta || MOCK.meta).costPerLead;
   const email_or  = ((D.email || MOCK.email).hq || {}).openRate || 0;
-  const cancel    = (D.bookings || MOCK.bookings).cancellationRate;
 
-  const s1 = Math.min(20, (ig_hq_eng / 2) * 20);
-  const s2 = Math.min(20, (ig_on_eng / 2) * 20);
-  const s3 = Math.min(20, meta_cpl <= 35 ? 20 : Math.max(0, 20 - (meta_cpl - 35)));
-  const s4 = Math.min(20, (email_or / 21) * 20);
-  const s5 = Math.min(20, cancel <= 10 ? 20 : Math.max(0, 20 - (cancel - 10) * 4));
-  return { total: Math.round(s1+s2+s3+s4+s5), s1, s2, s3, s4, s5, ig_hq_eng, ig_on_eng, meta_cpl, email_or, cancel };
+  const s1 = Math.min(25, (ig_hq_eng / 2) * 25);
+  const s2 = Math.min(25, (ig_on_eng / 2) * 25);
+  const s3 = Math.min(25, meta_cpl <= 35 ? 25 : Math.max(0, 25 - (meta_cpl - 35)));
+  const s4 = Math.min(25, (email_or / 21) * 25);
+  return { total: Math.round(s1+s2+s3+s4), s1, s2, s3, s4, ig_hq_eng, ig_on_eng, meta_cpl, email_or };
 }
 
 // ── NEXT UPDATE CALCULATOR ────────────────────────────────────────────────────
-// Schedule: Mon 9:00am, Tue 8:00am, Fri 8:00am AEST (UTC+10)
-const SCHEDULE = [
-  { day: 1, hour: 9,  minute: 0, label: 'Monday 9:00am',   badge: 'Weekly Monday'  },
-  { day: 2, hour: 8,  minute: 0, label: 'Tuesday 8:00am',  badge: 'Weekly Tuesday' },
-  { day: 5, hour: 8,  minute: 0, label: 'Friday 8:00am',   badge: 'Weekly Friday'  },
-];
+// Schedule: Every day at 8:00am AEST (UTC+10)
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 function getNextUpdate() {
-  // Current Brisbane time
   const nowBrisbane = new Date(new Date().toLocaleString('en-US', { timeZone: 'Australia/Brisbane' }));
-  const nowDay  = nowBrisbane.getDay();    // 0=Sun … 6=Sat
-  const nowMins = nowBrisbane.getHours() * 60 + nowBrisbane.getMinutes();
-  const isFirst = nowBrisbane.getDate() === 1;
+  const nowMins     = nowBrisbane.getHours() * 60 + nowBrisbane.getMinutes();
+  const slotMins    = 8 * 60; // 8:00am
+  const isFirst     = nowBrisbane.getDate() === 1;
 
-  // Minutes from now until a given schedule slot (wraps across week)
-  function minutesUntil(slot) {
-    const slotMins = slot.hour * 60 + slot.minute;
-    let dayDiff = slot.day - nowDay;
-    if (dayDiff < 0 || (dayDiff === 0 && slotMins <= nowMins)) dayDiff += 7;
-    return dayDiff * 1440 + slotMins - nowMins;
-  }
+  // If before 8am today → next update is today; otherwise tomorrow
+  let minsAway = slotMins - nowMins;
+  if (minsAway <= 0) minsAway += 1440;
 
-  const next = SCHEDULE
-    .map(s => ({ ...s, minsAway: minutesUntil(s) }))
-    .sort((a, b) => a.minsAway - b.minsAway)[0];
+  const nextDate = new Date(nowBrisbane.getTime() + minsAway * 60000);
+  const dayName  = DAY_NAMES[nextDate.getDay()];
 
   return {
-    label: next.label,
-    badge: isFirst ? 'Monthly Report' : next.badge,
+    label: `${dayName} 8:00am`,
+    badge: isFirst ? 'Monthly Report' : `Daily Update — ${dayName} 8:00am AEST`,
   };
 }
 
@@ -623,11 +590,10 @@ function renderHeader() {
   tip.innerHTML = `
     <div style="font-weight:800;margin-bottom:.5rem;font-size:.85rem">Marketing Health Score</div>
     <div style="display:grid;grid-template-columns:1fr auto;gap:2px 8px">
-      <span>IG HQ Engagement (${fmtPct(hs.ig_hq_eng)} vs 2%)</span><span>${Math.round(hs.s1)}/20</span>
-      <span>IG Online Engagement (${fmtPct(hs.ig_on_eng)} vs 2%)</span><span>${Math.round(hs.s2)}/20</span>
-      <span>Meta CPL (${fmtDollar(hs.meta_cpl)} vs $35)</span><span>${Math.round(hs.s3)}/20</span>
-      <span>Email Open Rate (${fmtPct(hs.email_or)} vs 21%)</span><span>${Math.round(hs.s4)}/20</span>
-      <span>Cancellation Rate (${fmtPct(hs.cancel)} vs 10%)</span><span>${Math.round(hs.s5)}/20</span>
+      <span>IG HQ Engagement (${fmtPct(hs.ig_hq_eng)} vs 2%)</span><span>${Math.round(hs.s1)}/25</span>
+      <span>IG Online Engagement (${fmtPct(hs.ig_on_eng)} vs 2%)</span><span>${Math.round(hs.s2)}/25</span>
+      <span>Meta CPL (${fmtDollar(hs.meta_cpl)} vs $35)</span><span>${Math.round(hs.s3)}/25</span>
+      <span>Email Open Rate (${fmtPct(hs.email_or)} vs 21%)</span><span>${Math.round(hs.s4)}/25</span>
     </div>
     <div style="border-top:1px solid #eee;margin-top:.5rem;padding-top:.5rem;font-weight:800">Total: ${hs.total}/100</div>`;
 }
@@ -1808,268 +1774,6 @@ BUILDERS['paid-ads'] = function buildTab6() {
   }, 50);
 };
 
-// ── TAB 7 — BOOKINGS ──────────────────────────────────────────────────────────
-BUILDERS['bookings'] = function buildTab7() {
-  const d  = D || MOCK;
-  const bk = d.bookings || MOCK.bookings;
-  const src = DATA_SOURCE;
-
-  const savedUrl = localStorage.getItem(LS_BOOKING_URL) || '';
-
-  function buildUtmUrl(base, source, medium, campaign) {
-    if (!base) return '';
-    try {
-      const u = new URL(base.includes('://') ? base : 'https://'+base);
-      u.searchParams.set('utm_source', source);
-      u.searchParams.set('utm_medium', medium);
-      u.searchParams.set('utm_campaign', campaign);
-      return u.toString();
-    } catch { return base + `?utm_source=${source}&utm_medium=${medium}&utm_campaign=${campaign}`; }
-  }
-
-  const utmSources = [
-    { label:'Instagram (organic)', source:'instagram', medium:'social', campaign:'booking_organic' },
-    { label:'Facebook (organic)', source:'facebook', medium:'social', campaign:'booking_organic' },
-    { label:'Google Ads', source:'google', medium:'cpc', campaign:'booking_paid' },
-    { label:'Meta Ads', source:'meta', medium:'paid_social', campaign:'booking_paid' },
-  ];
-
-  const el = document.getElementById('tab-bookings');
-  el.innerHTML = `
-    <div class="g3" style="margin-bottom:1.5rem">
-      ${widgetCard({label:'Total Appointments',value:fmtN(bk.totalAppts),cur:bk.totalAppts,prev:bk.totalApptsPrev,sparkData:bk.apptTrend,source:src})}
-      ${widgetCard({label:'New Patients',value:fmtN(bk.newPatients),cur:bk.newPatients,prev:bk.newPatientsPrev,sparkData:makeTrend(bk.newPatients,30,0.2),source:src})}
-      ${widgetCard({label:'Returning Patients',value:fmtN(bk.returningPatients),cur:bk.returningPatients,prev:bk.returningPatientsPrev,sparkData:makeTrend(bk.returningPatients,30,0.08),source:src})}
-      ${widgetCard({label:'Cancellation Rate',value:fmtPct(bk.cancellationRate),cur:bk.cancellationRate,prev:bk.cancellationRatePrev,inverse:true,benchmark:10,benchmarkLabel:'Max target',source:src})}
-      ${widgetCard({label:'Booking Link Clicks',value:fmtN(bk.bookingLinkClicks),cur:bk.bookingLinkClicks,prev:bk.bookingLinkClicksPrev,sparkData:makeTrend(bk.bookingLinkClicks,30,0.15),source:src})}
-      ${widgetCard({label:'New Halaxy Patients',value:fmtN(bk.halaxyPatients),cur:bk.halaxyPatients,prev:bk.halaxyPatientsPrev,sparkData:makeTrend(bk.halaxyPatients,30,0.18),source:src})}
-    </div>
-
-    <div class="g2" style="margin-bottom:1rem">
-      <div class="chart-card">
-        <h3>Daily Appointments — 30 Days</h3>
-        <div style="height:220px"><canvas id="ch_bk_appts"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>New vs Returning</h3>
-        <div style="height:220px"><canvas id="ch_bk_donut"></canvas></div>
-      </div>
-    </div>
-
-    <div class="g2" style="margin-bottom:1rem">
-      <div class="chart-card">
-        <h3>Most Booked Appointment Types</h3>
-        ${[...bk.types].sort((a,b)=>b.count-a.count).map((t,i)=>`
-          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem">
-            <span style="font-size:.85rem;font-weight:700;color:#1B2A4A;width:20px">${i+1}</span>
-            <span style="flex:1;font-size:.85rem">${t.name}</span>
-            <div style="width:120px">
-              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${Math.min(100,Math.round(t.count/bk.types[0].count*100))}%;background:${i===0?'#2ABFBF':'#1B2A4A'}"></div></div>
-            </div>
-            <span style="font-size:.85rem;font-weight:700;width:30px;text-align:right">${t.count}</span>
-          </div>`).join('')}
-      </div>
-      <div class="chart-card">
-        <h3>Booking Source</h3>
-        <div style="height:200px"><canvas id="ch_bk_source"></canvas></div>
-      </div>
-    </div>
-
-    <div class="chart-card">
-      <h3>UTM Link Builder</h3>
-      <div style="margin-bottom:.75rem">
-        <label style="font-size:.85rem;font-weight:700;display:block;margin-bottom:.4rem">Your Halaxy Booking URL</label>
-        <input id="utm-base-url" type="url" placeholder="https://www.halaxy.com/book/..." value="${savedUrl}"
-          style="width:100%;padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.9rem">
-      </div>
-      <div id="utm-links"></div>
-    </div>`;
-
-  function renderUtmLinks() {
-    const base = document.getElementById('utm-base-url').value.trim();
-    localStorage.setItem(LS_BOOKING_URL, base);
-    document.getElementById('utm-links').innerHTML = utmSources.map(s => {
-      const url = buildUtmUrl(base, s.source, s.medium, s.campaign);
-      const id = 'utm_' + s.source;
-      return `<div class="utm-row">
-        <label style="width:160px;font-size:.82rem;font-weight:600">${s.label}</label>
-        <input id="${id}" type="text" readonly value="${url}" title="${url}">
-        <button class="copy-btn" onclick="copyUtm('${id}')">Copy</button>
-      </div>`;
-    }).join('');
-  }
-
-  window.copyUtm = function(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    navigator.clipboard.writeText(el.value).then(() => {
-      const btn = el.nextElementSibling;
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 1500);
-    });
-  };
-
-  document.getElementById('utm-base-url').addEventListener('input', renderUtmLinks);
-  renderUtmLinks();
-
-  // ── THRIVECART SECTION ──────────────────────────────────────────────────────
-  const tc = (D||MOCK).thrivecart || MOCK.thrivecart;
-  const tcEl = document.createElement('div');
-  tcEl.innerHTML = `
-    <div style="margin-top:1.5rem;border-top:2px solid #e2e8f0;padding-top:1.5rem">
-      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
-        <span style="font-size:1rem;font-weight:800;color:#1B2A4A">ThriveCart</span>
-        <span style="font-size:.75rem;color:#999;font-weight:600">Online product sales — last 30 days</span>
-        <span style="font-size:.72rem;color:#888;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px">Env: THRIVECART_API_KEY</span>
-      </div>
-      <div class="g4" style="margin-bottom:1rem">
-        ${widgetCard({label:'Revenue (30d)', value:fmtDollar(tc.revenue30d), cur:tc.revenue30d, prev:tc.revenue30dPrev, sparkData:makeTrend(tc.revenue30d,30,0.15), source:src})}
-        ${widgetCard({label:'Best Product', value:tc.bestProduct.split('—')[0].trim(), source:src})}
-        ${widgetCard({label:'Units Sold', value:fmtN(tc.unitsSold), cur:tc.unitsSold, prev:tc.unitsSoldPrev, sparkData:makeTrend(tc.unitsSold,30,0.2), source:src})}
-        ${widgetCard({label:'Avg Conversion Rate', value:fmtPct(tc.avgConvRate), cur:tc.avgConvRate, prev:tc.avgConvRatePrev, sparkData:makeTrend(tc.avgConvRate,30,0.1), source:src})}
-      </div>
-      <div class="g2" style="margin-bottom:1rem">
-        <div class="chart-card">
-          <h3>Products (30 Days)</h3>
-          <table class="dash-table">
-            <thead><tr><th>Product</th><th>Units</th><th>Revenue</th><th>Conv Rate</th><th>Top Country</th></tr></thead>
-            <tbody>${tc.products.map(p=>`<tr>
-              <td style="font-weight:600">${p.name}</td>
-              <td>${p.units}</td>
-              <td style="font-weight:700">${fmtDollar(p.revenue)}</td>
-              <td>${fmtPct(p.convRate)}</td>
-              <td>${p.topCountry}</td>
-            </tr>`).join('')}</tbody>
-          </table>
-        </div>
-        <div class="chart-card">
-          <h3>Sales by Country</h3>
-          <div style="height:180px"><canvas id="ch_tc_country"></canvas></div>
-          <div style="margin-top:.75rem">
-            <div style="font-size:.8rem;font-weight:700;color:#888;margin-bottom:.4rem">Traffic Source</div>
-            ${tc.trafficSources.map(s=>`
-              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;font-size:.82rem">
-                <span style="width:100px">${s.label}</span>
-                <div style="flex:1;background:#f0f0f0;border-radius:4px;height:8px">
-                  <div style="width:${s.pct}%;height:8px;border-radius:4px;background:#2ABFBF"></div>
-                </div>
-                <span style="width:30px;text-align:right;font-weight:700">${s.pct}%</span>
-              </div>`).join('')}
-          </div>
-        </div>
-      </div>
-    </div>`;
-  document.getElementById('tab-bookings').appendChild(tcEl);
-
-  // ── GYM MASTER SECTION ──────────────────────────────────────────────────────
-  const gm = (D||MOCK).gymmaster || MOCK.gymmaster;
-  const gmEl = document.createElement('div');
-  gmEl.innerHTML = `
-    <div style="margin-top:1.5rem;border-top:2px solid #e2e8f0;padding-top:1.5rem">
-      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
-        <span style="font-size:1rem;font-weight:800;color:#1B2A4A">Gym Master</span>
-        <span style="font-size:.75rem;color:#999;font-weight:600">Membership management</span>
-        <span style="font-size:.72rem;color:#888;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px">Env: GYMMASTER_API_KEY</span>
-      </div>
-
-      <!-- Row 1: Core membership KPIs -->
-      <div class="g4" style="margin-bottom:1rem">
-        ${widgetCard({label:'Active Members', value:fmtN(gm.activeMembers), cur:gm.activeMembers, prev:gm.activeMembersPrev, sparkData:gm.growthTrend, source:src})}
-        ${widgetCard({label:'Members on Hold', value:fmtN(gm.membersOnHold), cur:gm.membersOnHold, prev:gm.membersOnHoldPrev, sparkData:makeTrend(gm.membersOnHold,6,0.08), source:src, inverse:true})}
-        ${widgetCard({label:'New Members (30d)', value:fmtN(gm.newMembers30d), cur:gm.newMembers30d, prev:gm.newMembers30dPrev, sparkData:makeTrend(gm.newMembers30d,6,0.18), source:src})}
-        ${widgetCard({label:'Churned (30d)', value:fmtN(gm.churnedMembers30d), cur:gm.churnedMembers30d, prev:gm.churnedMembers30dPrev, sparkData:makeTrend(gm.churnedMembers30d,6,0.12), source:src, inverse:true})}
-      </div>
-
-      <!-- Row 2: Revenue & retention KPIs -->
-      <div class="g4" style="margin-bottom:1.25rem">
-        ${widgetCard({label:'Retention Rate', value:fmtPct(gm.retentionRate), cur:gm.retentionRate, prev:gm.retentionRatePrev, sparkData:makeTrend(gm.retentionRate,6,0.02), source:src})}
-        ${widgetCard({label:'Revenue (30d)', value:fmtDollar(gm.membershipRevenue), cur:gm.membershipRevenue, prev:gm.membershipRevenuePrev, sparkData:makeTrend(gm.membershipRevenue,6,0.06), source:src})}
-        ${widgetCard({label:'Overdue Revenue', value:fmtDollar(gm.overdueRevenue) + ' <span style="font-size:.72rem;color:#999">('+gm.overdueCount+' members)</span>', cur:gm.overdueRevenue, prev:0, sparkData:makeTrend(gm.overdueRevenue,6,0.1), source:src, inverse:true})}
-        ${widgetCard({label:'Renewals This Week', value:fmtN(gm.renewalsThisWeek), cur:gm.renewalsThisWeek, prev:Math.round(gm.renewalsThisWeek*0.9), sparkData:makeTrend(gm.renewalsThisWeek,6,0.1), source:src})}
-      </div>
-
-      <!-- Row 3: Growth trend + Type breakdown -->
-      <div class="g2" style="margin-bottom:1.25rem">
-        <div class="chart-card">
-          <h3>Member Growth Trend <span style="font-size:.72rem;font-weight:400;color:#999">(6 months)</span></h3>
-          <div style="height:160px"><canvas id="ch_gm_growth"></canvas></div>
-          <div style="display:flex;gap:1.5rem;margin-top:.75rem;font-size:.8rem;color:#64748b">
-            <span>At-risk members: <strong style="color:#f59e0b">${gm.atRiskMembers}</strong></span>
-            <span>Avg lifetime: <strong>${gm.avgMemberLifetime} months</strong></span>
-          </div>
-        </div>
-        <div class="chart-card">
-          <h3>Membership Type Breakdown</h3>
-          <div style="height:160px"><canvas id="ch_gm_donut"></canvas></div>
-          <div style="margin-top:.75rem">
-            ${gm.membershipTypes.map(m=>`
-              <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem">
-                <div style="width:10px;height:10px;border-radius:50%;background:${m.colour};flex-shrink:0"></div>
-                <span style="flex:1;font-size:.8rem">${m.name}</span>
-                <span style="font-size:.8rem;font-weight:700">${m.count}</span>
-                <span style="font-size:.75rem;color:#999;width:32px;text-align:right">${m.pct}%</span>
-              </div>`).join('')}
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 4: Cancellation reasons + At-risk members -->
-      <div class="g2" style="margin-bottom:1.25rem">
-        <div class="chart-card">
-          <h3>Cancellation Reasons</h3>
-          <div style="height:180px"><canvas id="ch_gm_cancel"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <h3>At-Risk Members <span style="font-size:.72rem;font-weight:400;color:#f59e0b">${gm.atRiskMembers} flagged</span></h3>
-          <table style="width:100%;border-collapse:collapse;font-size:.83rem">
-            <thead>
-              <tr style="border-bottom:2px solid #e2e8f0;color:#64748b;font-size:.75rem;text-transform:uppercase">
-                <th style="text-align:left;padding:.35rem 0">Member</th>
-                <th style="text-align:left;padding:.35rem 0">Membership</th>
-                <th style="text-align:right;padding:.35rem 0">Days Inactive</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${gm.atRiskList.map(m=>`
-                <tr style="border-bottom:1px solid #f1f5f9">
-                  <td style="padding:.45rem 0;font-weight:600">${m.name}</td>
-                  <td style="padding:.45rem 0;color:#64748b">${m.membership}</td>
-                  <td style="padding:.45rem 0;text-align:right">
-                    <span style="background:${m.daysInactive>=20?'#fef3c7':m.daysInactive>=16?'#fed7aa':'#f1f5f9'};color:${m.daysInactive>=20?'#d97706':m.daysInactive>=16?'#ea580c':'#64748b'};border-radius:4px;padding:1px 7px;font-weight:700;font-size:.78rem">${m.daysInactive}d</span>
-                  </td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-          <div style="font-size:.75rem;color:#94a3b8;margin-top:.75rem">Members inactive 14+ days with active memberships</div>
-        </div>
-      </div>
-
-      <!-- Blueprint integration note -->
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.85rem 1rem;font-size:.78rem;color:#166534;line-height:1.6">
-        <strong style="color:#166534">✓ GymMaster Connected:</strong>
-        Live membership data is pulled directly from the GymMaster API via <code style="background:#dcfce7;border-radius:3px;padding:1px 4px">GYMMASTER_API_KEY</code>.
-        Revenue and check-in data will appear once those endpoints are confirmed with GymMaster support.
-        The Booking Blueprint at <code style="background:#dcfce7;border-radius:3px;padding:1px 4px">playful-kashata-9390c0.netlify.app</code> remains a separate site.
-      </div>
-    </div>`;
-  document.getElementById('tab-bookings').appendChild(gmEl);
-
-  setTimeout(() => {
-    lineChart('ch_bk_appts', D30, [{ label:'Appointments', data: bk.apptTrend, borderColor:'#2ABFBF', backgroundColor:'rgba(42,191,191,.1)', fill:true }]);
-    donutChart('ch_bk_donut', ['New Patients','Returning'],
-      [bk.newPatients, bk.returningPatients], ['#2ABFBF','#1B2A4A']);
-    barChart('ch_bk_source', bk.sources.map(s=>s.label),
-      [{ label:'Booking Source %', data: bk.sources.map(s=>s.pct), backgroundColor:'#1B2A4A' }], { horizontal: true });
-    donutChart('ch_tc_country', tc.countryBreakdown.map(c=>c.label), tc.countryBreakdown.map(c=>c.pct), ['#2ABFBF','#D4B896','#1B2A4A','#10B981']);
-    donutChart('ch_gm_donut', gm.membershipTypes.map(m=>m.name), gm.membershipTypes.map(m=>m.count), gm.membershipTypes.map(m=>m.colour));
-    lineChart('ch_gm_growth', ['6mo ago','5mo ago','4mo ago','3mo ago','2mo ago','1mo ago'],
-      [{ label:'Active Members', data: gm.growthTrend, borderColor:'#2ABFBF', backgroundColor:'rgba(42,191,191,.1)', fill:true }]);
-    barChart('ch_gm_cancel', gm.cancellationReasons.map(r=>r.reason),
-      [{ label:'% of cancellations', data: gm.cancellationReasons.map(r=>r.pct), backgroundColor:'#D4B896' }],
-      { horizontal: true });
-  }, 50);
-};
-
 // ── TAB 8 — BRAND STRATEGY ────────────────────────────────────────────────────
 BUILDERS['brand-strategy'] = function buildTab8() {
   const d   = D || MOCK;
@@ -2554,8 +2258,8 @@ async function refreshData() {
     if (r.ok) {
       const payload = await r.json();
       const fresh = payload.data || payload;
-      if (fresh && (fresh.email || fresh.gymmaster || fresh.meta || fresh.instagramHQ ||
-          fresh.youtube || fresh.ga4 || fresh.seo || fresh.bookings)) {
+      if (fresh && (fresh.email || fresh.meta || fresh.instagramHQ ||
+          fresh.youtube || fresh.ga4 || fresh.seo)) {
         D = fresh;
         DATA_SOURCE = 'Live';
         localStorage.setItem(LS_KEY, JSON.stringify(D));
@@ -2600,7 +2304,6 @@ function updateApiStatus() {
     'badge-youtube': !!D.youtube,
     'badge-ac':      !!(D.email && D.email.overall),
     'badge-gsc':     !!D.seo,
-    'badge-halaxy':  !!D.halaxy,
   };
 
   // Update each card badge
@@ -2672,13 +2375,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── TAB 1 — ALL CHANNELS ──────────────────────────────────────────────────────
 BUILDERS['all-channels'] = function buildTab1() {
-  const d = D || MOCK;
+  const d    = D || MOCK;
   const ighq = d.instagramHQ || MOCK.instagramHQ;
   const igon = d.instagramOnline || MOCK.instagramOnline;
   const fb   = d.facebook || MOCK.facebook;
   const yt   = d.youtube  || MOCK.youtube;
   const meta = d.meta     || MOCK.meta;
-  const bk   = d.bookings || MOCK.bookings;
+  const ga4d = d.ga4      || MOCK.ga4 || {};
   const em   = (d.email   || MOCK.email).hq || {};
   const hs   = calcHealthScore();
   const src  = DATA_SOURCE;
@@ -2704,9 +2407,9 @@ BUILDERS['all-channels'] = function buildTab1() {
     widgetCard({ label:'IG Online Engagement', value: fmtPct(igon.engagementRate), cur: igon.engagementRate, prev: igon.engagementRatePrev, benchmark: 2, benchmarkLabel:'Benchmark', sparkData: igon.engagementTrend, source: src }),
     widgetCard({ label:'Facebook Engagement', value: fmtPct(fb.engagementRate), cur: fb.engagementRate, prev: fb.engagementRatePrev, benchmark: 1, benchmarkLabel:'Benchmark', sparkData: fb.engagementTrend, sparkColour:'#1B2A4A', source: src }),
     widgetCard({ label:'YouTube Engagement Rate', value: fmtPct(yt.engagementRate), cur: yt.engagementRate, prev: yt.engagementRatePrev, benchmark:'2–5%', benchmarkLabel:'Industry avg', sparkData: yt.engagementTrend, sparkColour:'#D4B896', source: src }),
-    // Row 3 — Conversions
-    widgetCard({ label:'Booking Link Clicks', value: fmtN(bk.bookingLinkClicks), cur: bk.bookingLinkClicks, prev: bk.bookingLinkClicksPrev, sparkData: makeTrend(bk.bookingLinkClicks,7,0.15), source: src }),
-    widgetCard({ label:'New Halaxy Patients', value: fmtN(bk.halaxyPatients), cur: bk.halaxyPatients, prev: bk.halaxyPatientsPrev, sparkData: makeTrend(bk.halaxyPatients,7,0.2), source: src }),
+    // Row 3 — Web & Email
+    widgetCard({ label:'GA4 Sessions (30d)', value: fmtN(ga4d.sessions), cur: ga4d.sessions, prev: ga4d.sessionsPrev, sparkData: makeTrend(ga4d.sessions||0,7,0.05), source: src }),
+    widgetCard({ label:'GA4 Active Users (30d)', value: fmtN(ga4d.activeUsers), sparkData: makeTrend(ga4d.activeUsers||0,7,0.05), source: src }),
     widgetCard({ label:'Email Net Growth', value: '+' + fmtN(em.netGrowth||0), cur: em.netGrowth, prev: em.netGrowthPrev, sparkData: makeTrend(em.netGrowth||50,7,0.15), source: src }),
     widgetCard({ label:'Meta Leads 7d', value: fmtN(meta.leads7d), cur: meta.leads7d, prev: meta.leadsPrev, sparkData: meta.leadsTrend, sparkColour:'#1B2A4A', source: src }),
     // Row 4 — Health
@@ -2722,13 +2425,11 @@ BUILDERS['all-channels'] = function buildTab1() {
   // Connection status chips — check D directly (not MOCK fallback)
   const SOURCES = [
     { label: 'ActiveCampaign', live: !!(D.email && D.email.overall) },
-    { label: 'GymMaster',      live: !!D.gymmaster },
     { label: 'Instagram',      live: !!(D.instagramHQ || D.instagramOnline) },
     { label: 'Meta Ads',       live: !!D.meta },
     { label: 'YouTube',        live: !!D.youtube },
     { label: 'GA4',            live: !!D.ga4 },
     { label: 'Search Console', live: !!D.seo },
-    { label: 'Halaxy',         live: !!(D.halaxy || D.bookings) },
   ];
   const liveN = SOURCES.filter(s => s.live).length;
   const statusChips = SOURCES.map(s => {
@@ -2782,7 +2483,6 @@ const LS_SENTIMENT = 'pm_sentiment';
 const LS_SEASONAL  = 'pm_seasonal';
 const LS_PILLARS   = 'pm_pillars';
 const LS_AUDIENCE  = 'pm_audience_geo';
-const LS_BOOKING_URL='pm_booking_url';
 
 const CHARTS = {};
 const BUILT  = {};
@@ -3059,29 +2759,6 @@ const MOCK = {
       ],
     },
   },
-  bookings: {
-    totalAppts: 184, totalApptsPrev: 168,
-    newPatients: 28, newPatientsPrev: 22,
-    returningPatients: 156, returningPatientsPrev: 146,
-    cancellationRate: 13.0, cancellationRatePrev: 14.2,
-    bookingLinkClicks: 412, bookingLinkClicksPrev: 368,
-    halaxyPatients: 28, halaxyPatientsPrev: 22,
-    apptTrend: makeTrend(26, 30, 0.2),
-    types: [
-      { name: 'Initial Consultation', count: 48 },
-      { name: 'Physiotherapy Follow-up', count: 72 },
-      { name: 'Exercise Rehab', count: 36 },
-      { name: 'Telehealth Consult', count: 18 },
-      { name: 'Pilates Assessment', count: 10 },
-    ],
-    sources: [
-      { label: 'Direct / Organic', pct: 38 },
-      { label: 'Instagram', pct: 24 },
-      { label: 'Google Search', pct: 20 },
-      { label: 'Facebook', pct: 12 },
-      { label: 'Referral', pct: 6 },
-    ],
-  },
   seo: {
     connectionNote: 'Google Search Console connected via service account. Data refreshes nightly. Position tracking covers top 50 keywords for HQ and Online brands.',
     rankTrend30: {
@@ -3176,39 +2853,6 @@ const MOCK = {
       { label: 'Google Search', pct: 27 },
     ],
   },
-  gymmaster: {
-    activeMembers: 287, activeMembersPrev: 274,
-    membersOnHold: 9,  membersOnHoldPrev: 7,
-    newMembers30d: 24, newMembers30dPrev: 18,
-    churnedMembers30d: 6, churnedMembers30dPrev: 8,
-    atRiskMembers: 11,
-    avgMemberLifetime: 19,
-    retentionRate: 94.2, retentionRatePrev: 92.8,
-    membershipRevenue: 21840, membershipRevenuePrev: 20580,
-    overdueRevenue: 1240, overdueCount: 5,
-    renewalsThisWeek: 12,
-    growthTrend: makeTrend(287, 6, 0.04),
-    membershipTypes: [
-      { name: 'Full Access',   count: 142, pct: 49, colour: '#2ABFBF' },
-      { name: 'Group Classes', count: 89,  pct: 31, colour: '#1B2A4A' },
-      { name: 'Rehab Program', count: 38,  pct: 13, colour: '#D4B896' },
-      { name: 'Casual',        count: 18,  pct: 7,  colour: '#94a3b8' },
-    ],
-    cancellationReasons: [
-      { reason: 'Too expensive',  pct: 32 },
-      { reason: 'Not using it',   pct: 24 },
-      { reason: 'Moved away',     pct: 17 },
-      { reason: 'Injury',         pct: 12 },
-      { reason: 'Another gym',    pct: 8  },
-      { reason: 'Other',          pct: 7  },
-    ],
-    atRiskList: [
-      { name: 'J. Anderson', daysInactive: 21, membership: 'Full Access'   },
-      { name: 'S. Mitchell', daysInactive: 18, membership: 'Group Classes' },
-      { name: 'T. Clarke',   daysInactive: 16, membership: 'Rehab Program' },
-      { name: 'R. Nguyen',   daysInactive: 15, membership: 'Full Access'   },
-    ],
-  },
   goals: [
     { id: 1, name: 'IG HQ Monthly Reach', brand: 'HQ', platform: 'Instagram', target: 20000, current: 18400, interval: 'Monthly', status: 'On Track' },
     { id: 2, name: 'IG Online Monthly Reach', brand: 'Online', platform: 'Instagram', target: 30000, current: 28600, interval: 'Monthly', status: 'On Track' },
@@ -3217,9 +2861,7 @@ const MOCK = {
     { id: 5, name: 'Email Online List Growth', brand: 'Online', platform: 'Email', target: 100, current: 150, interval: 'Monthly', status: 'Complete' },
     { id: 6, name: 'YouTube Subscribers', brand: 'Online', platform: 'YouTube', target: 1000, current: 890, interval: 'Quarterly', status: 'On Track' },
     { id: 7, name: 'Facebook Reach 7d', brand: 'HQ', platform: 'Facebook', target: 4000, current: 3100, interval: 'Weekly', status: 'Off Track' },
-    { id: 8, name: 'Cancellation Rate', brand: 'Both', platform: 'Halaxy', target: 8, current: 7.2, interval: 'Monthly', status: 'Complete' },
     { id: 9, name: 'Meta Cost Per Lead', brand: 'Both', platform: 'Meta Ads', target: 35, current: 30, interval: 'Monthly', status: 'Complete' },
-    { id: 10, name: 'New Halaxy Patients', brand: 'Both', platform: 'Halaxy', target: 30, current: 28, interval: 'Monthly', status: 'On Track' },
   ],
 };
 
@@ -3229,8 +2871,8 @@ async function loadData() {
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      const hasData = parsed && (parsed.email || parsed.gymmaster || parsed.meta ||
-        parsed.instagramHQ || parsed.youtube || parsed.ga4 || parsed.seo || parsed.bookings);
+      const hasData = parsed && (parsed.email || parsed.meta ||
+        parsed.instagramHQ || parsed.youtube || parsed.ga4 || parsed.seo);
       if (hasData) { D = parsed; DATA_SOURCE = 'Cached'; return; }
     } catch(e) {}
   }
@@ -3332,7 +2974,6 @@ const TABS = [
   { id:'seo',            label:'SEO Rankings' },
   { id:'email',          label:'Email' },
   { id:'paid-ads',       label:'Paid Ads' },
-  { id:'bookings',       label:'Bookings' },
   { id:'brand-strategy', label:'Brand Strategy' },
   { id:'goals',          label:'Goals' },
 ];
