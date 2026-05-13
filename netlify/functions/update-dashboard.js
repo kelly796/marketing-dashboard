@@ -17,7 +17,8 @@ const { handler: fetchGSC }       = require('./fetch-gsc');
 const { handler: fetchHalaxy }    = require('./fetch-halaxy');
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
+  // Allow scheduled invocations (no httpMethod) and direct POST calls
+  if (event.httpMethod && event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
