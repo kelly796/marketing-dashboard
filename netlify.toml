@@ -11,16 +11,9 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-# ── SCHEDULED TRIGGERS ────────────────────────────────────────────────────────
-# Netlify only supports one schedule per function, so each day uses a thin
-# wrapper that calls the same update-dashboard handler.
-# All times in UTC (AEST = UTC+10).
+# ── SCHEDULED TRIGGER ─────────────────────────────────────────────────────────
+# Runs every day at 08:00 AEST (= 22:00 UTC previous day).
+# AEST = UTC+10; during AEDT (daylight saving) this fires at 09:00 AEDT.
 
-[functions."scheduled-mon"]
-  schedule = "0 23 * * 0"   # Monday 09:00 AEST  = Sunday 23:00 UTC
-
-[functions."scheduled-tue"]
-  schedule = "0 22 * * 1"   # Tuesday 08:00 AEST = Monday 22:00 UTC
-
-[functions."scheduled-fri"]
-  schedule = "0 22 * * 4"   # Friday 08:00 AEST  = Thursday 22:00 UTC
+[functions."scheduled-daily"]
+  schedule = "0 22 * * *"
