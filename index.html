@@ -1189,14 +1189,56 @@ BUILDERS['online-overview'] = function buildTab3() {
 
 // ── TAB 4 — SEO RANKINGS ──────────────────────────────────────────────────────
 BUILDERS['seo'] = function buildTab4() {
-  const d   = D || MOCK;
-  const seo = d.seo || MOCK.seo;
+  const d        = D || MOCK;
+  const seo      = d.seo || MOCK.seo;
+  const ga4data  = d.ga4 || MOCK.ga4 || {};
+  const topPages = d.ga4TopPages || MOCK.ga4TopPages || [];
   let kFilter = 'All';
 
   const el = document.getElementById('tab-seo');
   el.innerHTML = `
+    <!-- GA4 WEBSITE ANALYTICS -->
+    <div class="chart-card" style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <div>
+          <h3 style="margin:0">Website Analytics — GA4</h3>
+          <div style="font-size:.75rem;color:#888;margin-top:.2rem">Last 30 days · ${sourceBadgeHTML(DATA_SOURCE)}</div>
+        </div>
+        <button class="btn" onclick="refreshData()" style="font-size:.8rem;padding:.4rem .9rem">↻ Refresh</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.25rem">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;color:#1B2A4A">${fmtN(ga4data.sessions)}</div>
+          <div style="font-size:.72rem;color:#888;margin-top:.15rem">Sessions (30d)</div>
+          <div style="margin-top:.2rem">${wowBadge(ga4data.sessions, ga4data.sessionsPrev)}</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;color:#2ABFBF">${fmtN(ga4data.activeUsers)}</div>
+          <div style="font-size:.72rem;color:#888;margin-top:.15rem">Active Users (30d)</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;color:#10B981">${fmtPct(ga4data.conversionRate)}</div>
+          <div style="font-size:.72rem;color:#888;margin-top:.15rem">Conversion Rate</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;color:#1B2A4A">${fmtN(ga4data.pagesPerSession, 1)}</div>
+          <div style="font-size:.72rem;color:#888;margin-top:.15rem">Pages / Session</div>
+        </div>
+      </div>
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.04em;margin-bottom:.6rem">Top Pages (30d)</div>
+      <table class="dash-table">
+        <thead><tr><th>Page</th><th>Sessions</th><th>Page Views</th><th>Active Users</th></tr></thead>
+        <tbody>${topPages.map(p => `<tr>
+          <td style="font-weight:600;font-size:.82rem" title="${p.page}">${p.title || p.page}</td>
+          <td>${fmtN(p.sessions)}</td>
+          <td>${fmtN(p.views)}</td>
+          <td>${fmtN(p.activeUsers)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+
     <div class="card" style="margin-bottom:1rem;padding:1rem;border-left:4px solid #2ABFBF">
-      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.25rem">Connection Status</div>
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.25rem">GSC Connection Status</div>
       <div style="font-size:.9rem;color:#333">${seo.connectionNote}</div>
     </div>
 
@@ -1538,10 +1580,11 @@ BUILDERS['email'] = function buildTab5() {
   el.innerHTML = `
     <!-- OVERALL ACCOUNT SUMMARY -->
     <div class="chart-card" style="margin-bottom:1rem;border-left:4px solid #2ABFBF">
-      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
         <h3 style="margin:0">Overall Account</h3>
         <span style="font-size:.75rem;color:#888;font-weight:600">All lists · Account-wide stats</span>
-        <span style="font-size:.72rem;padding:.15rem .5rem;border-radius:4px;background:#f0fdf4;color:#166534;font-weight:700;border:1px solid #bbf7d0">${src}</span>
+        ${sourceBadgeHTML(src)}
+        <button class="btn" onclick="refreshData()" style="margin-left:auto;font-size:.8rem;padding:.4rem .9rem">↻ Refresh</button>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem">
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
@@ -3083,6 +3126,24 @@ const MOCK = {
       { keyword: 'performotion', brand: 'Both', current: 3, previous: 5, volume: 2200 },
     ],
   },
+  ga4: {
+    sessions: 9140, sessionsPrev: 8420,
+    activeUsers: 5240, users: 5240,
+    conversions: 312, conversionRate: 3.4,
+    pagesPerSession: 2.6,
+  },
+  ga4TopPages: [
+    { page: '/book-now',        title: 'Book Now',           sessions: 1840, views: 2920, activeUsers: 1320 },
+    { page: '/',                title: 'Home',               sessions: 1620, views: 2180, activeUsers: 1410 },
+    { page: '/services',        title: 'Our Services',       sessions: 980,  views: 1240, activeUsers: 870  },
+    { page: '/about',           title: 'About Us',           sessions: 720,  views: 890,  activeUsers: 640  },
+    { page: '/online-coaching', title: 'Online Coaching',    sessions: 640,  views: 880,  activeUsers: 580  },
+    { page: '/blog',            title: 'Blog',               sessions: 520,  views: 740,  activeUsers: 460  },
+    { page: '/contact',         title: 'Contact',            sessions: 410,  views: 490,  activeUsers: 370  },
+    { page: '/pricing',         title: 'Pricing',            sessions: 380,  views: 460,  activeUsers: 340  },
+    { page: '/powerlifting',    title: 'Powerlifting',       sessions: 290,  views: 380,  activeUsers: 260  },
+    { page: '/group-classes',   title: 'Group Classes',      sessions: 240,  views: 310,  activeUsers: 220  },
+  ],
   ga4Countries: [
     { country: 'Australia', sessions: 4820, pages: 3.2, convRate: 4.1, products: 38, source: 'Organic Search' },
     { country: 'United Kingdom', sessions: 1240, pages: 2.8, convRate: 2.9, products: 12, source: 'Social' },

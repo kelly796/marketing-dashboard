@@ -54,8 +54,9 @@ exports.handler = async (event) => {
   });
   absorb(ytRes,     'YouTube',        d => { if (d.subscribers) results.youtube = d; });
   absorb(ga4Res,    'GA4',            d => {
-    if (d.ga4)         results.ga4         = d.ga4;
-    if (d.ga4Countries) results.ga4Countries = d.ga4Countries;
+    if (d.ga4)          results.ga4          = d.ga4;
+    if (d.ga4Countries)  results.ga4Countries  = d.ga4Countries;
+    if (d.ga4TopPages)   results.ga4TopPages   = d.ga4TopPages;
   });
   absorb(gscRes,    'GSC',            d => { if (d.seo)  results.seo  = d.seo; });
   absorb(halaxyRes, 'Halaxy',         d => {
