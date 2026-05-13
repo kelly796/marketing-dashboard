@@ -37,7 +37,7 @@ exports.handler = async () => {
     const token = await getGoogleToken(saKey, SCOPES);
     const base  = `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}`;
 
-    const [countryReport, summaryReport, sourceReport] = await Promise.all([
+    const [countryReport, summaryReport, sourceReport, pagesReport] = await Promise.all([
       // Country breakdown for the last 30 days
       runReport(base, token, {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
@@ -58,7 +58,7 @@ exports.handler = async () => {
         ],
         metrics: [
           { name: 'sessions' },
-          { name: 'totalUsers' },
+          { name: 'activeUsers' },
           { name: 'conversions' },
           { name: 'screenPageViewsPerSession' },
         ],
@@ -73,6 +73,18 @@ exports.handler = async () => {
         metrics: [{ name: 'sessions' }],
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: 50,
+      }),
+      // Top pages by sessions for the last 30 days
+      runReport(base, token, {
+        dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+        dimensions: [{ name: 'pagePath' }, { name: 'pageTitle' }],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'screenPageViews' },
+          { name: 'activeUsers' },
+        ],
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: 10,
       }),
     ]);
 
@@ -108,10 +120,10 @@ exports.handler = async () => {
     const getMetric = (rowIndex, metricIndex) =>
       rows[rowIndex] ? Number(rows[rowIndex].metricValues[metricIndex].value) : 0;
 
-    const sessions    = getMetric(0, 0);
-    const sessionsPrev = getMetric(1, 0) || Math.round(sessions * 0.92);
-    const users       = getMetric(0, 1);
-    const conversions = getMetric(0, 2);
+    const sessions       = getMetric(0, 0);
+    const sessionsPrev   = getMetric(1, 0) || Math.round(sessions * 0.92);
+    const activeUsers    = getMetric(0, 1);
+    const conversions    = getMetric(0, 2);
     const pagesPerSession = rows[0]
       ? +Number(rows[0].metricValues[3].value).toFixed(1)
       : 0;
@@ -119,16 +131,25 @@ exports.handler = async () => {
     const ga4 = {
       sessions,
       sessionsPrev,
-      users,
+      activeUsers,
+      users: activeUsers,
       conversions,
       conversionRate:  sessions ? +(conversions / sessions * 100).toFixed(1) : 0,
       pagesPerSession,
     };
 
+    const ga4TopPages = (pagesReport.rows || []).map(row => ({
+      page:        row.dimensionValues[0].value,
+      title:       row.dimensionValues[1].value || row.dimensionValues[0].value,
+      sessions:    Number(row.metricValues[0].value),
+      views:       Number(row.metricValues[1].value),
+      activeUsers: Number(row.metricValues[2].value),
+    }));
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ga4, ga4Countries }),
+      body: JSON.stringify({ ga4, ga4Countries, ga4TopPages }),
     };
   } catch (err) {
     console.error('fetch-ga4 error:', err);
