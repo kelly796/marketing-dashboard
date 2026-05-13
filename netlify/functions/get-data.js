@@ -7,41 +7,33 @@
  *
  * Data sources:
  *  ✅ ActiveCampaign    — AC_BASE_URL + AC_API_KEY
- *  ✅ GymMaster         — GYMMASTER_API_KEY
  *  ✅ Meta / Instagram  — META_ACCESS_TOKEN + META_AD_ACCOUNT_ID + META_IG_*_ID + META_FB_PAGE_ID
  *  ✅ YouTube           — YOUTUBE_API_KEY + YOUTUBE_CHANNEL_ID
  *  ✅ Google Analytics 4 — GA4_PROPERTY_ID + GOOGLE_SERVICE_ACCOUNT_KEY
  *  ✅ Google Search Console — GSC_SITE_URL + GOOGLE_SERVICE_ACCOUNT_KEY
- *  ✅ Halaxy            — HALAXY_API_KEY
  */
 
-const { handler: fetchAC }       = require('./fetch-activecampaign');
-const { handler: fetchGymMaster } = require('./fetch-gymmaster');
-const { handler: fetchMeta }      = require('./fetch-meta');
-const { handler: fetchYouTube }   = require('./fetch-youtube');
-const { handler: fetchGA4 }       = require('./fetch-ga4');
-const { handler: fetchGSC }       = require('./fetch-gsc');
-const { handler: fetchHalaxy }    = require('./fetch-halaxy');
+const { handler: fetchAC }      = require('./fetch-activecampaign');
+const { handler: fetchMeta }    = require('./fetch-meta');
+const { handler: fetchYouTube } = require('./fetch-youtube');
+const { handler: fetchGA4 }     = require('./fetch-ga4');
+const { handler: fetchGSC }     = require('./fetch-gsc');
 
 exports.handler = async (event) => {
   try {
-    const [acRes, gmRes, metaRes, ytRes, ga4Res, gscRes, halaxyRes] = await Promise.allSettled([
+    const [acRes, metaRes, ytRes, ga4Res, gscRes] = await Promise.allSettled([
       fetchAC(event),
-      fetchGymMaster(event),
       fetchMeta(event),
       fetchYouTube(event),
       fetchGA4(event),
       fetchGSC(event),
-      fetchHalaxy(event),
     ]);
 
-    const email     = parse(acRes,     'ActiveCampaign');
-    const gymmaster = parse(gmRes,     'GymMaster');
-    const metaData  = parse(metaRes,   'Meta');
-    const ytData    = parse(ytRes,     'YouTube');
-    const ga4Data   = parse(ga4Res,    'GA4');
-    const gscData   = parse(gscRes,    'GSC');
-    const halaxyData = parse(halaxyRes, 'Halaxy');
+    const email    = parse(acRes,   'ActiveCampaign');
+    const metaData = parse(metaRes, 'Meta');
+    const ytData   = parse(ytRes,   'YouTube');
+    const ga4Data  = parse(ga4Res,  'GA4');
+    const gscData  = parse(gscRes,  'GSC');
 
     // Meta returns multiple keys
     const metaKeys = metaData ? {
@@ -53,32 +45,22 @@ exports.handler = async (event) => {
 
     // GA4 returns ga4 + ga4Countries + ga4TopPages as separate keys
     const ga4Keys = ga4Data ? {
-      ...(ga4Data.ga4          ? { ga4:          ga4Data.ga4 }          : {}),
-      ...(ga4Data.ga4Countries  ? { ga4Countries:  ga4Data.ga4Countries }  : {}),
-      ...(ga4Data.ga4TopPages   ? { ga4TopPages:   ga4Data.ga4TopPages }   : {}),
-    } : {};
-
-    // Halaxy returns bookings + halaxy
-    const halaxyKeys = halaxyData ? {
-      ...(halaxyData.bookings ? { bookings: halaxyData.bookings } : {}),
-      ...(halaxyData.halaxy   ? { halaxy:   halaxyData.halaxy }   : {}),
+      ...(ga4Data.ga4          ? { ga4:         ga4Data.ga4 }         : {}),
+      ...(ga4Data.ga4Countries ? { ga4Countries: ga4Data.ga4Countries } : {}),
+      ...(ga4Data.ga4TopPages  ? { ga4TopPages:  ga4Data.ga4TopPages }  : {}),
     } : {};
 
     const data = {
       lastUpdated: new Date().toISOString(),
       dataSource:  'Live',
-      ...(email                         ? { email }                         : {}),
-      ...(gymmaster                     ? { gymmaster }                     : {}),
+      ...(email                        ? { email }          : {}),
       ...metaKeys,
-      ...(ytData && ytData.subscribers  ? { youtube: ytData }               : {}),
+      ...(ytData && ytData.subscribers ? { youtube: ytData } : {}),
       ...ga4Keys,
-      ...gscData  ? { seo: gscData.seo } : {},
-      ...halaxyKeys,
+      ...(gscData ? { seo: gscData.seo } : {}),
     };
 
-    // If nothing loaded (all env vars missing), tell the browser so it falls
-    // back to data/dashboard-data.json or MOCK rather than caching empty data.
-    const hasAnyData = email || gymmaster || metaData || ytData || ga4Data || gscData || halaxyData;
+    const hasAnyData = email || metaData || ytData || ga4Data || gscData;
     if (!hasAnyData) {
       return {
         statusCode: 503,
