@@ -43,11 +43,10 @@ exports.handler = async (event) => {
       ...(metaData.meta            ? { meta:            metaData.meta }            : {}),
     } : {};
 
-    // GA4 returns ga4 + ga4Countries + ga4TopPages as separate keys
+    // GA4 returns ga4 + ga4Countries as separate keys
     const ga4Keys = ga4Data ? {
-      ...(ga4Data.ga4          ? { ga4:         ga4Data.ga4 }         : {}),
+      ...(ga4Data.ga4          ? { ga4:          ga4Data.ga4 }          : {}),
       ...(ga4Data.ga4Countries ? { ga4Countries: ga4Data.ga4Countries } : {}),
-      ...(ga4Data.ga4TopPages  ? { ga4TopPages:  ga4Data.ga4TopPages }  : {}),
     } : {};
 
     const data = {

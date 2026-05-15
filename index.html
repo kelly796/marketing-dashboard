@@ -2852,6 +2852,8 @@ const MOCK = {
 };
 
 // ── DATA LOADING ──────────────────────────────────────────────────────────────
+const CACHE_MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours — force fresh fetch after this
+
 async function loadData() {
   const cached = localStorage.getItem(LS_KEY);
   if (cached) {
@@ -2859,7 +2861,11 @@ async function loadData() {
       const parsed = JSON.parse(cached);
       const hasData = parsed && (parsed.email || parsed.meta ||
         parsed.instagramHQ || parsed.youtube || parsed.ga4 || parsed.seo);
-      if (hasData) { D = parsed; DATA_SOURCE = 'Cached'; return; }
+      const cacheAge = parsed?.lastUpdated
+        ? Date.now() - new Date(parsed.lastUpdated).getTime()
+        : Infinity;
+      const cacheValid = hasData && cacheAge < CACHE_MAX_AGE_MS;
+      if (cacheValid) { D = parsed; DATA_SOURCE = 'Cached'; return; }
     } catch(e) {}
   }
   try {
