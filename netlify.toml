@@ -10,10 +10,3 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
-
-# ── SCHEDULED TRIGGER ─────────────────────────────────────────────────────────
-# Runs every day at 08:00 AEST (= 22:00 UTC previous day).
-# AEST = UTC+10; during AEDT (daylight saving) this fires at 09:00 AEDT.
-
-[functions."scheduled-daily"]
-  schedule = "0 22 * * *"
