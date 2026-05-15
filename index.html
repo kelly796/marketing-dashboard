@@ -651,7 +651,8 @@ function renderIGAnalytics(ig, key, color) {
   const perf = ig.pillarPerformance || {};
   const pillarList = Object.entries(perf);
   const sorted = [...pillarList].sort((a,b) => (b[1].avgReach*b[1].avgEngagement) - (a[1].avgReach*a[1].avgEngagement));
-  const best = sorted[0]; const worst = sorted[sorted.length-1];
+  const emptyPillar = [null, {label:'—', avgReach:0, avgEngagement:0, bookingCorr:'N/A', metaDemoMatch:'N/A', posts:0}];
+  const best = sorted[0] || emptyPillar; const worst = sorted[sorted.length-1] || emptyPillar;
   const trend = ig.trendData || {};
   const maxBkClicks = Math.max(...(trend.contentTypes||[{avgBookingClicks:1}]).map(t=>t.avgBookingClicks), 1);
 
