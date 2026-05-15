@@ -15,6 +15,21 @@
  * ─── TOKEN PERMISSIONS NEEDED ────────────────────────────────────────────────
  *  instagram_basic, instagram_manage_insights, pages_read_engagement,
  *  pages_show_list, ads_read, business_management
+ *
+ * ─── ⚠️  TOKEN EXPIRY — ACTION REQUIRED EVERY ~55 DAYS ───────────────────────
+ *  Long-lived Meta access tokens expire after 60 days. There is NO auto-refresh.
+ *  When the token expires ALL Meta data (Instagram HQ, Instagram Online, Facebook
+ *  Page, Meta Ads) will silently fail.
+ *
+ *  How to refresh:
+ *   1. Go to Meta for Developers → Tools → Graph API Explorer
+ *   2. Generate a new short-lived User Token with the required permissions above
+ *   3. GET /api/exchange-token?short_lived_token=<new_short_token>
+ *      (this calls exchange-token.js and returns a 60-day token)
+ *   4. Update META_ACCESS_TOKEN in Netlify → Site configuration → Environment variables
+ *   5. Trigger a new Netlify deploy so the function picks up the new value
+ *
+ *  Tip: set a recurring calendar reminder for every 50 days so you never miss it.
  */
 
 const GRAPH = 'https://graph.facebook.com/v19.0';

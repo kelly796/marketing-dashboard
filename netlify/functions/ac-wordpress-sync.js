@@ -210,7 +210,10 @@ async function postToWordPress(click) {
 // ─── SIGNATURE VERIFICATION ───────────────────────────────────────────────────
 // Supports both plain-token comparison (older AC webhooks) and HMAC-SHA256
 function verifySignature(body, signature, secret) {
-  if (!secret) return true; // no secret configured — allow all (dev only)
+  if (!secret) {
+    console.error('SECURITY: AC_WEBHOOK_TOKEN is not configured. All webhook requests are being rejected. Set this env var in Netlify immediately.');
+    return false;
+  }
   // Plain token match (AC v1 webhooks)
   if (signature === secret) return true;
   // HMAC-SHA256 (AC v2 webhooks)

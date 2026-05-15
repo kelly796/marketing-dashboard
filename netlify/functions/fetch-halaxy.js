@@ -155,14 +155,21 @@ exports.handler = async () => {
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
-async function halaxyGet(url, headers, params = {}) {
+async function halaxyGet(url, headers, params = {}, retries = 3) {
   const full = url + '?' + new URLSearchParams(params);
-  const res  = await fetch(full, { headers });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Halaxy GET ${url} → HTTP ${res.status}: ${err}`);
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(full, { headers });
+    if (res.status === 429) {
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Halaxy GET ${url} → HTTP ${res.status}: ${err}`);
+    }
+    return res.json();
   }
-  return res.json();
+  throw new Error(`Halaxy GET ${url} failed after ${retries} retries (rate limited)`);
 }
 
 function asArray(resp) {

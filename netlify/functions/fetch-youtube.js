@@ -80,10 +80,11 @@ exports.handler = async () => {
         engagementRatePrev,
         reach7d:               cur.views,
         reach7dPrev:           prev.views,
-        viewsTrend:            buildTrend(cur.views,      30, 0.13),
-        reachTrend:            buildTrend(cur.views,      30, 0.15),
-        engagementTrend:       buildTrend(engagementRate, 30, 0.10),
-        pillars: { tutorials: 45, casestudies: 25, qa: 20, vlog: 10 },
+        viewsTrend:            buildFlatTrend(cur.views,      30),
+        reachTrend:            buildFlatTrend(cur.views,      30),
+        engagementTrend:       buildFlatTrend(engagementRate, 30),
+        pillars: { tutorials: 0, casestudies: 0, qa: 0, vlog: 0 }, // requires manual content tagging
+        dataNote: 'watchTime, subscribersGained, avgViewDuration and trend history require YouTube Analytics API (OAuth).',
       }),
     };
   } catch (err) {
@@ -114,15 +115,10 @@ function aggregate(list) {
   }), { views: 0, likes: 0, comments: 0 });
 }
 
-function buildTrend(current, points, volatility) {
-  const trend = [];
-  let v = current * 0.75;
-  for (let i = 0; i < points; i++) {
-    v = v * (1 + (Math.random() - 0.45) * volatility);
-    trend.push(Math.round(v));
-  }
-  trend[trend.length - 1] = current;
-  return trend;
+// Returns a flat array anchored to the current real value.
+// True historical trends require the YouTube Analytics API (OAuth user consent).
+function buildFlatTrend(current, points) {
+  return Array(points).fill(Math.round(current));
 }
 
 async function ytGet(path, params) {

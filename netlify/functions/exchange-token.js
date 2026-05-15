@@ -17,7 +17,7 @@ const GRAPH     = 'https://graph.facebook.com/v19.0';
 exports.handler = async (event) => {
   const headers = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': 'https://poetic-zuccutto-6b0288.netlify.app',
+    'Access-Control-Allow-Origin': 'https://monumental-syrniki-3b33aa.netlify.app',
   };
 
   if (event.httpMethod === 'OPTIONS') {
