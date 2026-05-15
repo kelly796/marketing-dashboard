@@ -2868,24 +2868,36 @@ async function loadData() {
       if (cacheValid) { D = parsed; DATA_SOURCE = 'Cached'; return; }
     } catch(e) {}
   }
+  // Load static data.json first so we always have real Meta/IG data
+  let staticData = null;
+  try {
+    const rs = await fetch('./data/dashboard-data.json');
+    if (rs.ok) staticData = await rs.json();
+  } catch(e) {}
+
   try {
     const r = await fetch('/.netlify/functions/get-data');
     if (r.ok) {
       D = await r.json();
       DATA_SOURCE = 'Live';
+      // Supplement any missing Meta/IG keys from static data.json
+      if (staticData) {
+        if (!D.instagramHQ     && staticData.instagramHQ)     D.instagramHQ     = staticData.instagramHQ;
+        if (!D.instagramOnline && staticData.instagramOnline) D.instagramOnline = staticData.instagramOnline;
+        if (!D.facebook        && staticData.facebook)        D.facebook        = staticData.facebook;
+        if (!D.meta            && staticData.meta)            D.meta            = staticData.meta;
+      }
       localStorage.setItem(LS_KEY, JSON.stringify(D));
       return;
     }
   } catch(e) {}
-  try {
-    const r = await fetch('./data/dashboard-data.json');
-    if (r.ok) {
-      D = await r.json();
-      DATA_SOURCE = D.dataSource || 'Mock';
-      localStorage.setItem(LS_KEY, JSON.stringify(D));
-      return;
-    }
-  } catch(e) {}
+
+  if (staticData) {
+    D = staticData;
+    DATA_SOURCE = staticData.dataSource || 'Live';
+    localStorage.setItem(LS_KEY, JSON.stringify(D));
+    return;
+  }
   D = MOCK;
   DATA_SOURCE = 'Mock';
 }
