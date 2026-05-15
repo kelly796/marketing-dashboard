@@ -545,26 +545,12 @@ function calcHealthScore() {
   return { total: Math.round(s1+s2+s3+s4), s1, s2, s3, s4, ig_hq_eng, ig_on_eng, meta_cpl, email_or };
 }
 
-// ── NEXT UPDATE CALCULATOR ────────────────────────────────────────────────────
-// Schedule: Every day at 8:00am AEST (UTC+10)
-const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
+// ── UPDATE LABEL ──────────────────────────────────────────────────────────────
+// Dashboard updates on manual refresh only (no scheduled auto-update).
 function getNextUpdate() {
-  const nowBrisbane = new Date(new Date().toLocaleString('en-US', { timeZone: 'Australia/Brisbane' }));
-  const nowMins     = nowBrisbane.getHours() * 60 + nowBrisbane.getMinutes();
-  const slotMins    = 8 * 60; // 8:00am
-  const isFirst     = nowBrisbane.getDate() === 1;
-
-  // If before 8am today → next update is today; otherwise tomorrow
-  let minsAway = slotMins - nowMins;
-  if (minsAway <= 0) minsAway += 1440;
-
-  const nextDate = new Date(nowBrisbane.getTime() + minsAway * 60000);
-  const dayName  = DAY_NAMES[nextDate.getDay()];
-
   return {
-    label: `${dayName} 8:00am`,
-    badge: isFirst ? 'Monthly Report' : `Daily Update — ${dayName} 8:00am AEST`,
+    label: 'on demand',
+    badge: 'Manual Refresh',
   };
 }
 
@@ -577,10 +563,10 @@ function renderHeader() {
   const tip = document.getElementById('hdr-health-tip');
   if (!badge) return;
 
-  // Next update time + badge
+  // Update badge — manual refresh only
   const next = getNextUpdate();
   badge.textContent = next.badge;
-  updated.textContent = 'Next update: ' + next.label + ' AEST';
+  updated.textContent = 'Updates on manual refresh';
 
   const hs = calcHealthScore();
   healthNum.textContent = hs.total;
