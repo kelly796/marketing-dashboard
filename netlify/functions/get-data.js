@@ -6,33 +6,33 @@
  * The browser falls back to MOCK for any key that is null/undefined.
  *
  * Data sources:
- *  ✅ ActiveCampaign    — AC_BASE_URL + AC_API_KEY
- *  ✅ Meta / Instagram  — META_ACCESS_TOKEN + META_AD_ACCOUNT_ID + META_IG_*_ID + META_FB_PAGE_ID
- *  ✅ YouTube           — YOUTUBE_API_KEY + YOUTUBE_CHANNEL_ID
- *  ✅ Google Analytics 4 — GA4_PROPERTY_ID + GOOGLE_SERVICE_ACCOUNT_KEY
- *  ✅ Google Search Console — GSC_SITE_URL + GOOGLE_SERVICE_ACCOUNT_KEY
+ *  ✅ ActiveCampaign         — AC_BASE_URL + AC_API_KEY
+ *  ✅ Meta / Instagram       — META_ACCESS_TOKEN + META_AD_ACCOUNT_ID + META_HQ_PAGE_ID + META_ONLINE_PAGE_ID
+ *  ✅ YouTube                — YOUTUBE_API_KEY + YOUTUBE_CHANNEL_ID
+ *  ✅ WordPress / Ind. Analytics — WP_SITE_URL + WP_USERNAME + WP_APP_PASSWORD
+ *  ✅ Google Search Console  — GSC_SITE_URL + GOOGLE_SERVICE_ACCOUNT_KEY
  */
 
 const { handler: fetchAC }      = require('./fetch-activecampaign');
 const { handler: fetchMeta }    = require('./fetch-meta');
 const { handler: fetchYouTube } = require('./fetch-youtube');
-const { handler: fetchGA4 }     = require('./fetch-ga4');
+const { handler: fetchWPAnalytics } = require('./fetch-wordpress-analytics');
 const { handler: fetchGSC }     = require('./fetch-gsc');
 
 exports.handler = async (event) => {
   try {
-    const [acRes, metaRes, ytRes, ga4Res, gscRes] = await Promise.allSettled([
+    const [acRes, metaRes, ytRes, wpRes, gscRes] = await Promise.allSettled([
       fetchAC(event),
       fetchMeta(event),
       fetchYouTube(event),
-      fetchGA4(event),
+      fetchWPAnalytics(event),
       fetchGSC(event),
     ]);
 
     const email    = parse(acRes,   'ActiveCampaign');
     const metaData = parse(metaRes, 'Meta');
     const ytData   = parse(ytRes,   'YouTube');
-    const ga4Data  = parse(ga4Res,  'GA4');
+    const wpData   = parse(wpRes,   'WPAnalytics');
     const gscData  = parse(gscRes,  'GSC');
 
     // Meta returns multiple keys
@@ -43,10 +43,10 @@ exports.handler = async (event) => {
       ...(metaData.meta            ? { meta:            metaData.meta }            : {}),
     } : {};
 
-    // GA4 returns ga4 + ga4Countries as separate keys
-    const ga4Keys = ga4Data ? {
-      ...(ga4Data.ga4          ? { ga4:          ga4Data.ga4 }          : {}),
-      ...(ga4Data.ga4Countries ? { ga4Countries: ga4Data.ga4Countries } : {}),
+    // WordPress analytics returns wpAnalytics key
+    const wpKeys = wpData && wpData.wpAnalytics ? {
+      ga4: normaliseWPAnalytics(wpData.wpAnalytics),
+      ...(wpData.wpAnalytics.topPages?.length ? { ga4TopPages: wpData.wpAnalytics.topPages } : {}),
     } : {};
 
     const data = {
@@ -55,11 +55,11 @@ exports.handler = async (event) => {
       ...(email                        ? { email }          : {}),
       ...metaKeys,
       ...(ytData && ytData.subscribers ? { youtube: ytData } : {}),
-      ...ga4Keys,
+      ...wpKeys,
       ...(gscData ? { seo: gscData.seo } : {}),
     };
 
-    const hasAnyData = email || metaData || ytData || ga4Data || gscData;
+    const hasAnyData = email || metaData || ytData || wpData || gscData;
     if (!hasAnyData) {
       return {
         statusCode: 503,
@@ -92,4 +92,29 @@ function parse(result, label) {
     console.warn(`${label} returned ${result.value?.statusCode}:`, result.value?.body);
   }
   return null;
+}
+
+// Map Independent Analytics response shape → the ga4 schema the dashboard expects
+// so the frontend continues to work without changes.
+function normaliseWPAnalytics(wp) {
+  const views    = Number(wp.views30d    || 0);
+  const viewsPrev = Number(wp.views30dPrev || 0);
+  const visitors = Number(wp.visitors30d || 0);
+
+  return {
+    sessions:        views,
+    sessionsPrev:    viewsPrev,
+    users:           visitors,
+    activeUsers:     visitors,
+    conversions:     0,
+    conversionRate:  0,
+    pagesPerSession: 0,
+    viewsTrend:      wp.viewsTrend      || [],
+    visitorsTrend:   wp.visitorsTrend   || [],
+    topPages:        wp.topPages        || [],
+    topReferrers:    wp.topReferrers    || [],
+    deviceBreakdown: wp.deviceBreakdown || [],
+    dataSource:      'Independent Analytics',
+    period:          wp.period          || {},
+  };
 }

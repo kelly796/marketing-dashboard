@@ -8,11 +8,11 @@
  * The browser calls: POST /.netlify/functions/update-dashboard
  */
 
-const { handler: fetchAC }      = require('./fetch-activecampaign');
-const { handler: fetchMeta }    = require('./fetch-meta');
-const { handler: fetchYouTube } = require('./fetch-youtube');
-const { handler: fetchGA4 }     = require('./fetch-ga4');
-const { handler: fetchGSC }     = require('./fetch-gsc');
+const { handler: fetchAC }           = require('./fetch-activecampaign');
+const { handler: fetchMeta }         = require('./fetch-meta');
+const { handler: fetchYouTube }      = require('./fetch-youtube');
+const { handler: fetchWPAnalytics }  = require('./fetch-wordpress-analytics');
+const { handler: fetchGSC }          = require('./fetch-gsc');
 
 exports.handler = async (event) => {
   // Allow scheduled invocations (no httpMethod) and direct POST calls
@@ -23,11 +23,11 @@ exports.handler = async (event) => {
   const results = {};
   const errors  = [];
 
-  const [acRes, metaRes, ytRes, ga4Res, gscRes] = await Promise.allSettled([
+  const [acRes, metaRes, ytRes, wpRes, gscRes] = await Promise.allSettled([
     fetchAC(event),
     fetchMeta(event),
     fetchYouTube(event),
-    fetchGA4(event),
+    fetchWPAnalytics(event),
     fetchGSC(event),
   ]);
 
@@ -48,13 +48,11 @@ exports.handler = async (event) => {
     if (d.facebook)        results.facebook        = d.facebook;
     if (d.meta)            results.meta            = d.meta;
   });
-  absorb(ytRes,   'YouTube', d => { if (d.subscribers) results.youtube = d; });
-  absorb(ga4Res,  'GA4',     d => {
-    if (d.ga4)          results.ga4          = d.ga4;
-    if (d.ga4Countries) results.ga4Countries = d.ga4Countries;
-    if (d.ga4TopPages)  results.ga4TopPages  = d.ga4TopPages;
+  absorb(ytRes, 'YouTube', d => { if (d.subscribers) results.youtube = d; });
+  absorb(wpRes, 'WPAnalytics', d => {
+    if (d.wpAnalytics) results.ga4 = normaliseWPAnalytics(d.wpAnalytics);
   });
-  absorb(gscRes,  'GSC', d => { if (d.seo) results.seo = d.seo; });
+  absorb(gscRes, 'GSC', d => { if (d.seo) results.seo = d.seo; });
 
   const data = {
     lastUpdated: new Date().toISOString(),
@@ -73,3 +71,24 @@ exports.handler = async (event) => {
     }),
   };
 };
+
+// Map Independent Analytics response shape → ga4 schema the dashboard expects
+function normaliseWPAnalytics(wp) {
+  const visitors = Number(wp.visitors30d || 0);
+  return {
+    sessions:        Number(wp.views30d     || 0),
+    sessionsPrev:    Number(wp.views30dPrev || 0),
+    users:           visitors,
+    activeUsers:     visitors,
+    conversions:     0,
+    conversionRate:  0,
+    pagesPerSession: 0,
+    viewsTrend:      wp.viewsTrend      || [],
+    visitorsTrend:   wp.visitorsTrend   || [],
+    topPages:        wp.topPages        || [],
+    topReferrers:    wp.topReferrers    || [],
+    deviceBreakdown: wp.deviceBreakdown || [],
+    dataSource:      'Independent Analytics',
+    period:          wp.period          || {},
+  };
+}

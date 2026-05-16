@@ -199,8 +199,8 @@ function buildIGData(account, insights7d, insights7dPrev, insights30d, media, po
   const reach7dPrev      = sumMetric(insights7dPrev, 'reach');
   const impressions7d    = sumMetric(insights7d,     'impressions');
   const impressionsPrev  = sumMetric(insights7dPrev, 'impressions');
-  const reachTrend       = dailyArray(insights30d, 'reach');
-  const impressionsTrend = dailyArray(insights30d, 'impressions');
+  const reachTrend       = padTo30(dailyArray(insights30d, 'reach'));
+  const impressionsTrend = padTo30(dailyArray(insights30d, 'impressions'));
 
   const posts = (media?.data || []).map((post, i) => {
     const pi       = postInsights[i] || {};
@@ -214,7 +214,7 @@ function buildIGData(account, insights7d, insights7dPrev, insights30d, media, po
     return {
       id:            post.id,
       caption:       (post.caption || '').slice(0, 120),
-      type:          (post.media_type || 'POST').toLowerCase().replace('image', 'post'),
+      type:          normalizeMediaType(post.media_type),
       date:          (post.timestamp || '').slice(0, 10),
       reach:         postReach,
       likes,
@@ -423,6 +423,20 @@ function buildCreatives(adsData) {
     .filter(c => c.spend > 0)
     .sort((a, b) => b.spend - a.spend)
     .slice(0, 5);
+}
+
+// ─── ARRAY HELPERS ────────────────────────────────────────────────────────────
+function padTo30(arr) {
+  if (arr.length >= 30) return arr.slice(arr.length - 30);
+  return Array(30 - arr.length).fill(0).concat(arr);
+}
+
+// ─── MEDIA TYPE NORMALIZER ────────────────────────────────────────────────────
+function normalizeMediaType(mt) {
+  const s = (mt || 'POST').toUpperCase();
+  if (s.includes('CAROUSEL')) return 'carousel';
+  if (s === 'VIDEO')          return 'reel';
+  return 'post';
 }
 
 // ─── HTTP HELPER ─────────────────────────────────────────────────────────────

@@ -1145,7 +1145,7 @@ BUILDERS['seo'] = function buildTab4() {
   const d        = D || MOCK;
   const seo      = d.seo || MOCK.seo;
   const ga4data  = d.ga4 || MOCK.ga4 || {};
-  const topPages = d.ga4TopPages || MOCK.ga4TopPages || [];
+  const topPages = d.ga4TopPages || d.ga4?.topPages || MOCK.ga4TopPages || [];
   let kFilter = 'All';
 
   const el = document.getElementById('tab-seo');
@@ -2249,6 +2249,16 @@ async function refreshData() {
           fresh.youtube || fresh.ga4 || fresh.seo)) {
         D = fresh;
         DATA_SOURCE = 'Live';
+        try {
+          const rs = await fetch('./data/dashboard-data.json');
+          if (rs.ok) {
+            const sd = await rs.json();
+            if (!D.instagramHQ     && sd.instagramHQ)     D.instagramHQ     = sd.instagramHQ;
+            if (!D.instagramOnline && sd.instagramOnline) D.instagramOnline = sd.instagramOnline;
+            if (!D.facebook        && sd.facebook)        D.facebook        = sd.facebook;
+            if (!D.meta            && sd.meta)            D.meta            = sd.meta;
+          }
+        } catch(e) {}
         localStorage.setItem(LS_KEY, JSON.stringify(D));
       }
     }
@@ -2490,7 +2500,7 @@ function makeTrend(base, n, variance) {
 function days30() {
   const d = [];
   for (let i = 29; i >= 0; i--) {
-    const dt = new Date('2026-05-09');
+    const dt = new Date();
     dt.setDate(dt.getDate() - i);
     d.push(dt.toISOString().slice(5, 10));
   }
@@ -2856,6 +2866,21 @@ const MOCK = {
 const CACHE_MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours — force fresh fetch after this
 
 async function loadData() {
+  // Always fetch static data first — used as supplement/fallback throughout
+  let staticData = null;
+  try {
+    const rs = await fetch('./data/dashboard-data.json');
+    if (rs.ok) staticData = await rs.json();
+  } catch(e) {}
+
+  function supplementFromStatic(obj) {
+    if (!staticData) return;
+    if (!obj.instagramHQ     && staticData.instagramHQ)     obj.instagramHQ     = staticData.instagramHQ;
+    if (!obj.instagramOnline && staticData.instagramOnline) obj.instagramOnline = staticData.instagramOnline;
+    if (!obj.facebook        && staticData.facebook)        obj.facebook        = staticData.facebook;
+    if (!obj.meta            && staticData.meta)            obj.meta            = staticData.meta;
+  }
+
   const cached = localStorage.getItem(LS_KEY);
   if (cached) {
     try {
@@ -2866,28 +2891,21 @@ async function loadData() {
         ? Date.now() - new Date(parsed.lastUpdated).getTime()
         : Infinity;
       const cacheValid = hasData && cacheAge < CACHE_MAX_AGE_MS;
-      if (cacheValid) { D = parsed; DATA_SOURCE = 'Cached'; return; }
+      if (cacheValid) {
+        D = parsed;
+        DATA_SOURCE = 'Cached';
+        supplementFromStatic(D);
+        return;
+      }
     } catch(e) {}
   }
-  // Load static data.json first so we always have real Meta/IG data
-  let staticData = null;
-  try {
-    const rs = await fetch('./data/dashboard-data.json');
-    if (rs.ok) staticData = await rs.json();
-  } catch(e) {}
 
   try {
     const r = await fetch('/.netlify/functions/get-data');
     if (r.ok) {
       D = await r.json();
       DATA_SOURCE = 'Live';
-      // Supplement any missing Meta/IG keys from static data.json
-      if (staticData) {
-        if (!D.instagramHQ     && staticData.instagramHQ)     D.instagramHQ     = staticData.instagramHQ;
-        if (!D.instagramOnline && staticData.instagramOnline) D.instagramOnline = staticData.instagramOnline;
-        if (!D.facebook        && staticData.facebook)        D.facebook        = staticData.facebook;
-        if (!D.meta            && staticData.meta)            D.meta            = staticData.meta;
-      }
+      supplementFromStatic(D);
       localStorage.setItem(LS_KEY, JSON.stringify(D));
       return;
     }
