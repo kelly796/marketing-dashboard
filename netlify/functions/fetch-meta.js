@@ -66,8 +66,8 @@ exports.handler = async () => {
 
     // ── STEP 2: Fetch all data in parallel ─────────────────────────────────────
     const [
-      igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia,
-      igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia,
+      igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqAudience,
+      igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnAudience,
       fbInsights, fbInsightsPrev, fbPosts,
       adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives,
     ] = await Promise.all([
@@ -77,14 +77,16 @@ exports.handler = async () => {
       igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions,profile_views', period: 'day', since: since7,  until: now,    access_token: token }) : null,
       igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since14, until: since7, access_token: token }) : null,
       igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since30, until: now,    access_token: token }) : null,
-      igHqId ? metaGet(`/${igHqId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 5, access_token: token }) : null,
+      igHqId ? metaGet(`/${igHqId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'audience_gender_age',            period: 'lifetime',                            access_token: token }).catch(() => null) : null,
 
       // ── IG ONLINE ──────────────────────────────────────────────────────────
       igOnlineId ? metaGet(`/${igOnlineId}`, { fields: 'followers_count,media_count,name', access_token: token }) : null,
       igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions,profile_views', period: 'day', since: since7,  until: now,    access_token: token }) : null,
       igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since14, until: since7, access_token: token }) : null,
       igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since30, until: now,    access_token: token }) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 5, access_token: token }) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'audience_gender_age',            period: 'lifetime',                            access_token: token }).catch(() => null) : null,
 
       // ── FACEBOOK PAGE (use HQ page) ────────────────────────────────────────
       hqPageId ? metaGet(`/${hqPageId}/insights`, {
@@ -150,8 +152,8 @@ exports.handler = async () => {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        instagramHQ:     buildIGData(igHqAccount,   igHqInsights7d,  igHqInsights7dPrev,  igHqInsights30d,  igHqMedia,  igHqPostInsights),
-        instagramOnline: buildIGData(igOnAccount,   igOnInsights7d,  igOnInsights7dPrev,  igOnInsights30d,  igOnMedia,  igOnPostInsights),
+        instagramHQ:     buildIGData(igHqAccount,   igHqInsights7d,  igHqInsights7dPrev,  igHqInsights30d,  igHqMedia,  igHqPostInsights,  igHqAudience),
+        instagramOnline: buildIGData(igOnAccount,   igOnInsights7d,  igOnInsights7dPrev,  igOnInsights30d,  igOnMedia,  igOnPostInsights,  igOnAudience),
         facebook:        buildFBData(fbInsights, fbInsightsPrev, hqPageMeta, fbPosts),
         meta:            buildMetaAdsData(adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives),
       }),
@@ -182,7 +184,7 @@ async function fetchPostInsights(posts, token) {
 }
 
 // ─── INSTAGRAM DATA BUILDER ───────────────────────────────────────────────────
-function buildIGData(account, insights7d, insights7dPrev, insights30d, media, postInsights) {
+function buildIGData(account, insights7d, insights7dPrev, insights30d, media, postInsights, audienceInsights) {
   if (!account) return null;
 
   function sumMetric(insightsResp, name) {
@@ -201,6 +203,8 @@ function buildIGData(account, insights7d, insights7dPrev, insights30d, media, po
   const impressionsPrev  = sumMetric(insights7dPrev, 'impressions');
   const reachTrend       = padTo30(dailyArray(insights30d, 'reach'));
   const impressionsTrend = padTo30(dailyArray(insights30d, 'impressions'));
+
+  const audienceDemographics = parseAudienceDemographics(audienceInsights);
 
   const posts = (media?.data || []).map((post, i) => {
     const pi       = postInsights[i] || {};
@@ -222,8 +226,8 @@ function buildIGData(account, insights7d, insights7dPrev, insights30d, media, po
       saves:         saved,
       pillar:        '',
       perfScore,
-      gender:        { female: 0, male: 0 },
-      age:           [],
+      gender:        audienceDemographics.gender,
+      age:           audienceDemographics.age,
       bookingClicks: 0,
     };
   });
@@ -423,6 +427,34 @@ function buildCreatives(adsData) {
     .filter(c => c.spend > 0)
     .sort((a, b) => b.spend - a.spend)
     .slice(0, 5);
+}
+
+// ─── AUDIENCE DEMOGRAPHICS PARSER ────────────────────────────────────────────
+function parseAudienceDemographics(insightsResp) {
+  const metric = (insightsResp?.data || []).find(m => m.name === 'audience_gender_age');
+  const value  = metric?.values?.[0]?.value || {};
+
+  let female = 0, male = 0;
+  const ageBuckets = {};
+  for (const [key, count] of Object.entries(value)) {
+    const [gender, age] = key.split('.');
+    if (gender === 'F') female += count;
+    else if (gender === 'M') male += count;
+    if (age) ageBuckets[age] = (ageBuckets[age] || 0) + count;
+  }
+  const total = female + male;
+  if (total === 0) return { gender: { female: 0, male: 0 }, age: [] };
+
+  const AGE_ORDER = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+  return {
+    gender: {
+      female: Math.round(female / total * 100),
+      male:   Math.round(male   / total * 100),
+    },
+    age: AGE_ORDER
+      .filter(b => ageBuckets[b])
+      .map(b => ({ b, pct: Math.round(ageBuckets[b] / total * 100) })),
+  };
 }
 
 // ─── ARRAY HELPERS ────────────────────────────────────────────────────────────

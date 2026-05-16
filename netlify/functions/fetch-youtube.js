@@ -32,9 +32,19 @@ exports.handler = async () => {
 
   try {
     // ── CHANNEL STATS ─────────────────────────────────────────────────────────
-    const channelRes  = await ytGet('/channels', { part: 'statistics', id: channelId, key: apiKey });
+    // Resolve @handle to UCxxxx ID if needed
+    let resolvedId = channelId;
+    if (channelId.startsWith('@') || !channelId.startsWith('UC')) {
+      const handle = channelId.replace(/^@/, '');
+      const handleRes = await ytGet('/channels', { part: 'id', forHandle: handle, key: apiKey });
+      const handleItem = (handleRes.items || [])[0];
+      if (!handleItem) throw new Error(`YouTube channel not found for handle: ${channelId}`);
+      resolvedId = handleItem.id;
+    }
+
+    const channelRes  = await ytGet('/channels', { part: 'statistics', id: resolvedId, key: apiKey });
     const channelItem = (channelRes.items || [])[0];
-    if (!channelItem) throw new Error(`Channel ${channelId} not found`);
+    if (!channelItem) throw new Error(`Channel ${resolvedId} not found`);
 
     const subscribers = Number(channelItem.statistics.subscriberCount || 0);
 
@@ -44,8 +54,8 @@ exports.handler = async () => {
     const d14ago = new Date(now - 14 * 86400000).toISOString();
 
     const [recentIds, prevIds] = await Promise.all([
-      getVideoIds(channelId, d7ago,  now.toISOString(), apiKey),
-      getVideoIds(channelId, d14ago, d7ago,             apiKey),
+      getVideoIds(resolvedId, d7ago,  now.toISOString(), apiKey),
+      getVideoIds(resolvedId, d14ago, d7ago,             apiKey),
     ]);
 
     const [recentStats, prevStats] = await Promise.all([
