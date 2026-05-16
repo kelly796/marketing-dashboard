@@ -11,6 +11,7 @@
 const { handler: fetchAC }           = require('./fetch-activecampaign');
 const { handler: fetchMeta }         = require('./fetch-meta');
 const { handler: fetchYouTube }      = require('./fetch-youtube');
+const { handler: fetchGA4 }          = require('./fetch-ga4');
 const { handler: fetchWPAnalytics }  = require('./fetch-wordpress-analytics');
 const { handler: fetchGSC }          = require('./fetch-gsc');
 
@@ -23,10 +24,11 @@ exports.handler = async (event) => {
   const results = {};
   const errors  = [];
 
-  const [acRes, metaRes, ytRes, wpRes, gscRes] = await Promise.allSettled([
+  const [acRes, metaRes, ytRes, ga4Res, wpRes, gscRes] = await Promise.allSettled([
     fetchAC(event),
     fetchMeta(event),
     fetchYouTube(event),
+    fetchGA4(event),
     fetchWPAnalytics(event),
     fetchGSC(event),
   ]);
@@ -49,8 +51,17 @@ exports.handler = async (event) => {
     if (d.meta)            results.meta            = d.meta;
   });
   absorb(ytRes, 'YouTube', d => { if (d.subscribers) results.youtube = d; });
+  // GA4 preferred; WP analytics fills in if GA4 failed
+  absorb(ga4Res, 'GA4', d => {
+    if (d.ga4)          results.ga4          = d.ga4;
+    if (d.ga4Countries) results.ga4Countries = d.ga4Countries;
+    if (d.ga4TopPages)  results.ga4TopPages  = d.ga4TopPages;
+  });
   absorb(wpRes, 'WPAnalytics', d => {
-    if (d.wpAnalytics) results.ga4 = normaliseWPAnalytics(d.wpAnalytics);
+    if (d.wpAnalytics && !results.ga4) {
+      results.ga4 = normaliseWPAnalytics(d.wpAnalytics);
+      if (d.wpAnalytics.topPages?.length) results.ga4TopPages = d.wpAnalytics.topPages;
+    }
   });
   absorb(gscRes, 'GSC', d => { if (d.seo) results.seo = d.seo; });
 

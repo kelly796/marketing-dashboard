@@ -9,22 +9,25 @@
  *  ✅ ActiveCampaign         — AC_BASE_URL + AC_API_KEY
  *  ✅ Meta / Instagram       — META_ACCESS_TOKEN + META_AD_ACCOUNT_ID + META_HQ_PAGE_ID + META_ONLINE_PAGE_ID
  *  ✅ YouTube                — YOUTUBE_API_KEY + YOUTUBE_CHANNEL_ID
- *  ✅ WordPress / Ind. Analytics — WP_SITE_URL + WP_USERNAME + WP_APP_PASSWORD
+ *  ✅ Google Analytics 4     — GA4_PROPERTY_ID + GOOGLE_SERVICE_ACCOUNT_KEY (preferred)
+ *  ✅ WordPress / Ind. Analytics — WP_SITE_URL + WP_USERNAME + WP_APP_PASSWORD (fallback if GA4 fails)
  *  ✅ Google Search Console  — GSC_SITE_URL + GOOGLE_SERVICE_ACCOUNT_KEY
  */
 
-const { handler: fetchAC }      = require('./fetch-activecampaign');
-const { handler: fetchMeta }    = require('./fetch-meta');
-const { handler: fetchYouTube } = require('./fetch-youtube');
-const { handler: fetchWPAnalytics } = require('./fetch-wordpress-analytics');
-const { handler: fetchGSC }     = require('./fetch-gsc');
+const { handler: fetchAC }           = require('./fetch-activecampaign');
+const { handler: fetchMeta }         = require('./fetch-meta');
+const { handler: fetchYouTube }      = require('./fetch-youtube');
+const { handler: fetchGA4 }          = require('./fetch-ga4');
+const { handler: fetchWPAnalytics }  = require('./fetch-wordpress-analytics');
+const { handler: fetchGSC }          = require('./fetch-gsc');
 
 exports.handler = async (event) => {
   try {
-    const [acRes, metaRes, ytRes, wpRes, gscRes] = await Promise.allSettled([
+    const [acRes, metaRes, ytRes, ga4Res, wpRes, gscRes] = await Promise.allSettled([
       fetchAC(event),
       fetchMeta(event),
       fetchYouTube(event),
+      fetchGA4(event),
       fetchWPAnalytics(event),
       fetchGSC(event),
     ]);
@@ -32,6 +35,7 @@ exports.handler = async (event) => {
     const email    = parse(acRes,   'ActiveCampaign');
     const metaData = parse(metaRes, 'Meta');
     const ytData   = parse(ytRes,   'YouTube');
+    const ga4Data  = parse(ga4Res,  'GA4');
     const wpData   = parse(wpRes,   'WPAnalytics');
     const gscData  = parse(gscRes,  'GSC');
 
@@ -43,11 +47,15 @@ exports.handler = async (event) => {
       ...(metaData.meta            ? { meta:            metaData.meta }            : {}),
     } : {};
 
-    // WordPress analytics returns wpAnalytics key
-    const wpKeys = wpData && wpData.wpAnalytics ? {
+    // GA4 preferred; WP analytics is the fallback when GA4 credentials fail
+    const analyticsKeys = ga4Data ? {
+      ...(ga4Data.ga4          ? { ga4:          ga4Data.ga4 }          : {}),
+      ...(ga4Data.ga4Countries ? { ga4Countries: ga4Data.ga4Countries } : {}),
+      ...(ga4Data.ga4TopPages  ? { ga4TopPages:  ga4Data.ga4TopPages }  : {}),
+    } : (wpData && wpData.wpAnalytics ? {
       ga4: normaliseWPAnalytics(wpData.wpAnalytics),
       ...(wpData.wpAnalytics.topPages?.length ? { ga4TopPages: wpData.wpAnalytics.topPages } : {}),
-    } : {};
+    } : {});
 
     const data = {
       lastUpdated: new Date().toISOString(),
@@ -55,11 +63,11 @@ exports.handler = async (event) => {
       ...(email                        ? { email }          : {}),
       ...metaKeys,
       ...(ytData && ytData.subscribers ? { youtube: ytData } : {}),
-      ...wpKeys,
+      ...analyticsKeys,
       ...(gscData ? { seo: gscData.seo } : {}),
     };
 
-    const hasAnyData = email || metaData || ytData || wpData || gscData;
+    const hasAnyData = email || metaData || ytData || ga4Data || wpData || gscData;
     if (!hasAnyData) {
       return {
         statusCode: 503,
