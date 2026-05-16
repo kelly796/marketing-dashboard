@@ -2989,6 +2989,237 @@ function widgetCard({ label, value, prev, cur, format='n', benchmark, benchmarkL
   </div>`;
 }
 
+// ── TAB 10 — AI MARKETING INSIGHTS ───────────────────────────────────────────
+BUILDERS['ai-insights'] = function buildTabAIInsights() {
+  const el = document.getElementById('tab-ai-insights');
+  el.innerHTML = `
+    <div class="section-banner">AI Marketing Insights</div>
+    <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">Analyses this week's data across all channels and surfaces key wins, concerns and recommended actions. Powered by Claude AI.</p>
+    <button class="btn" id="ai-insights-btn" style="margin-bottom:1.5rem">Generate Insights</button>
+    <div id="ai-insights-loading" style="display:none;color:#aaa;padding:1rem 0">Analysing your data…</div>
+    <div id="ai-insights-result"></div>
+  `;
+
+  document.getElementById('ai-insights-btn').addEventListener('click', async function() {
+    const btn     = this;
+    const loading = document.getElementById('ai-insights-loading');
+    const result  = document.getElementById('ai-insights-result');
+    btn.disabled = true; btn.textContent = 'Generating…';
+    loading.style.display = 'block'; result.innerHTML = '';
+
+    try {
+      const res  = await fetch('/.netlify/functions/ai-insights', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(D || MOCK),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error || 'Generation failed. Try again.'}</div>`;
+        return;
+      }
+      const ins = json.insights || {};
+      if (ins.raw) { result.innerHTML = `<div class="card" style="padding:1.5rem;white-space:pre-wrap;color:#ddd;line-height:1.6">${ins.raw}</div>`; return; }
+
+      result.innerHTML = `
+        <div class="g2" style="margin-bottom:1.5rem">
+          <div class="card" style="padding:1.5rem;border-left:4px solid #22C55E">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#22C55E;margin-bottom:.6rem">Top Win</div>
+            <p style="color:#ddd;margin:0;line-height:1.6">${ins.topWin||'—'}</p>
+          </div>
+          <div class="card" style="padding:1.5rem;border-left:4px solid #EF4444">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#EF4444;margin-bottom:.6rem">Watch Out</div>
+            <p style="color:#ddd;margin:0;line-height:1.6">${ins.watchOut||'—'}</p>
+          </div>
+        </div>
+        <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2ABFBF;margin-bottom:.75rem">Weekly Summary</div>
+          <p style="color:#ddd;margin:0;line-height:1.6">${ins.summary||'—'}</p>
+        </div>
+        <h3 style="color:#fff;margin:0 0 1rem">Key Insights</h3>
+        <div class="g3" style="margin-bottom:1.5rem">
+          ${(ins.insights||[]).map(i=>`<div class="card" style="padding:1.25rem"><p style="color:#ddd;margin:0;line-height:1.5;font-size:.9rem">${i}</p></div>`).join('')}
+        </div>
+        <h3 style="color:#fff;margin:0 0 1rem">Recommended Actions</h3>
+        <div class="card" style="padding:1.5rem">
+          <ol style="margin:0;padding-left:1.25rem;color:#ddd;line-height:1.8">
+            ${(ins.actions||[]).map(a=>`<li>${a}</li>`).join('')}
+          </ol>
+        </div>
+      `;
+    } catch(e) {
+      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Regenerate';
+      loading.style.display = 'none';
+    }
+  });
+};
+
+// ── TAB 11 — AI CONTENT IDEAS ─────────────────────────────────────────────────
+BUILDERS['ai-content'] = function buildTabAIContent() {
+  const el = document.getElementById('tab-ai-content');
+  el.innerHTML = `
+    <div class="section-banner">AI Content Ideas</div>
+    <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">Generates 5 Instagram content ideas based on your best-performing posts and audience data. Powered by Claude AI.</p>
+    <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap">
+      <div style="display:flex;gap:.5rem">
+        <button class="btn active" id="ai-content-hq-btn" onclick="aiContentBrand('HQ')" style="font-size:.82rem;padding:.4rem .9rem">HQ</button>
+        <button class="btn btn-secondary" id="ai-content-on-btn" onclick="aiContentBrand('Online')" style="font-size:.82rem;padding:.4rem .9rem">Online</button>
+      </div>
+      <button class="btn" id="ai-content-gen-btn">Generate Ideas</button>
+    </div>
+    <div id="ai-content-loading" style="display:none;color:#aaa;padding:1rem 0">Generating content ideas…</div>
+    <div id="ai-content-result"></div>
+  `;
+
+  let activeBrand = 'HQ';
+  window.aiContentBrand = function(brand) {
+    activeBrand = brand;
+    document.getElementById('ai-content-hq-btn').className = brand === 'HQ' ? 'btn active' : 'btn btn-secondary';
+    document.getElementById('ai-content-on-btn').className = brand === 'Online' ? 'btn active' : 'btn btn-secondary';
+  };
+
+  document.getElementById('ai-content-gen-btn').addEventListener('click', async function() {
+    const btn     = this;
+    const loading = document.getElementById('ai-content-loading');
+    const result  = document.getElementById('ai-content-result');
+    btn.disabled = true; btn.textContent = 'Generating…';
+    loading.style.display = 'block'; result.innerHTML = '';
+
+    try {
+      const payload = { brand: activeBrand, instagramHQ: (D||MOCK).instagramHQ, instagramOnline: (D||MOCK).instagramOnline };
+      const res  = await fetch('/.netlify/functions/ai-content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error||'Generation failed. Try again.'}</div>`;
+        return;
+      }
+      const ideas = json.ideas?.ideas || json.ideas || [];
+      if (!Array.isArray(ideas) || !ideas.length) {
+        result.innerHTML = `<div class="card" style="padding:1.25rem;color:#aaa">No ideas returned. Try again.</div>`;
+        return;
+      }
+      const formatBadge = f => {
+        const colours = { reel:'#8B5CF6', carousel:'#2ABFBF', post:'#22C55E' };
+        return `<span style="display:inline-block;background:${colours[f]||'#666'};color:#fff;font-size:.7rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;text-transform:uppercase;letter-spacing:.4px">${f}</span>`;
+      };
+      result.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          ${ideas.map((idea,i)=>`
+            <div class="card" style="padding:1.5rem">
+              <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+                <span style="font-size:.8rem;font-weight:700;color:#888">#${i+1}</span>
+                ${formatBadge(idea.format||'post')}
+              </div>
+              <div style="margin-bottom:.6rem">
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#2ABFBF;margin-bottom:.3rem">Hook</div>
+                <p style="color:#fff;margin:0;font-weight:600;line-height:1.5">${idea.hook||'—'}</p>
+              </div>
+              <div style="margin-bottom:.6rem">
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#999;margin-bottom:.3rem">Caption</div>
+                <p style="color:#ddd;margin:0;line-height:1.6;font-size:.9rem">${idea.caption||'—'}</p>
+              </div>
+              <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:.6rem;margin-top:.6rem">
+                <span style="font-size:.78rem;color:#888;font-style:italic">${idea.why||''}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } catch(e) {
+      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Regenerate';
+      loading.style.display = 'none';
+    }
+  });
+};
+
+// ── TAB 12 — AI SEO AUDIT ─────────────────────────────────────────────────────
+BUILDERS['ai-seo'] = function buildTabAISEO() {
+  const el = document.getElementById('tab-ai-seo');
+  el.innerHTML = `
+    <div class="section-banner">AI SEO Audit</div>
+    <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">Analyses your Search Console keywords and top pages to identify quick wins, ranking opportunities and content gaps. Powered by Claude AI.</p>
+    <button class="btn" id="ai-seo-btn" style="margin-bottom:1.5rem">Run Audit</button>
+    <div id="ai-seo-loading" style="display:none;color:#aaa;padding:1rem 0">Auditing your SEO data…</div>
+    <div id="ai-seo-result"></div>
+  `;
+
+  document.getElementById('ai-seo-btn').addEventListener('click', async function() {
+    const btn     = this;
+    const loading = document.getElementById('ai-seo-loading');
+    const result  = document.getElementById('ai-seo-result');
+    btn.disabled = true; btn.textContent = 'Auditing…';
+    loading.style.display = 'block'; result.innerHTML = '';
+
+    try {
+      const d = D || MOCK;
+      const res = await fetch('/.netlify/functions/ai-seo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seo: d.seo, ga4TopPages: d.ga4TopPages, ga4: d.ga4 }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error||'Audit failed. Try again.'}</div>`;
+        return;
+      }
+      const audit = json.audit || {};
+      if (audit.raw) { result.innerHTML = `<div class="card" style="padding:1.5rem;white-space:pre-wrap;color:#ddd;line-height:1.6">${audit.raw}</div>`; return; }
+
+      const score = Number(audit.score||0);
+      const scoreColour = score >= 70 ? '#22C55E' : score >= 45 ? '#F59E0B' : '#EF4444';
+      const scoreLabel  = score >= 70 ? 'Good' : score >= 45 ? 'Fair' : 'Needs Work';
+
+      const listItems = (arr, colour) => (arr||[]).map(item=>`
+        <div style="border-left:3px solid ${colour};padding:.75rem 1rem;margin-bottom:.75rem;background:rgba(255,255,255,.03);border-radius:0 4px 4px 0">
+          <div style="font-weight:700;color:#fff;margin-bottom:.3rem;font-size:.9rem">${item.title||item.topic||'—'}</div>
+          ${item.keyword?`<div style="font-size:.78rem;color:#2ABFBF;margin-bottom:.3rem">Target: ${item.keyword}${item.intent?' · '+item.intent:''}</div>`:''}
+          <div style="font-size:.85rem;color:#bbb;line-height:1.5">${item.description||''}</div>
+        </div>
+      `).join('');
+
+      result.innerHTML = `
+        <div class="g2" style="margin-bottom:1.5rem">
+          <div class="card" style="padding:1.5rem;display:flex;align-items:center;gap:1.5rem">
+            <div style="font-size:3rem;font-weight:800;color:${scoreColour};line-height:1">${score}</div>
+            <div>
+              <div style="font-weight:700;color:${scoreColour};font-size:1rem">${scoreLabel}</div>
+              <div style="font-size:.8rem;color:#888">SEO Health Score</div>
+            </div>
+          </div>
+          <div class="card" style="padding:1.5rem">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2ABFBF;margin-bottom:.75rem">Summary</div>
+            <p style="color:#ddd;margin:0;line-height:1.6;font-size:.9rem">${audit.summary||'—'}</p>
+          </div>
+        </div>
+        <div class="g3">
+          <div>
+            <h3 style="color:#22C55E;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Quick Wins</h3>
+            ${listItems(audit.quickWins, '#22C55E')}
+          </div>
+          <div>
+            <h3 style="color:#2ABFBF;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Opportunities</h3>
+            ${listItems(audit.opportunities, '#2ABFBF')}
+          </div>
+          <div>
+            <h3 style="color:#F59E0B;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Content Gaps</h3>
+            ${listItems(audit.contentGaps, '#F59E0B')}
+          </div>
+        </div>
+      `;
+    } catch(e) {
+      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Re-run Audit';
+      loading.style.display = 'none';
+    }
+  });
+};
+
 // ── SHELL BUILDER ─────────────────────────────────────────────────────────────
 const TABS = [
   { id:'all-channels',   label:'All Channels' },
@@ -2999,6 +3230,9 @@ const TABS = [
   { id:'paid-ads',       label:'Paid Ads' },
   { id:'brand-strategy', label:'Brand Strategy' },
   { id:'goals',          label:'Goals' },
+  { id:'ai-insights',    label:'AI Insights' },
+  { id:'ai-content',     label:'Content Ideas' },
+  { id:'ai-seo',         label:'SEO Audit' },
 ];
 
 function buildShell() {
