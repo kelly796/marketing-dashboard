@@ -3655,6 +3655,159 @@ BUILDERS['ai-seo'] = function buildTabAISEO() {
   });
 };
 
+// ── AD BUILD TAB ──────────────────────────────────────────────────────────────
+BUILDERS['ad-build'] = function buildAdBuild() {
+  const LS_BUILD    = 'PM_AD_BUILD';
+  const LS_LP_URL   = 'PM_LP_URL';
+  const LS_FEEDBACK = 'PM_LP_FEEDBACK';
+
+  const el = document.getElementById('tab-ad-build');
+
+  const STEPS = [
+    { id:'s1',  phase:'Page',   text:'Build landing page in ActiveCampaign',               note:'Headline: "Feel Like Yourself Again: Stronger, Less Pain, More Energy"' },
+    { id:'s2',  phase:'Page',   text:'Add pre-assessment form to landing page',             note:'Fields: main goal, work context, prior health experience, injuries/limitations' },
+    { id:'s3',  phase:'Page',   text:'Test full landing page flow on mobile + desktop',     note:'Check form submission, confirmation page, redirect to booking' },
+    { id:'s4',  phase:'Email',  text:'Write Email 1 — Memory anchor (Day 1)',               note:'Remind them what they opted in for and what they\'re about to get' },
+    { id:'s5',  phase:'Email',  text:'Write Email 2 — Social proof (Day 2)',                note:'One testimonial from someone like them, focused on their outcome' },
+    { id:'s6',  phase:'Email',  text:'Write Email 3 — ROI or lifestyle benefit (Day 3)',   note:'Corporate wellness angle or perimenopause/energy angle' },
+    { id:'s7',  phase:'Email',  text:'Write Email 4 — Handle hesitation (Day 5)',           note:'"You don\'t need to be fit already. Your body will adapt."' },
+    { id:'s8',  phase:'Email',  text:'Write Email 5 — Urgency + direct booking (Day 6)',   note:'"Assessment spots fill up" — clear link to booking' },
+    { id:'s9',  phase:'Email',  text:'Set up ActiveCampaign automation sequence',           note:'Trigger: form submit → 5-email sequence fires automatically' },
+    { id:'s10', phase:'Ads',    text:'Confirm Meta Pixel installed on AC landing page',     note:'Pixel must fire on page view AND form submit event' },
+    { id:'s11', phase:'Ads',    text:'Build Facebook/Instagram creatives — 3 angles',      note:'Energy · Pain relief · Strength — feed + story/reel formats each' },
+    { id:'s12', phase:'Ads',    text:'Build LinkedIn creatives — corporate angle',          note:'Target: HR managers, wellness coordinators, employees 40+ in Brisbane' },
+    { id:'s13', phase:'Ads',    text:'Set up warm audience campaigns',                      note:'Existing clients, email list, page followers — $200–300 to start' },
+    { id:'s14', phase:'Ads',    text:'Set up 14-day retargeting campaign',                  note:'Anyone who clicks ad but doesn\'t book → retarget with nurture content' },
+    { id:'s15', phase:'Launch', text:'Run end-to-end funnel test yourself',                 note:'Click ad → land → fill form → check emails arrive → confirm booking link works' },
+    { id:'s16', phase:'Launch', text:'Go live: warm audience ads',                          note:'Goal: 5–10 assessments booked in Week 1–2' },
+    { id:'s17', phase:'Scale',  text:'Scale to cold traffic ($500–800/wk)',                 note:'Double down on winning angle. CPL target: under $100 per assessment booked' },
+  ];
+
+  const PHASES      = ['Page', 'Email', 'Ads', 'Launch', 'Scale'];
+  const PHASE_COLOR = { Page:'#2ABFBF', Email:'#8B5CF6', Ads:'#F59E0B', Launch:'#EF4444', Scale:'#10B981' };
+
+  const done      = JSON.parse(localStorage.getItem(LS_BUILD)    || '{}');
+  const lpUrl     = localStorage.getItem(LS_LP_URL)              || '';
+  const feedbacks = JSON.parse(localStorage.getItem(LS_FEEDBACK) || '[]');
+
+  const doneCount = STEPS.filter(s => done[s.id]).length;
+  const pct       = Math.round(doneCount / STEPS.length * 100);
+
+  const stepsHtml = PHASES.map(phase => {
+    const ps    = STEPS.filter(s => s.phase === phase);
+    const pdone = ps.filter(s => done[s.id]).length;
+    return `
+      <div style="margin-bottom:1.25rem">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
+          <span style="background:${PHASE_COLOR[phase]};color:#fff;font-size:.68rem;font-weight:700;padding:.12rem .45rem;border-radius:3px;text-transform:uppercase">${phase}</span>
+          <span style="font-size:.72rem;color:#888">${pdone}/${ps.length} done</span>
+        </div>
+        ${ps.map(s => `
+          <label style="display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .6rem;border-radius:6px;cursor:pointer;margin-bottom:.2rem;background:${done[s.id] ? '#f0fdf4' : '#fafafa'}">
+            <input type="checkbox" ${done[s.id] ? 'checked' : ''} onchange="toggleBuildStep('${s.id}',this.checked)" style="margin-top:.2rem;accent-color:#2ABFBF;flex-shrink:0;cursor:pointer">
+            <div>
+              <div style="font-size:.84rem;font-weight:700;color:${done[s.id] ? '#10B981' : '#1B2A4A'};${done[s.id] ? 'text-decoration:line-through;opacity:.55' : ''}">${s.text}</div>
+              <div style="font-size:.72rem;color:#aaa;margin-top:.1rem">${s.note}</div>
+            </div>
+          </label>`).join('')}
+      </div>`;
+  }).join('');
+
+  const feedbackHistoryHtml = feedbacks.length
+    ? feedbacks.slice().reverse().map(f => `
+        <div style="background:#f8fafc;border-radius:6px;padding:.65rem;margin-bottom:.4rem;border-left:3px solid #2ABFBF">
+          <div style="font-size:.7rem;color:#aaa;margin-bottom:.25rem">${new Date(f.ts).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'})}</div>
+          <div style="font-size:.82rem;color:#333;white-space:pre-wrap">${f.text}</div>
+        </div>`).join('')
+    : '<div style="font-size:.8rem;color:#bbb;padding:.25rem 0">No notes yet.</div>';
+
+  el.innerHTML = `
+    <div class="section-banner" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+      <div>
+        <div>HQ Tier 1 Ad Launch — Build Tracker</div>
+        <div style="font-size:.8rem;font-weight:400;color:#aaa;margin-top:.2rem">Perf Core · Plus · Prime — 40+ Brisbane</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:2rem;font-weight:800;color:#2ABFBF">${pct}%</div>
+        <div style="font-size:.75rem;color:#aaa">${doneCount}/${STEPS.length} steps done</div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="padding:.75rem 1.25rem;margin-bottom:1.25rem">
+      <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#888;margin-bottom:.35rem">
+        <span>Overall progress</span><span>${pct}%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+
+      <div class="chart-card">
+        <h3 style="margin-bottom:1rem">Launch Steps</h3>
+        ${stepsHtml}
+      </div>
+
+      <div>
+        <div class="chart-card" style="margin-bottom:1rem">
+          <h3>Landing Page Preview</h3>
+          <p style="font-size:.8rem;color:#888;margin-bottom:.75rem">Build your page in ActiveCampaign, then paste the URL here to preview and review it.</p>
+          <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+            <input type="url" id="lp-url-input" value="${lpUrl.replace(/"/g, '&quot;')}" placeholder="https://…activehosted.com/…"
+                   style="flex:1;padding:.4rem .7rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.83rem;outline:none"
+                   onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">
+            <button class="btn" style="font-size:.8rem;padding:.4rem .9rem;white-space:nowrap" onclick="saveLpUrl()">Load</button>
+          </div>
+          <div id="lp-preview-wrap">
+            ${lpUrl
+              ? `<iframe src="${lpUrl.replace(/"/g, '&quot;')}" style="width:100%;height:520px;border:2px solid #e2e8f0;border-radius:8px" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`
+              : `<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:8px;height:200px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.88rem;text-align:center;padding:1rem">
+                   Paste your ActiveCampaign landing page URL above to preview it here
+                 </div>`}
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Landing Page Notes</h3>
+          <p style="font-size:.8rem;color:#888;margin-bottom:.6rem">Record what needs changing, what's working, or feedback from your course.</p>
+          <textarea id="lp-feedback-input" class="priority-box" placeholder="e.g. Headline too generic — try adding Brisbane. CTA button needs brand teal. Need a photo of the gym." style="min-height:90px"></textarea>
+          <button class="btn" style="font-size:.8rem;padding:.4rem .9rem;margin-top:.5rem" onclick="saveLpFeedback()">Save Note</button>
+          <div id="lp-feedback-history" style="margin-top:.75rem">${feedbackHistoryHtml}</div>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  window.toggleBuildStep = function(id, checked) {
+    const d = JSON.parse(localStorage.getItem(LS_BUILD) || '{}');
+    d[id] = checked;
+    localStorage.setItem(LS_BUILD, JSON.stringify(d));
+    BUILDERS['ad-build']();
+  };
+
+  window.saveLpUrl = function() {
+    const url = (document.getElementById('lp-url-input').value || '').trim();
+    localStorage.setItem(LS_LP_URL, url);
+    document.getElementById('lp-preview-wrap').innerHTML = url
+      ? `<iframe src="${url}" style="width:100%;height:520px;border:2px solid #e2e8f0;border-radius:8px" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`
+      : `<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:8px;height:200px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.88rem">No URL loaded yet</div>`;
+  };
+
+  window.saveLpFeedback = function() {
+    const text = (document.getElementById('lp-feedback-input').value || '').trim();
+    if (!text) return;
+    const fs = JSON.parse(localStorage.getItem(LS_FEEDBACK) || '[]');
+    fs.push({ ts: Date.now(), text });
+    localStorage.setItem(LS_FEEDBACK, JSON.stringify(fs));
+    document.getElementById('lp-feedback-input').value = '';
+    document.getElementById('lp-feedback-history').innerHTML = fs.slice().reverse().map(f => `
+      <div style="background:#f8fafc;border-radius:6px;padding:.65rem;margin-bottom:.4rem;border-left:3px solid #2ABFBF">
+        <div style="font-size:.7rem;color:#aaa;margin-bottom:.25rem">${new Date(f.ts).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'})}</div>
+        <div style="font-size:.82rem;color:#333;white-space:pre-wrap">${f.text}</div>
+      </div>`).join('');
+  };
+};
+
 // ── SHELL BUILDER ─────────────────────────────────────────────────────────────
 const TABS = [
   { id:'all-channels',   label:'All Channels' },
@@ -3663,6 +3816,7 @@ const TABS = [
   { id:'seo',            label:'SEO Rankings' },
   { id:'email',          label:'Email' },
   { id:'paid-ads',       label:'Paid Ads' },
+  { id:'ad-build',       label:'Ad Build' },
   { id:'brand-strategy', label:'Brand Strategy' },
   { id:'goals',          label:'Goals' },
   { id:'ai-insights',    label:'AI Insights' },
