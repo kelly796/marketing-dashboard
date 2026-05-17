@@ -5,7 +5,7 @@
  * Used to debug why a data source shows "Not connected" on the dashboard.
  */
 
-const { getGoogleToken } = require('./google-auth');
+const { getGoogleToken, getOAuthToken } = require('./google-auth');
 
 exports.handler = async () => {
   const results = {};
@@ -132,14 +132,19 @@ async function checkGA4(out) {
 
 // ── GOOGLE SEARCH CONSOLE ────────────────────────────────────────────────────
 async function checkGSC(out) {
-  const siteUrl = process.env.GSC_SITE_URL;
-  const saKey   = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const siteUrl      = process.env.GSC_SITE_URL;
+  const clientId     = process.env.GSC_CLIENT_ID;
+  const clientSecret = process.env.GSC_CLIENT_SECRET;
+  const refreshToken = process.env.GSC_REFRESH_TOKEN;
+  const saKey        = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
 
   if (!siteUrl) { out.gsc = { ok: false, error: 'GSC_SITE_URL not set' }; return; }
-  if (!saKey)   { out.gsc = { ok: false, error: 'GOOGLE_SERVICE_ACCOUNT_KEY not set' }; return; }
+  if (!clientId && !saKey) { out.gsc = { ok: false, error: 'GSC_CLIENT_ID or GOOGLE_SERVICE_ACCOUNT_KEY not set' }; return; }
 
   try {
-    const token      = await getGoogleToken(saKey, ['https://www.googleapis.com/auth/webmasters.readonly']);
+    const token = (clientId && clientSecret && refreshToken)
+      ? await getOAuthToken(clientId, clientSecret, refreshToken)
+      : await getGoogleToken(saKey, ['https://www.googleapis.com/auth/webmasters.readonly']);
     const encodedUrl = encodeURIComponent(siteUrl);
     const res        = await fetch(
       `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodedUrl}/searchAnalytics/query`,

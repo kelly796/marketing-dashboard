@@ -58,4 +58,23 @@ function b64url(str) {
   return Buffer.from(str).toString('base64url');
 }
 
-module.exports = { getGoogleToken };
+async function getOAuthToken(clientId, clientSecret, refreshToken) {
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type:    'refresh_token',
+      refresh_token: refreshToken,
+      client_id:     clientId,
+      client_secret: clientSecret,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`OAuth token refresh failed (${res.status}): ${text}`);
+  }
+  const { access_token } = await res.json();
+  return access_token;
+}
+
+module.exports = { getGoogleToken, getOAuthToken };

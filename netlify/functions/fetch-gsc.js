@@ -19,7 +19,7 @@
  *  by matching against the BRAND_KEYWORDS map below — extend as needed.
  */
 
-const { getGoogleToken } = require('./google-auth');
+const { getGoogleToken, getOAuthToken } = require('./google-auth');
 const SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly'];
 
 // Keywords containing these strings → tagged to that brand
@@ -36,18 +36,23 @@ const BRAND_KEYWORDS = {
 };
 
 exports.handler = async () => {
-  const siteUrl = process.env.GSC_SITE_URL;
-  const saKey   = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const siteUrl       = process.env.GSC_SITE_URL;
+  const clientId      = process.env.GSC_CLIENT_ID;
+  const clientSecret  = process.env.GSC_CLIENT_SECRET;
+  const refreshToken  = process.env.GSC_REFRESH_TOKEN;
+  const saKey         = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
 
-  if (!siteUrl || !saKey) {
-    return {
-      statusCode: 503,
-      body: JSON.stringify({ error: 'GSC_SITE_URL and GOOGLE_SERVICE_ACCOUNT_KEY must be set' }),
-    };
+  if (!siteUrl) {
+    return { statusCode: 503, body: JSON.stringify({ error: 'GSC_SITE_URL must be set' }) };
+  }
+  if (!clientId && !saKey) {
+    return { statusCode: 503, body: JSON.stringify({ error: 'GSC_CLIENT_ID or GOOGLE_SERVICE_ACCOUNT_KEY must be set' }) };
   }
 
   try {
-    const token     = await getGoogleToken(saKey, SCOPES);
+    const token = (clientId && clientSecret && refreshToken)
+      ? await getOAuthToken(clientId, clientSecret, refreshToken)
+      : await getGoogleToken(saKey, SCOPES);
     const encodedUrl = encodeURIComponent(siteUrl);
     const apiBase   = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodedUrl}/searchAnalytics/query`;
 
