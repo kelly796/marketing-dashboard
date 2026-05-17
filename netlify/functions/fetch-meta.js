@@ -57,12 +57,14 @@ exports.handler = async () => {
   try {
     // ── STEP 1: Derive Instagram Business Account IDs from Page IDs ────────────
     const [hqPageMeta, onlinePageMeta] = await Promise.all([
-      hqPageId     ? metaGet(`/${hqPageId}`,     { fields: 'instagram_business_account,fan_count,name', access_token: token }) : null,
+      hqPageId     ? metaGet(`/${hqPageId}`,     { fields: 'instagram_business_account,fan_count,name,access_token', access_token: token }) : null,
       onlinePageId ? metaGet(`/${onlinePageId}`,  { fields: 'instagram_business_account,fan_count,name', access_token: token }) : null,
     ]);
 
     const igHqId     = hqPageMeta?.instagram_business_account?.id     || null;
     const igOnlineId = onlinePageMeta?.instagram_business_account?.id || null;
+    // Page access token required for page insights on New Pages Experience
+    const pageToken  = hqPageMeta?.access_token || token;
 
     // ── STEP 2: Fetch all data in parallel ─────────────────────────────────────
     const [
@@ -90,24 +92,26 @@ exports.handler = async () => {
 
       // ── FACEBOOK PAGE (use HQ page) ────────────────────────────────────────
       hqPageId ? metaGet(`/${hqPageId}/insights`, {
-        metric: 'page_impressions_unique,page_impressions,page_engaged_users',
-        period: 'week',
-        access_token: token,
-      }) : null,
+        metric: 'page_views_total,page_post_engagements',
+        period: 'day',
+        since: since7,
+        until: now,
+        access_token: pageToken,
+      }).catch(() => null) : null,
       hqPageId ? metaGet(`/${hqPageId}/insights`, {
-        metric: 'page_impressions_unique,page_impressions,page_engaged_users',
-        period: 'week',
+        metric: 'page_views_total,page_post_engagements',
+        period: 'day',
         since: since14,
         until: since7,
-        access_token: token,
-      }) : null,
+        access_token: pageToken,
+      }).catch(() => null) : null,
       hqPageId ? metaGet(`/${hqPageId}/posts`, {
         fields: 'id,created_time',
         since: since7,
         until: now,
         limit: 50,
-        access_token: token,
-      }) : null,
+        access_token: pageToken,
+      }).catch(() => null) : null,
 
       // ── META ADS ───────────────────────────────────────────────────────────
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
@@ -273,12 +277,17 @@ function buildFBData(insights, insightsPrev, pageAccount, postsResp) {
     return Number(vals[vals.length - 1]?.value || 0);
   }
 
-  const reach7d           = latestValue(insights, 'page_impressions_unique');
-  const reach7dPrev       = latestValue(insightsPrev, 'page_impressions_unique');
-  const impressions7d     = latestValue(insights, 'page_impressions');
-  const impressionsPrev   = latestValue(insightsPrev, 'page_impressions');
-  const engaged           = latestValue(insights, 'page_engaged_users');
-  const engagedPrev       = latestValue(insightsPrev, 'page_engaged_users');
+  function sumValues(insightsResp, name) {
+    const metric = (insightsResp?.data || []).find(m => m.name === name);
+    return (metric?.values || []).reduce((s, v) => s + Number(v.value || 0), 0);
+  }
+
+  const reach7d           = sumValues(insights, 'page_views_total');
+  const reach7dPrev       = sumValues(insightsPrev, 'page_views_total');
+  const impressions7d     = reach7d;
+  const impressionsPrev   = reach7dPrev;
+  const engaged           = sumValues(insights, 'page_post_engagements');
+  const engagedPrev       = sumValues(insightsPrev, 'page_post_engagements');
   const engagementRate    = reach7d > 0 ? +((engaged / reach7d) * 100).toFixed(2) : 0;
   const engagementRatePrev = reach7dPrev > 0 ? +((engagedPrev / reach7dPrev) * 100).toFixed(2) : 0;
   const posts7d           = (postsResp?.data || []).length;
