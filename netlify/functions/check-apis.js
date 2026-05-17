@@ -151,7 +151,11 @@ async function checkGSC(out) {
       {
         method:  'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startDate: '7daysAgo', endDate: 'today', rowLimit: 1 }),
+        body: JSON.stringify({
+          startDate: new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10),
+          endDate:   new Date().toISOString().slice(0, 10),
+          rowLimit:  1,
+        }),
       }
     );
     if (!res.ok) {
