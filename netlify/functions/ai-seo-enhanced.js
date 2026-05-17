@@ -111,7 +111,7 @@ Include 3-4 items per section. Be specific to THIS site's actual data.`;
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2500,
         messages: [{ role: 'user', content: prompt }],
       }),

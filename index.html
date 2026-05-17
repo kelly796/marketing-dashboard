@@ -1286,7 +1286,10 @@ BUILDERS['seo'] = function buildTab4() {
           ga4: (D||MOCK).ga4, speed, siteAudit,
         }),
       });
-      const analysisJson = await analysisRes.json();
+      const rawText = await analysisRes.text();
+      let analysisJson;
+      try { analysisJson = JSON.parse(rawText); }
+      catch { throw new Error('Analysis timed out — the site crawl took too long. Try again; it usually works on retry.'); }
       if (!analysisRes.ok || analysisJson.error) throw new Error(analysisJson.error || 'AI analysis failed');
       const a = analysisJson.analysis || {};
 

@@ -4,8 +4,8 @@
  */
 
 const SITE_URL = (process.env.GSC_SITE_URL || 'https://performotion.com.au').replace(/\/$/, '');
-const MAX_PAGES = 40; // cap to avoid Netlify 10s timeout
-const FETCH_CONCURRENCY = 6;
+const MAX_PAGES = 15; // cap to fit within Netlify 26s timeout
+const FETCH_CONCURRENCY = 8;
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
   'Accept': 'text/html,application/xhtml+xml,application/xml',
@@ -123,13 +123,16 @@ function onlyPageUrls(url) {
 
 async function auditUrl(url) {
   try {
-    const res = await fetch(url, { headers: HEADERS, redirect: 'follow' });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(url, { headers: HEADERS, redirect: 'follow', signal: controller.signal });
+    clearTimeout(timer);
     if (res.status === 404 || res.status === 410) return null;
     if (!res.ok) return { url, error: `HTTP ${res.status}` };
     const html = await res.text();
     return { url, ...auditPage(url, html) };
   } catch (err) {
-    return { url, error: err.message };
+    return { url, error: err.name === 'AbortError' ? 'timeout' : err.message };
   }
 }
 
