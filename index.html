@@ -834,325 +834,20 @@ function renderIGAnalytics(ig, key, color) {
     </div>`;
 }
 
-BUILDERS['hq-overview'] = function buildTab2() {
-  const d = D || MOCK;
-  const ighq = d.instagramHQ || MOCK.instagramHQ;
-  const fb   = d.facebook    || MOCK.facebook;
-  const src  = DATA_SOURCE;
-
-  const voiceDefaults = [
-    'Posts reflect warm, clinical community voice',
-    'Imagery features real patients or practitioners',
-    'Caption length under 150 words',
-    'CTA links to booking page',
-    'Hashtags are location + condition specific',
-  ];
-  const voiceState = JSON.parse(localStorage.getItem(LS_VOICE_HQ) || 'null') || voiceDefaults.map(() => false);
-
-  const pillarsStored = JSON.parse(localStorage.getItem(LS_PILLARS + '_hq') || 'null') || ighq.pillars;
-
-  const el = document.getElementById('tab-hq-overview');
-  el.innerHTML = `
-    <div class="section-banner">PerforMotion HQ — Teneriffe, Brisbane</div>
-    <div class="g2" style="margin-bottom:1.5rem">
-      <!-- Instagram HQ card -->
-      <div class="card">
-        <div style="font-size:.95rem;font-weight:800;color:#2ABFBF;margin-bottom:1rem;border-bottom:2px solid #2ABFBF;padding-bottom:.5rem">Instagram HQ</div>
-        <div class="g2" style="gap:.75rem">
-          ${widgetCard({label:'Reach 7d',value:fmtN(ighq.reach7d),cur:ighq.reach7d,prev:ighq.reach7dPrev,sparkData:ighq.reachTrend,source:src})}
-          ${widgetCard({label:'Engagement Rate',value:fmtPct(ighq.engagementRate),cur:ighq.engagementRate,prev:ighq.engagementRatePrev,benchmark:2,benchmarkLabel:'Benchmark',sparkData:ighq.engagementTrend,source:src})}
-          ${widgetCard({label:'Impressions 7d',value:fmtN(ighq.impressions7d),cur:ighq.impressions7d,prev:ighq.impressionsPrev,sparkData:ighq.impressionsTrend,source:src})}
-          ${widgetCard({label:'Followers',value:fmtN(ighq.followers),cur:ighq.followers,prev:ighq.followersPrev,sparkData:makeTrend(ighq.followers,7,0.02),source:src})}
-        </div>
-      </div>
-      <!-- Facebook card -->
-      <div class="card">
-        <div style="font-size:.95rem;font-weight:800;color:#1B2A4A;margin-bottom:1rem;border-bottom:2px solid #1B2A4A;padding-bottom:.5rem">Facebook</div>
-        <div class="g2" style="gap:.75rem">
-          ${widgetCard({label:'Reach 7d',value:fmtN(fb.reach7d),cur:fb.reach7d,prev:fb.reach7dPrev,sparkData:fb.reachTrend,sparkColour:'#1B2A4A',source:src})}
-          ${widgetCard({label:'Engagement Rate',value:fmtPct(fb.engagementRate),cur:fb.engagementRate,prev:fb.engagementRatePrev,benchmark:1,benchmarkLabel:'Benchmark',sparkData:fb.engagementTrend,sparkColour:'#1B2A4A',source:src})}
-          ${widgetCard({label:'Impressions 7d',value:fmtN(fb.impressions7d),cur:fb.impressions7d,prev:fb.impressionsPrev,sparkData:makeTrend(fb.impressions7d||8900,7,0.12),sparkColour:'#1B2A4A',source:src})}
-          ${widgetCard({label:'Page Likes',value:fmtN(fb.pageLikes),cur:fb.pageLikes,prev:fb.pageLikesPrev,sparkData:makeTrend(fb.pageLikes||1240,7,0.01),sparkColour:'#1B2A4A',source:src})}
-        </div>
-      </div>
-    </div>
-
-    <!-- Daily reach trend -->
-    <div class="chart-card" style="margin-bottom:1rem">
-      <h3>Daily Reach Trend — 30 Days</h3>
-      <div style="height:220px"><canvas id="ch_hq_reach"></canvas></div>
-    </div>
-
-    <div class="g2" style="margin-bottom:1rem">
-      <!-- Content by pillar -->
-      <div class="chart-card">
-        <h3>Content by Pillar (HQ) <span style="font-size:.75rem;color:#999;font-weight:400">— click values to edit</span></h3>
-        <div id="hq-pillar-inputs" style="margin-bottom:1rem">
-          ${Object.entries(pillarsStored).map(([k,v])=>`
-            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
-              <label style="width:120px;font-size:.82rem;font-weight:600;text-transform:capitalize">${k.replace(/([A-Z])/g,' $1')}</label>
-              <input type="number" min="0" max="100" value="${v}" data-pillar-hq="${k}" style="width:60px;border:1px solid #e2e8f0;border-radius:4px;padding:.2rem .4rem;font-family:inherit">
-              <span style="font-size:.82rem;color:#888">%</span>
-            </div>`).join('')}
-        </div>
-        <div style="height:160px"><canvas id="ch_hq_pillars"></canvas></div>
-      </div>
-
-      <!-- Voice consistency -->
-      <div class="chart-card">
-        <h3>Voice Consistency Checker</h3>
-        <div id="hq-voice-list">
-          ${voiceDefaults.map((item,i)=>`
-            <div class="voice-toggle">
-              <span style="font-size:.85rem">${item}</span>
-              <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer">
-                <input type="checkbox" data-voice-hq="${i}" ${voiceState[i]?'checked':''} style="width:16px;height:16px;accent-color:#2ABFBF">
-                <span style="font-size:.8rem;color:#888">${voiceState[i]?'Yes':'No'}</span>
-              </label>
-            </div>`).join('')}
-        </div>
-        <div style="margin-top:1rem;padding:.75rem;background:#f8fafc;border-radius:6px;text-align:center">
-          <div style="font-size:.8rem;color:#888;margin-bottom:.25rem">Voice Score</div>
-          <div style="font-size:2rem;font-weight:800;color:#1B2A4A" id="hq-voice-score">${voiceState.filter(Boolean).length}/5</div>
-        </div>
-      </div>
-    </div>`;
-
-  // Append IG analytics sections
-  const igAnalyticsHQ = document.createElement('div');
-  igAnalyticsHQ.innerHTML = renderIGAnalytics(ighq, 'hq', '#2ABFBF');
-  el.appendChild(igAnalyticsHQ);
-
-  // Charts
-  setTimeout(() => {
-    lineChart('ch_hq_reach', D30, [
-      { label:'Instagram HQ', data: ighq.reachTrend, borderColor:'#2ABFBF', backgroundColor:'rgba(42,191,191,.08)', fill:true },
-      { label:'Facebook',     data: fb.reachTrend,   borderColor:'#1B2A4A', backgroundColor:'rgba(27,42,74,.06)', fill:true },
-    ]);
-
-    const pillarVals = Object.values(pillarsStored);
-    const pillarKeys = Object.keys(pillarsStored).map(k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()));
-    barChart('ch_hq_pillars', pillarKeys, [{ label:'Coverage %', data: pillarVals, backgroundColor:'#2ABFBF' }], { horizontal: true });
-
-    // Pillar performance chart
-    const hqPP = Object.values(ighq.pillarPerformance||{});
-    if (hqPP.length && document.getElementById('ch_ig_hq_pillar_perf')) {
-      barChart('ch_ig_hq_pillar_perf', hqPP.map(p=>p.label),
-        [{ label:'Avg Reach', data:hqPP.map(p=>p.avgReach), backgroundColor:['#10B981','#2ABFBF','#EF4444'] }],
-        { horizontal:true });
-    }
-  }, 50);
-
-  // Pillar input listeners
-  el.querySelectorAll('[data-pillar-hq]').forEach(inp => {
-    inp.addEventListener('input', () => {
-      const stored = JSON.parse(localStorage.getItem(LS_PILLARS + '_hq') || 'null') || ighq.pillars;
-      stored[inp.dataset.pillarHq] = Number(inp.value);
-      localStorage.setItem(LS_PILLARS + '_hq', JSON.stringify(stored));
-      destroyChart('ch_hq_pillars');
-      const vals = Object.values(stored);
-      const keys = Object.keys(stored).map(k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()));
-      barChart('ch_hq_pillars', keys, [{ label:'Coverage %', data: vals, backgroundColor:'#2ABFBF' }], { horizontal: true });
-    });
-  });
-
-  // Voice toggle listeners
-  el.querySelectorAll('[data-voice-hq]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      const st = JSON.parse(localStorage.getItem(LS_VOICE_HQ) || 'null') || voiceDefaults.map(()=>false);
-      st[Number(cb.dataset.voiceHq)] = cb.checked;
-      cb.nextElementSibling.textContent = cb.checked ? 'Yes' : 'No';
-      localStorage.setItem(LS_VOICE_HQ, JSON.stringify(st));
-      document.getElementById('hq-voice-score').textContent = st.filter(Boolean).length + '/5';
-    });
-  });
-};
-
-// ── TAB 3 — ONLINE OVERVIEW ───────────────────────────────────────────────────
-BUILDERS['online-overview'] = function buildTab3() {
-  const d   = D || MOCK;
-  const igon = d.instagramOnline || MOCK.instagramOnline;
-  const yt   = d.youtube         || MOCK.youtube;
-  const src  = DATA_SOURCE;
-
-  const voiceDefaults = [
-    'Educational tone — evidence-based claims only',
-    'Imagery is clean, modern, professional',
-    'Links to research or blog post where relevant',
-    'Speaks to national/international audience',
-    'Hashtags reflect condition + treatment keywords',
-  ];
-  const voiceState = JSON.parse(localStorage.getItem(LS_VOICE_ON) || 'null') || voiceDefaults.map(() => false);
-  const pillarsStored = JSON.parse(localStorage.getItem(LS_PILLARS + '_on') || 'null') || igon.pillars;
-
-  const geoDefaults = JSON.parse(localStorage.getItem(LS_AUDIENCE) || 'null') || [
-    { label:'Australia', pct: 62 }, { label:'UK', pct: 14 },
-    { label:'USA', pct: 12 }, { label:'NZ', pct: 8 }, { label:'Other', pct: 4 },
-  ];
-
-  const el = document.getElementById('tab-online-overview');
-  el.innerHTML = `
-    <div class="section-banner" style="background:linear-gradient(135deg,#2a3d5e,#D4B896)">PerforMotion Online — Australia &amp; International</div>
-    <div class="g2" style="margin-bottom:1.5rem">
-      <div class="card">
-        <div style="font-size:.95rem;font-weight:800;color:#D4B896;margin-bottom:1rem;border-bottom:2px solid #D4B896;padding-bottom:.5rem">Instagram Online</div>
-        <div class="g2" style="gap:.75rem">
-          ${widgetCard({label:'Reach 7d',value:fmtN(igon.reach7d),cur:igon.reach7d,prev:igon.reach7dPrev,sparkData:igon.reachTrend,sparkColour:'#D4B896',source:src})}
-          ${widgetCard({label:'Engagement Rate',value:fmtPct(igon.engagementRate),cur:igon.engagementRate,prev:igon.engagementRatePrev,benchmark:2,benchmarkLabel:'Benchmark',sparkData:igon.engagementTrend,sparkColour:'#D4B896',source:src})}
-          ${widgetCard({label:'Impressions 7d',value:fmtN(igon.impressions7d),cur:igon.impressions7d,prev:igon.impressionsPrev,sparkData:igon.impressionsTrend,sparkColour:'#D4B896',source:src})}
-          ${widgetCard({label:'Followers',value:fmtN(igon.followers),cur:igon.followers,prev:igon.followersPrev,sparkData:makeTrend(igon.followers,7,0.02),sparkColour:'#D4B896',source:src})}
-        </div>
-      </div>
-      <div class="card">
-        <div style="font-size:.95rem;font-weight:800;color:#1B2A4A;margin-bottom:1rem;border-bottom:2px solid #1B2A4A;padding-bottom:.5rem">YouTube</div>
-        <div class="g2" style="gap:.75rem">
-          ${widgetCard({label:'Subscribers',value:fmtN(yt.subscribers),cur:yt.subscribers,prev:yt.subscribersPrev,sparkData:makeTrend(yt.subscribers,7,0.01),sparkColour:'#1B2A4A',source:src})}
-          ${widgetCard({label:'Views 7d',value:fmtN(yt.views7d),cur:yt.views7d,prev:yt.viewsPrev,sparkData:yt.viewsTrend,sparkColour:'#1B2A4A',source:src})}
-          ${widgetCard({label:'Watch Time (hrs)',value:fmtN(yt.watchTime7d),cur:yt.watchTime7d,prev:yt.watchTimePrev,sparkData:makeTrend(yt.watchTime7d,7,0.1),sparkColour:'#1B2A4A',source:src})}
-          ${widgetCard({label:'Subscribers Gained',value:'+'+fmtN(yt.subscribersGained7d),cur:yt.subscribersGained7d,prev:yt.subscribersGainedPrev,sparkData:makeTrend(yt.subscribersGained7d,7,0.2),sparkColour:'#1B2A4A',source:src})}
-          ${widgetCard({label:'Likes 7d',value:fmtN(yt.likes7d),cur:yt.likes7d,prev:yt.likesPrev,sparkData:makeTrend(yt.likes7d,7,0.15),sparkColour:'#1B2A4A',source:src})}
-          ${widgetCard({label:'Comments 7d',value:fmtN(yt.comments7d),cur:yt.comments7d,prev:yt.commentsPrev,sparkData:makeTrend(yt.comments7d,7,0.2),sparkColour:'#1B2A4A',source:src})}
-        </div>
-      </div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:1rem">
-      <h3>Daily Reach Trend — 30 Days</h3>
-      <div style="height:220px"><canvas id="ch_on_reach"></canvas></div>
-    </div>
-
-    <div class="g2" style="margin-bottom:1rem">
-      <div class="chart-card">
-        <h3>Audience Geography <span style="font-size:.75rem;color:#999;font-weight:400">— editable</span></h3>
-        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">
-          ${geoDefaults.map((g,i)=>`
-            <div style="display:flex;align-items:center;gap:.3rem">
-              <label style="font-size:.8rem;font-weight:600">${g.label}</label>
-              <input type="number" min="0" max="100" value="${g.pct}" data-geo="${i}" style="width:50px;border:1px solid #e2e8f0;border-radius:4px;padding:.2rem .3rem;font-family:inherit;font-size:.8rem">%
-            </div>`).join('')}
-        </div>
-        <div style="height:200px"><canvas id="ch_on_geo"></canvas></div>
-      </div>
-      <div class="g1">
-        <div class="chart-card">
-          <h3>Content by Pillar (Online)</h3>
-          <div id="on-pillar-inputs" style="margin-bottom:1rem">
-            ${Object.entries(pillarsStored).map(([k,v])=>`
-              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
-                <label style="width:120px;font-size:.82rem;font-weight:600;text-transform:capitalize">${k.replace(/([A-Z])/g,' $1')}</label>
-                <input type="number" min="0" max="100" value="${v}" data-pillar-on="${k}" style="width:60px;border:1px solid #e2e8f0;border-radius:4px;padding:.2rem .4rem;font-family:inherit">%
-              </div>`).join('')}
-          </div>
-          <div style="height:130px"><canvas id="ch_on_pillars"></canvas></div>
-        </div>
-        <div class="chart-card" style="margin-top:1rem">
-          <h3>Voice Consistency Checker</h3>
-          ${voiceDefaults.map((item,i)=>`
-            <div class="voice-toggle">
-              <span style="font-size:.85rem">${item}</span>
-              <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer">
-                <input type="checkbox" data-voice-on="${i}" ${voiceState[i]?'checked':''} style="width:16px;height:16px;accent-color:#D4B896">
-                <span style="font-size:.8rem;color:#888">${voiceState[i]?'Yes':'No'}</span>
-              </label>
-            </div>`).join('')}
-          <div style="margin-top:.75rem;padding:.75rem;background:#f8fafc;border-radius:6px;text-align:center">
-            <div style="font-size:.8rem;color:#888;margin-bottom:.25rem">Voice Score</div>
-            <div style="font-size:2rem;font-weight:800;color:#1B2A4A" id="on-voice-score">${voiceState.filter(Boolean).length}/5</div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-
-  setTimeout(() => {
-    lineChart('ch_on_reach', D30, [
-      { label:'Instagram Online', data: igon.reachTrend, borderColor:'#D4B896' },
-      { label:'YouTube',          data: yt.reachTrend,   borderColor:'#1B2A4A' },
-    ]);
-    donutChart('ch_on_geo', geoDefaults.map(g=>g.label), geoDefaults.map(g=>g.pct),
-      ['#2ABFBF','#1B2A4A','#D4B896','#10B981','#94a3b8']);
-    const pvk = Object.keys(pillarsStored).map(k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()));
-    barChart('ch_on_pillars', pvk, [{ label:'Coverage %', data: Object.values(pillarsStored), backgroundColor:'#D4B896' }], { horizontal: true });
-  }, 50);
-
-  el.querySelectorAll('[data-geo]').forEach(inp => {
-    inp.addEventListener('input', () => {
-      const geo = JSON.parse(localStorage.getItem(LS_AUDIENCE) || 'null') || geoDefaults;
-      geo[Number(inp.dataset.geo)].pct = Number(inp.value);
-      localStorage.setItem(LS_AUDIENCE, JSON.stringify(geo));
-      destroyChart('ch_on_geo');
-      donutChart('ch_on_geo', geo.map(g=>g.label), geo.map(g=>g.pct), ['#2ABFBF','#1B2A4A','#D4B896','#10B981','#94a3b8']);
-    });
-  });
-  el.querySelectorAll('[data-pillar-on]').forEach(inp => {
-    inp.addEventListener('input', () => {
-      const stored = JSON.parse(localStorage.getItem(LS_PILLARS+'_on')||'null') || igon.pillars;
-      stored[inp.dataset.pillarOn] = Number(inp.value);
-      localStorage.setItem(LS_PILLARS+'_on', JSON.stringify(stored));
-      destroyChart('ch_on_pillars');
-      barChart('ch_on_pillars', Object.keys(stored).map(k=>k.replace(/([A-Z])/g,' $1')), [{ label:'Coverage %', data:Object.values(stored), backgroundColor:'#D4B896' }], { horizontal:true });
-    });
-  });
-  el.querySelectorAll('[data-voice-on]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      const st = JSON.parse(localStorage.getItem(LS_VOICE_ON)||'null') || voiceDefaults.map(()=>false);
-      st[Number(cb.dataset.voiceOn)] = cb.checked;
-      cb.nextElementSibling.textContent = cb.checked ? 'Yes' : 'No';
-      localStorage.setItem(LS_VOICE_ON, JSON.stringify(st));
-      document.getElementById('on-voice-score').textContent = st.filter(Boolean).length + '/5';
-    });
-  });
-
-  // Append IG analytics sections
-  const igAnalyticsON = document.createElement('div');
-  igAnalyticsON.innerHTML = renderIGAnalytics(igon, 'online', '#D4B896');
-  el.appendChild(igAnalyticsON);
-
-  // Init pillar performance chart for online
-  setTimeout(() => {
-    const onPP = Object.values(igon.pillarPerformance||{});
-    if (onPP.length && document.getElementById('ch_ig_online_pillar_perf')) {
-      barChart('ch_ig_online_pillar_perf', onPP.map(p=>p.label),
-        [{ label:'Avg Reach', data:onPP.map(p=>p.avgReach), backgroundColor:['#10B981','#D4B896','#94A3B8'] }],
-        { horizontal:true });
-    }
-  }, 100);
-
-  // ── GA4 COUNTRY TRACKING ────────────────────────────────────────────────────
-  const countries = (D||MOCK).ga4Countries || MOCK.ga4Countries;
-  const ctryEl = document.createElement('div');
-  ctryEl.className = 'chart-card';
-  ctryEl.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
-      <h3 style="margin:0">GA4 — Top Countries</h3>
-      <span style="font-size:.75rem;color:#888">Auto-updates Tue &amp; Fri 8:00 AM AEST</span>
-    </div>
-    <table class="dash-table">
-      <thead><tr><th>Country</th><th>Sessions</th><th>Pages/Visit</th><th>Conv Rate</th><th>Products Viewed</th><th>Top Source</th></tr></thead>
-      <tbody>${countries.map(c=>`<tr>
-        <td style="font-weight:600">${c.country}</td>
-        <td>${fmtN(c.sessions)}</td>
-        <td>${c.pages.toFixed(1)}</td>
-        <td style="font-weight:700;color:${c.convRate>=3?'#10B981':c.convRate>=1.5?'#F59E0B':'#EF4444'}">${fmtPct(c.convRate)}</td>
-        <td>${c.products}</td>
-        <td style="color:#888;font-size:.82rem">${c.source}</td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-  el.appendChild(ctryEl);
-};
-
 // ── TAB 4 — SEO RANKINGS ──────────────────────────────────────────────────────
-BUILDERS['seo'] = function buildTab4() {
+BUILDERS['website'] = function buildTab4() {
   const d        = D || MOCK;
   const seo      = d.seo || MOCK.seo;
   const ga4data  = d.ga4 || MOCK.ga4 || {};
   const topPages = d.ga4TopPages || d.ga4?.topPages || MOCK.ga4TopPages || [];
   let kFilter = 'All';
 
-  const el = document.getElementById('tab-seo');
+  const el = document.getElementById('tab-website');
   el.innerHTML = `
     <div class="inner-tabs">
       <button class="inner-tab-btn active" data-itab="seo-rankings" onclick="switchInnerTab('seo','rankings')">Rankings & Analytics</button>
       <button class="inner-tab-btn" data-itab="seo-ai" onclick="switchInnerTab('seo','ai')">AI Analysis</button>
+      <button class="inner-tab-btn" data-itab="website-audit" onclick="switchInnerTab('website','audit')">SEO Audit</button>
     </div>
 
     <div id="seo-rankings" class="inner-tab-section active">
@@ -1229,6 +924,14 @@ BUILDERS['seo'] = function buildTab4() {
         <div id="seo-ai-loading" style="display:none;padding:1rem 0;color:#888">Checking site speed and generating recommendations — takes ~15 seconds…</div>
         <div id="seo-ai-result"></div>
       </div>
+    </div>
+
+    <div id="website-audit" class="inner-tab-section">
+      <div class="section-banner">AI SEO Audit</div>
+      <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">Analyses your Search Console keywords and top pages to identify quick wins, ranking opportunities and content gaps. Powered by Claude AI.</p>
+      <button class="btn" id="ai-seo-btn" style="margin-bottom:1.5rem">Run Audit</button>
+      <div id="ai-seo-loading" style="display:none;color:#aaa;padding:1rem 0">Auditing your SEO data…</div>
+      <div id="ai-seo-result"></div>
     </div>`;
 
   window.setKFilter = function(f) {
@@ -1485,6 +1188,77 @@ BUILDERS['seo'] = function buildTab4() {
     }
   };
 
+  // AI SEO Audit button handler (for website-audit inner tab)
+  document.getElementById('ai-seo-btn').addEventListener('click', async function() {
+    const btn     = this;
+    const loading = document.getElementById('ai-seo-loading');
+    const result  = document.getElementById('ai-seo-result');
+    btn.disabled = true; btn.textContent = 'Auditing…';
+    loading.style.display = 'block'; result.innerHTML = '';
+
+    try {
+      const d = D || MOCK;
+      const res = await fetch('/.netlify/functions/ai-seo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seo: d.seo, ga4TopPages: d.ga4TopPages, ga4: d.ga4 }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error||'Audit failed. Try again.'}</div>`;
+        return;
+      }
+      const audit = json.audit || {};
+      if (audit.raw) { result.innerHTML = `<div class="card" style="padding:1.5rem;white-space:pre-wrap;color:#ddd;line-height:1.6">${audit.raw}</div>`; return; }
+
+      const score = Number(audit.score||0);
+      const scoreColour = score >= 70 ? '#22C55E' : score >= 45 ? '#F59E0B' : '#EF4444';
+      const scoreLabel  = score >= 70 ? 'Good' : score >= 45 ? 'Fair' : 'Needs Work';
+
+      const listItems = (arr, colour) => (arr||[]).map(item=>`
+        <div style="border-left:3px solid ${colour};padding:.75rem 1rem;margin-bottom:.75rem;background:rgba(255,255,255,.03);border-radius:0 4px 4px 0">
+          <div style="font-weight:700;color:#fff;margin-bottom:.3rem;font-size:.9rem">${item.title||item.topic||'—'}</div>
+          ${item.keyword?`<div style="font-size:.78rem;color:#2ABFBF;margin-bottom:.3rem">Target: ${item.keyword}${item.intent?' · '+item.intent:''}</div>`:''}
+          <div style="font-size:.85rem;color:#bbb;line-height:1.5">${item.description||''}</div>
+        </div>
+      `).join('');
+
+      result.innerHTML = `
+        <div class="g2" style="margin-bottom:1.5rem">
+          <div class="card" style="padding:1.5rem;display:flex;align-items:center;gap:1.5rem">
+            <div style="font-size:3rem;font-weight:800;color:${scoreColour};line-height:1">${score}</div>
+            <div>
+              <div style="font-weight:700;color:${scoreColour};font-size:1rem">${scoreLabel}</div>
+              <div style="font-size:.8rem;color:#888">SEO Health Score</div>
+            </div>
+          </div>
+          <div class="card" style="padding:1.5rem">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2ABFBF;margin-bottom:.75rem">Summary</div>
+            <p style="color:#ddd;margin:0;line-height:1.6;font-size:.9rem">${audit.summary||'—'}</p>
+          </div>
+        </div>
+        <div class="g3">
+          <div>
+            <h3 style="color:#22C55E;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Quick Wins</h3>
+            ${listItems(audit.quickWins, '#22C55E')}
+          </div>
+          <div>
+            <h3 style="color:#2ABFBF;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Opportunities</h3>
+            ${listItems(audit.opportunities, '#2ABFBF')}
+          </div>
+          <div>
+            <h3 style="color:#F59E0B;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Content Gaps</h3>
+            ${listItems(audit.contentGaps, '#F59E0B')}
+          </div>
+        </div>
+      `;
+    } catch(e) {
+      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Re-run Audit';
+      loading.style.display = 'none';
+    }
+  });
+
   setTimeout(() => {
     const rt = seo.rankTrend30;
     barChart('ch_seo_rank', rt.labels, [
@@ -1499,7 +1273,7 @@ BUILDERS['seo'] = function buildTab4() {
 };
 
 // ── TAB 5 — EMAIL ─────────────────────────────────────────────────────────────
-BUILDERS['email'] = function buildTab5() {
+BUILDERS['activecampaign'] = function buildTab5() {
   const d  = D || MOCK;
   const em = d.email || MOCK.email;
   const src = DATA_SOURCE;
@@ -1773,7 +1547,7 @@ BUILDERS['email'] = function buildTab5() {
   const ovOpenColor  = (ov.openRate  || 0) >= 21  ? '#10B981' : '#F59E0B';
   const ovUnsubColor = (ov.unsubRate || 0) <= 0.5 ? '#10B981' : '#EF4444';
 
-  const el = document.getElementById('tab-email');
+  const el = document.getElementById('tab-activecampaign');
   el.innerHTML = `
     <!-- OVERALL ACCOUNT SUMMARY -->
     <div class="chart-card" style="margin-bottom:1rem;border-left:4px solid #2ABFBF">
@@ -1964,7 +1738,7 @@ BUILDERS['email'] = function buildTab5() {
   };
 
 // ── TAB 6 — PAID ADS ──────────────────────────────────────────────────────────
-BUILDERS['paid-ads'] = function buildTab6() {
+BUILDERS['meta-ads'] = function buildTab6() {
   const d    = D || MOCK;
   const meta = d.meta || MOCK.meta;
   const src  = DATA_SOURCE;
@@ -1973,7 +1747,7 @@ BUILDERS['paid-ads'] = function buildTab6() {
   const LS_ADS_INSIGHTS = 'PM_ADS_INSIGHTS';
   const cachedAdsInsights = JSON.parse(localStorage.getItem(LS_ADS_INSIGHTS) || 'null');
 
-  const el = document.getElementById('tab-paid-ads');
+  const el = document.getElementById('tab-meta-ads');
   el.innerHTML = `
     <!-- DAILY ACTIONS PANEL -->
     <div class="chart-card" style="margin-bottom:1.5rem;border-left:4px solid #F59E0B">
@@ -2096,7 +1870,7 @@ BUILDERS['paid-ads'] = function buildTab6() {
   wwCard.className = 'chart-card';
   wwCard.style.marginTop = '1rem';
   wwCard.innerHTML = `<h3>What's Working</h3><div id="ads-whats-working"></div>`;
-  document.getElementById('tab-paid-ads').appendChild(wwCard);
+  document.getElementById('tab-meta-ads').appendChild(wwCard);
   renderWhatsWorking();
 
   const origSetAdFilter = window.setAdFilter;
@@ -2266,7 +2040,7 @@ BUILDERS['brand-strategy'] = function buildTab8() {
     <div class="inner-tabs">
       <button class="inner-tab-btn active" data-itab="bs-compare" onclick="switchInnerTab('bs','compare')">Brand Comparison</button>
       <button class="inner-tab-btn" data-itab="bs-positioning" onclick="switchInnerTab('bs','positioning')">Positioning</button>
-      <button class="inner-tab-btn" data-itab="bs-planner" onclick="switchInnerTab('bs','planner')">Content Planner</button>
+      <button class="inner-tab-btn" data-itab="bs-planner" onclick="switchTab('content');setTimeout(()=>switchInnerTab('ct','planner'),50)">Content Planner →</button>
       <button class="inner-tab-btn" data-itab="bs-ai" onclick="switchInnerTab('bs','ai')">AI Insights</button>
     </div>
 
@@ -2497,13 +2271,13 @@ BUILDERS['brand-strategy'] = function buildTab8() {
     if (!con[key]) con[key] = [];
     con[key].push({ date:'', format:'', topic:'', status:'Planned' });
     localStorage.setItem(LS_CONTENT, JSON.stringify(con));
-    BUILT['brand-strategy'] = false; switchTab('brand-strategy');
+    BUILT['content'] = false; switchTab('content');
   };
   window.deleteCpRow = function(key, idx) {
     const con = JSON.parse(localStorage.getItem(LS_CONTENT)||'null') || defaultContent;
     if (con[key]) con[key].splice(idx,1);
     localStorage.setItem(LS_CONTENT, JSON.stringify(con));
-    BUILT['brand-strategy'] = false; switchTab('brand-strategy');
+    BUILT['content'] = false; switchTab('content');
   };
 
   // AI Insights
@@ -2610,6 +2384,13 @@ BUILDERS['goals'] = function buildTab9() {
           <h3 style="margin:0">Goals Tracker</h3>
           <button onclick="addGoal()" style="padding:.35rem .9rem;background:#2ABFBF;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:700;font-size:.85rem">+ Add Goal</button>
         </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
+          <button class="toggle-btn active" data-gfilter="All" onclick="setGoalFilter('All')">All</button>
+          <button class="toggle-btn" data-gfilter="Content" onclick="setGoalFilter('Content')">Content</button>
+          <button class="toggle-btn" data-gfilter="Meta Ads" onclick="setGoalFilter('Meta Ads')">Meta Ads</button>
+          <button class="toggle-btn" data-gfilter="Email" onclick="setGoalFilter('Email')">Email</button>
+          <button class="toggle-btn" data-gfilter="Website" onclick="setGoalFilter('Website')">Website</button>
+        </div>
         <table class="dash-table">
           <thead><tr><th>Goal</th><th>Brand</th><th>Platform</th><th>Target</th><th>Current</th><th>Progress</th><th>Status</th><th>Interval</th><th></th></tr></thead>
           <tbody>${goals.map((g,i)=>{
@@ -2652,11 +2433,20 @@ BUILDERS['goals'] = function buildTab9() {
     save(); render();
   };
   window.addGoal = function() {
-    goals.push({ id:Date.now(), name:'New Goal', brand:'HQ', platform:'Instagram', target:100, current:0, interval:'Monthly', status:'Off Track' });
+    goals.push({ id:Date.now(), name:'New Goal', brand:'HQ', platform:'Content', target:100, current:0, interval:'Monthly', status:'Off Track' });
     save(); render();
   };
   window.deleteGoal = function(i) {
     goals.splice(i,1); save(); render();
+  };
+  window.setGoalFilter = function(filter) {
+    document.querySelectorAll('[data-gfilter]').forEach(b => b.classList.toggle('active', b.dataset.gfilter === filter));
+    document.querySelectorAll('#tab-goals tbody tr').forEach(row => {
+      if (filter === 'All') { row.style.display = ''; return; }
+      const platformCell = row.querySelector('td:nth-child(3) input');
+      const platform = platformCell ? platformCell.value : '';
+      row.style.display = platform === filter ? '' : 'none';
+    });
   };
 
   render();
@@ -2664,7 +2454,7 @@ BUILDERS['goals'] = function buildTab9() {
 
 // ── INNER TAB HELPER ──────────────────────────────────────────────────────────
 window.switchInnerTab = function(prefix, name) {
-  const tabId = { em:'email', bs:'brand-strategy', seo:'seo' }[prefix] || prefix;
+  const tabId = { em:'activecampaign', bs:'brand-strategy', seo:'website', ct:'content', website:'website', ab:'ad-build' }[prefix] || prefix;
   const container = document.getElementById('tab-' + tabId);
   if (!container) return;
   container.querySelectorAll('.inner-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.itab === prefix+'-'+name));
@@ -2701,7 +2491,7 @@ async function refreshData() {
   } catch(e) {}
   Object.keys(BUILT).forEach(k => { delete BUILT[k]; });
   renderAll();
-  const active = localStorage.getItem(LS_TAB) || 'all-channels';
+  const active = localStorage.getItem(LS_TAB) || 'overview';
   switchTab(active);
   btn.textContent = '↻ Refresh';
   btn.disabled = false;
@@ -2719,7 +2509,7 @@ async function init() {
   await loadData();
   buildShell();
   renderAll();
-  const active = localStorage.getItem(LS_TAB) || 'all-channels';
+  const active = localStorage.getItem(LS_TAB) || 'overview';
   switchTab(active);
 
   // Refresh the "Next update" timestamp every minute
@@ -2806,7 +2596,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── TAB 1 — ALL CHANNELS ──────────────────────────────────────────────────────
-BUILDERS['all-channels'] = function buildTab1() {
+BUILDERS['overview'] = function buildTab1() {
   const d    = D || MOCK;
   const ighq = d.instagramHQ || MOCK.instagramHQ;
   const igon = d.instagramOnline || MOCK.instagramOnline;
@@ -2871,11 +2661,20 @@ BUILDERS['all-channels'] = function buildTab1() {
     return `<span style="display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;border-radius:20px;font-size:.72rem;font-weight:700;background:${bg};color:${color};border:1px solid ${color}30">${dot} ${s.label}</span>`;
   }).join('');
 
-  const el = document.getElementById('tab-all-channels');
+  const el = document.getElementById('tab-overview');
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem;padding:.75rem 1rem;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
       <span style="font-size:.75rem;font-weight:700;color:#64748b;white-space:nowrap">${liveN} of ${SOURCES.length} sources live</span>
       <div style="display:flex;flex-wrap:wrap;gap:.4rem">${statusChips}</div>
+    </div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem">
+      <button class="btn btn-secondary" onclick="switchTab('content')" style="font-size:.82rem">Content</button>
+      <button class="btn btn-secondary" onclick="switchTab('meta-ads')" style="font-size:.82rem">Meta Ads</button>
+      <button class="btn btn-secondary" onclick="switchTab('ad-build')" style="font-size:.82rem">Ad Build</button>
+      <button class="btn btn-secondary" onclick="switchTab('activecampaign')" style="font-size:.82rem">ActiveCampaign</button>
+      <button class="btn btn-secondary" onclick="switchTab('website')" style="font-size:.82rem">Website</button>
+      <button class="btn btn-secondary" onclick="switchTab('brand-strategy')" style="font-size:.82rem">Brand Strategy</button>
+      <button class="btn btn-secondary" onclick="switchTab('goals')" style="font-size:.82rem">Goals</button>
     </div>
     <div class="g4" style="margin-bottom:1.5rem">${rows.join('')}</div>
     <div class="g3">
@@ -2886,6 +2685,17 @@ BUILDERS['all-channels'] = function buildTab1() {
           </div>
           <textarea class="priority-box" data-pri="${k}">${pri[k]||''}</textarea>
         </div>`).join('')}
+    </div>
+    <div class="chart-card" style="margin-top:1.5rem;border-left:4px solid #2ABFBF">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+        <div>
+          <h3 style="margin:0">AI Weekly Insights</h3>
+          <p style="color:#aaa;margin:.25rem 0 0;font-size:.82rem;max-width:520px;line-height:1.5">Cross-channel analysis — wins, concerns and actions. Powered by Claude AI.</p>
+        </div>
+        <button class="btn" id="ai-insights-btn" onclick="runAIInsights()">Generate Insights</button>
+      </div>
+      <div id="ai-insights-loading" style="display:none;color:#aaa;padding:1rem 0">Analysing your data…</div>
+      <div id="ai-insights-result"></div>
     </div>`;
 
   el.querySelectorAll('textarea[data-pri]').forEach(ta => {
@@ -2895,7 +2705,486 @@ BUILDERS['all-channels'] = function buildTab1() {
       localStorage.setItem(LS_PRI, JSON.stringify(p));
     });
   });
+
+  window.runAIInsights = function() { document.getElementById('ai-insights-btn').click(); };
+  document.getElementById('ai-insights-btn').addEventListener('click', async function() {
+    const btn     = this;
+    const loading = document.getElementById('ai-insights-loading');
+    const result  = document.getElementById('ai-insights-result');
+    btn.disabled = true; btn.textContent = 'Generating…';
+    loading.style.display = 'block'; result.innerHTML = '';
+
+    try {
+      const res  = await fetch('/.netlify/functions/ai-insights', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(D || MOCK),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error || 'Generation failed. Try again.'}</div>`;
+        return;
+      }
+      const ins = json.insights || {};
+      if (ins.raw) { result.innerHTML = `<div class="card" style="padding:1.5rem;white-space:pre-wrap;color:#ddd;line-height:1.6">${ins.raw}</div>`; return; }
+
+      result.innerHTML = `
+        <div class="g2" style="margin-bottom:1.5rem">
+          <div class="card" style="padding:1.5rem;border-left:4px solid #22C55E">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#22C55E;margin-bottom:.6rem">Top Win</div>
+            <p style="color:#ddd;margin:0;line-height:1.6">${ins.topWin||'—'}</p>
+          </div>
+          <div class="card" style="padding:1.5rem;border-left:4px solid #EF4444">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#EF4444;margin-bottom:.6rem">Watch Out</div>
+            <p style="color:#ddd;margin:0;line-height:1.6">${ins.watchOut||'—'}</p>
+          </div>
+        </div>
+        <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2ABFBF;margin-bottom:.75rem">Weekly Summary</div>
+          <p style="color:#ddd;margin:0;line-height:1.6">${ins.summary||'—'}</p>
+        </div>
+        <h3 style="color:#fff;margin:0 0 1rem">Key Insights</h3>
+        <div class="g3" style="margin-bottom:1.5rem">
+          ${(ins.insights||[]).map(i=>`<div class="card" style="padding:1.25rem"><p style="color:#ddd;margin:0;line-height:1.5;font-size:.9rem">${i}</p></div>`).join('')}
+        </div>
+        <h3 style="color:#fff;margin:0 0 1rem">Recommended Actions</h3>
+        <div class="card" style="padding:1.5rem">
+          <ol style="margin:0;padding-left:1.25rem;color:#ddd;line-height:1.8">
+            ${(ins.actions||[]).map(a=>`<li>${a}</li>`).join('')}
+          </ol>
+        </div>
+      `;
+    } catch(e) {
+      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Regenerate';
+      loading.style.display = 'none';
+    }
+  });
 };
+
+BUILDERS['content'] = function buildContentTab() {
+  const d    = D || MOCK;
+  const ighq = d.instagramHQ    || MOCK.instagramHQ;
+  const igon = d.instagramOnline || MOCK.instagramOnline;
+  const fb   = d.facebook        || MOCK.facebook;
+  const yt   = d.youtube         || MOCK.youtube;
+  const src  = DATA_SOURCE;
+
+  const voiceDefaultsHQ = [
+    'Posts reflect warm, clinical community voice',
+    'Imagery features real patients or practitioners',
+    'Caption length under 150 words',
+    'CTA links to booking page',
+    'Hashtags are location + condition specific',
+  ];
+  const voiceDefaultsOn = [
+    'Education-forward tone',
+    'Research citations where relevant',
+    'Lifestyle imagery that reflects the audience',
+    'CTA links to Online program page',
+    'Hashtags are topic + audience specific',
+  ];
+  const voiceStateHQ = JSON.parse(localStorage.getItem(LS_VOICE_HQ)  || 'null') || voiceDefaultsHQ.map(() => false);
+  const voiceStateOn = JSON.parse(localStorage.getItem(LS_VOICE_ON)  || 'null') || voiceDefaultsOn.map(() => false);
+
+  const pillarsHQ = JSON.parse(localStorage.getItem(LS_PILLARS + '_hq') || 'null') || ighq.pillars;
+  const pillarsOn = JSON.parse(localStorage.getItem(LS_PILLARS + '_on') || 'null') || igon.pillars;
+
+  const el = document.getElementById('tab-content');
+  el.innerHTML = `
+    <div class="inner-tabs">
+      <button class="inner-tab-btn active" data-itab="ct-ighq"    onclick="switchInnerTab('ct','ighq')">IG HQ</button>
+      <button class="inner-tab-btn"        data-itab="ct-fb"      onclick="switchInnerTab('ct','fb')">Facebook HQ</button>
+      <button class="inner-tab-btn"        data-itab="ct-igon"    onclick="switchInnerTab('ct','igon')">IG Online</button>
+      <button class="inner-tab-btn"        data-itab="ct-yt"      onclick="switchInnerTab('ct','yt')">YouTube</button>
+      <button class="inner-tab-btn"        data-itab="ct-li"      onclick="switchInnerTab('ct','li')">LinkedIn</button>
+      <button class="inner-tab-btn"        data-itab="ct-planner" onclick="switchInnerTab('ct','planner')">Content Planner</button>
+      <button class="inner-tab-btn"        data-itab="ct-ideas"   onclick="switchInnerTab('ct','ideas')">Content Ideas</button>
+    </div>
+
+    <!-- IG HQ -->
+    <div id="ct-ighq" class="inner-tab-section active">
+      <div class="section-banner">PerforMotion HQ — Instagram</div>
+      <div class="g4" style="margin-bottom:1.5rem">
+        ${widgetCard({label:'Reach 7d',value:fmtN(ighq.reach7d),cur:ighq.reach7d,prev:ighq.reach7dPrev,sparkData:ighq.reachTrend,source:src})}
+        ${widgetCard({label:'Engagement Rate',value:fmtPct(ighq.engagementRate),cur:ighq.engagementRate,prev:ighq.engagementRatePrev,benchmark:2,benchmarkLabel:'Benchmark',sparkData:ighq.engagementTrend,source:src})}
+        ${widgetCard({label:'Impressions 7d',value:fmtN(ighq.impressions7d),cur:ighq.impressions7d,prev:ighq.impressionsPrev,sparkData:ighq.impressionsTrend,source:src})}
+        ${widgetCard({label:'Followers',value:fmtN(ighq.followers),cur:ighq.followers,prev:ighq.followersPrev,sparkData:makeTrend(ighq.followers,7,0.02),source:src})}
+      </div>
+      <div class="chart-card" style="margin-bottom:1rem">
+        <h3>Daily Reach Trend — 30 Days</h3>
+        <div style="height:220px"><canvas id="ch_ct_hq_reach"></canvas></div>
+      </div>
+      <div class="g2" style="margin-bottom:1rem">
+        <div class="chart-card">
+          <h3>Content by Pillar <span style="font-size:.75rem;color:#999;font-weight:400">— click values to edit</span></h3>
+          <div id="ct-hq-pillar-inputs" style="margin-bottom:1rem">
+            ${Object.entries(pillarsHQ).map(([k,v])=>`
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
+                <label style="width:120px;font-size:.82rem;font-weight:600;text-transform:capitalize">${k.replace(/([A-Z])/g,' $1')}</label>
+                <input type="number" min="0" max="100" value="${v}" data-pillar-hq="${k}" style="width:60px;border:1px solid #e2e8f0;border-radius:4px;padding:.2rem .4rem;font-family:inherit">
+                <span style="font-size:.82rem;color:#888">%</span>
+              </div>`).join('')}
+          </div>
+          <div style="height:160px"><canvas id="ch_ct_hq_pillars"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Voice Consistency Checker</h3>
+          <div id="ct-hq-voice-list">
+            ${voiceDefaultsHQ.map((item,i)=>`
+              <div class="voice-toggle">
+                <span style="font-size:.85rem">${item}</span>
+                <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer">
+                  <input type="checkbox" data-voice-hq="${i}" ${voiceStateHQ[i]?'checked':''} style="width:16px;height:16px;accent-color:#2ABFBF">
+                  <span style="font-size:.8rem;color:#888">${voiceStateHQ[i]?'Yes':'No'}</span>
+                </label>
+              </div>`).join('')}
+          </div>
+          <div style="margin-top:1rem;padding:.75rem;background:#f8fafc;border-radius:6px;text-align:center">
+            <div style="font-size:.8rem;color:#888;margin-bottom:.25rem">Voice Score</div>
+            <div style="font-size:2rem;font-weight:800;color:#1B2A4A" id="ct-hq-voice-score">${voiceStateHQ.filter(Boolean).length}/5</div>
+          </div>
+        </div>
+      </div>
+      <div id="ct-ighq-analytics"></div>
+    </div>
+
+    <!-- Facebook HQ -->
+    <div id="ct-fb" class="inner-tab-section">
+      <div class="section-banner">PerforMotion HQ — Facebook</div>
+      <div class="g4" style="margin-bottom:1.5rem">
+        ${widgetCard({label:'Reach 7d',value:fmtN(fb.reach7d),cur:fb.reach7d,prev:fb.reach7dPrev,sparkData:fb.reachTrend,sparkColour:'#1B2A4A',source:src})}
+        ${widgetCard({label:'Engagement Rate',value:fmtPct(fb.engagementRate),cur:fb.engagementRate,prev:fb.engagementRatePrev,benchmark:1,benchmarkLabel:'Benchmark',sparkData:fb.engagementTrend,sparkColour:'#1B2A4A',source:src})}
+        ${widgetCard({label:'Impressions 7d',value:fmtN(fb.impressions7d),cur:fb.impressions7d,prev:fb.impressionsPrev,sparkData:makeTrend(fb.impressions7d||8900,7,0.12),sparkColour:'#1B2A4A',source:src})}
+        ${widgetCard({label:'Page Likes',value:fmtN(fb.pageLikes),cur:fb.pageLikes,prev:fb.pageLikesPrev,sparkData:makeTrend(fb.pageLikes||1240,7,0.01),sparkColour:'#1B2A4A',source:src})}
+      </div>
+      <div class="chart-card" style="margin-bottom:1rem">
+        <h3>Daily Reach Trend — 30 Days</h3>
+        <div style="height:220px"><canvas id="ch_ct_fb_reach"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Buffer — Post to Facebook</h3>
+        <div style="padding:1rem;background:#f8fafc;border-radius:6px;border:1.5px dashed #e2e8f0;text-align:center;color:#999;font-size:.85rem">
+          Buffer connection coming soon — posts will be queued directly from here
+        </div>
+      </div>
+    </div>
+
+    <!-- IG Online -->
+    <div id="ct-igon" class="inner-tab-section">
+      <div class="section-banner">PerforMotion Online — Instagram</div>
+      <div class="g4" style="margin-bottom:1.5rem">
+        ${widgetCard({label:'Reach 7d',value:fmtN(igon.reach7d),cur:igon.reach7d,prev:igon.reach7dPrev,sparkData:igon.reachTrend,sparkColour:'#D4B896',source:src})}
+        ${widgetCard({label:'Engagement Rate',value:fmtPct(igon.engagementRate),cur:igon.engagementRate,prev:igon.engagementRatePrev,benchmark:2,benchmarkLabel:'Benchmark',sparkData:igon.engagementTrend,sparkColour:'#D4B896',source:src})}
+        ${widgetCard({label:'Impressions 7d',value:fmtN(igon.impressions7d),cur:igon.impressions7d,prev:igon.impressionsPrev,sparkData:igon.impressionsTrend,sparkColour:'#D4B896',source:src})}
+        ${widgetCard({label:'Followers',value:fmtN(igon.followers),cur:igon.followers,prev:igon.followersPrev,sparkData:makeTrend(igon.followers,7,0.02),sparkColour:'#D4B896',source:src})}
+      </div>
+      <div class="chart-card" style="margin-bottom:1rem">
+        <h3>Daily Reach Trend — 30 Days</h3>
+        <div style="height:220px"><canvas id="ch_ct_on_reach"></canvas></div>
+      </div>
+      <div class="g2" style="margin-bottom:1rem">
+        <div class="chart-card">
+          <h3>Content by Pillar <span style="font-size:.75rem;color:#999;font-weight:400">— click values to edit</span></h3>
+          <div id="ct-on-pillar-inputs" style="margin-bottom:1rem">
+            ${Object.entries(pillarsOn).map(([k,v])=>`
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
+                <label style="width:120px;font-size:.82rem;font-weight:600;text-transform:capitalize">${k.replace(/([A-Z])/g,' $1')}</label>
+                <input type="number" min="0" max="100" value="${v}" data-pillar-on="${k}" style="width:60px;border:1px solid #e2e8f0;border-radius:4px;padding:.2rem .4rem;font-family:inherit">
+                <span style="font-size:.82rem;color:#888">%</span>
+              </div>`).join('')}
+          </div>
+          <div style="height:160px"><canvas id="ch_ct_on_pillars"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Voice Consistency Checker</h3>
+          <div id="ct-on-voice-list">
+            ${voiceDefaultsOn.map((item,i)=>`
+              <div class="voice-toggle">
+                <span style="font-size:.85rem">${item}</span>
+                <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer">
+                  <input type="checkbox" data-voice-on="${i}" ${voiceStateOn[i]?'checked':''} style="width:16px;height:16px;accent-color:#D4B896">
+                  <span style="font-size:.8rem;color:#888">${voiceStateOn[i]?'Yes':'No'}</span>
+                </label>
+              </div>`).join('')}
+          </div>
+          <div style="margin-top:1rem;padding:.75rem;background:#f8fafc;border-radius:6px;text-align:center">
+            <div style="font-size:.8rem;color:#888;margin-bottom:.25rem">Voice Score</div>
+            <div style="font-size:2rem;font-weight:800;color:#1B2A4A" id="ct-on-voice-score">${voiceStateOn.filter(Boolean).length}/5</div>
+          </div>
+        </div>
+      </div>
+      <div id="ct-igon-analytics"></div>
+    </div>
+
+    <!-- YouTube -->
+    <div id="ct-yt" class="inner-tab-section">
+      <div class="section-banner">YouTube</div>
+      <div class="g6" style="margin-bottom:1.5rem">
+        ${widgetCard({label:'Subscribers',value:fmtN(yt.subscribers),cur:yt.subscribers,prev:yt.subscribersPrev,sparkData:makeTrend(yt.subscribers,7,0.01),sparkColour:'#1B2A4A',source:src})}
+        ${widgetCard({label:'Views 7d',value:fmtN(yt.views7d),cur:yt.views7d,prev:yt.viewsPrev,sparkData:yt.viewsTrend,sparkColour:'#1B2A4A',source:src})}
+        ${widgetCard({label:'Watch Time (hrs)',value:fmtN(yt.watchTime7d),cur:yt.watchTime7d,prev:yt.watchTimePrev,sparkData:makeTrend(yt.watchTime7d,7,0.1),sparkColour:'#1B2A4A',source:src})}
+        ${widgetCard({label:'Subscribers Gained',value:'+'+fmtN(yt.subscribersGained7d),cur:yt.subscribersGained7d,prev:yt.subscribersGainedPrev,sparkData:makeTrend(yt.subscribersGained7d,7,0.2),sparkColour:'#1B2A4A',source:src})}
+        ${widgetCard({label:'Likes 7d',value:fmtN(yt.likes7d),cur:yt.likes7d,prev:yt.likesPrev,sparkData:makeTrend(yt.likes7d,7,0.15),sparkColour:'#1B2A4A',source:src})}
+        ${widgetCard({label:'Comments 7d',value:fmtN(yt.comments7d),cur:yt.comments7d,prev:yt.commentsPrev,sparkData:makeTrend(yt.comments7d,7,0.2),sparkColour:'#1B2A4A',source:src})}
+      </div>
+      <div class="chart-card" style="margin-bottom:1rem">
+        <h3>Views Trend — 30 Days</h3>
+        <div style="height:220px"><canvas id="ch_ct_yt_views"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Content Recycling — YouTube → Other Channels</h3>
+        <div style="padding:1rem;background:#f8fafc;border-radius:6px;border:1.5px dashed #e2e8f0;color:#999;font-size:.85rem;line-height:1.6">
+          <strong style="color:#1B2A4A">Coming soon:</strong> YouTube videos will appear here for one-click repurposing as LinkedIn posts, Instagram Reels, or Facebook clips via Buffer.
+        </div>
+      </div>
+    </div>
+
+    <!-- LinkedIn -->
+    <div id="ct-li" class="inner-tab-section">
+      <div class="section-banner">LinkedIn — Awaiting Connection</div>
+      <div class="card" style="border-left:4px solid #F59E0B;padding:1.25rem;margin-bottom:1rem">
+        <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#F59E0B;margin-bottom:.5rem">Connection Pending</div>
+        <p style="margin:0;font-size:.9rem;color:#333;line-height:1.6">LinkedIn data will appear here once the API connection is configured. The tab is ready — metrics, post analytics, and audience breakdown will render automatically when connected.</p>
+      </div>
+      <div class="g4" style="margin-bottom:1.5rem;opacity:.4;pointer-events:none">
+        ${widgetCard({label:'Followers',value:'—',source:'Mock'})}
+        ${widgetCard({label:'Impressions 7d',value:'—',source:'Mock'})}
+        ${widgetCard({label:'Engagement Rate',value:'—',source:'Mock'})}
+        ${widgetCard({label:'Post Clicks 7d',value:'—',source:'Mock'})}
+      </div>
+      <div class="chart-card">
+        <h3>Buffer — Post to LinkedIn</h3>
+        <div style="padding:1rem;background:#f8fafc;border-radius:6px;border:1.5px dashed #e2e8f0;text-align:center;color:#999;font-size:.85rem">
+          Buffer connection coming soon — posts will be queued directly from here
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Planner -->
+    <div id="ct-planner" class="inner-tab-section">
+      <div class="section-banner">Content Planner</div>
+      <div id="ct-planner-body"></div>
+    </div>
+
+    <!-- Content Ideas (AI) -->
+    <div id="ct-ideas" class="inner-tab-section">
+      <div class="section-banner">AI Content Ideas</div>
+      <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">Generates 5 content ideas based on your best-performing posts and audience data. Powered by Claude AI.</p>
+      <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap">
+        <div style="display:flex;gap:.5rem">
+          <button class="btn active" id="ai-content-hq-btn" onclick="aiContentBrand('HQ')" style="font-size:.82rem;padding:.4rem .9rem">HQ</button>
+          <button class="btn btn-secondary" id="ai-content-on-btn" onclick="aiContentBrand('Online')" style="font-size:.82rem;padding:.4rem .9rem">Online</button>
+        </div>
+        <button class="btn" id="ai-content-gen-btn">Generate Ideas</button>
+      </div>
+      <div id="ai-content-loading" style="display:none;color:#aaa;padding:1rem 0">Generating content ideas…</div>
+      <div id="ai-content-result"></div>
+    </div>
+  `;
+
+  // ── IG HQ analytics append
+  const igAnalyticsHQ = document.createElement('div');
+  igAnalyticsHQ.innerHTML = renderIGAnalytics(ighq, 'hq', '#2ABFBF');
+  document.getElementById('ct-ighq-analytics').appendChild(igAnalyticsHQ);
+
+  // ── IG Online analytics append
+  const igAnalyticsOn = document.createElement('div');
+  igAnalyticsOn.innerHTML = renderIGAnalytics(igon, 'on', '#D4B896');
+  document.getElementById('ct-igon-analytics').appendChild(igAnalyticsOn);
+
+  // ── Content Planner (lifted from brand-strategy)
+  const contentPlannerData = JSON.parse(localStorage.getItem(LS_CONTENT) || 'null') || { hq_ig:[], fb:[], on_ig:[], yt:[] };
+  function contentPlannerHTML(key, label) {
+    const rows = (contentPlannerData[key]||[]);
+    return `<div style="margin-bottom:1.5rem">
+      <div style="font-size:.95rem;font-weight:700;margin-bottom:.5rem;color:#1B2A4A">${label}</div>
+      <div style="margin-bottom:.5rem">
+        <label style="font-size:.82rem;color:#888">Monthly Goal: </label>
+        <input type="text" data-cp-goal="${key}" value="${(contentPlannerData[key]||{}).goal||''}" placeholder="e.g. 12 posts, 3 Reels" style="border:1px solid #e2e8f0;border-radius:4px;padding:.2rem .5rem;font-family:inherit;font-size:.82rem;width:200px">
+      </div>
+      <table class="dash-table" style="font-size:.8rem">
+        <thead><tr><th>Date</th><th>Format</th><th>Topic</th><th>Status</th><th></th></tr></thead>
+        <tbody id="cp-tbody-${key}">${rows.length?rows.map((r,i)=>`
+          <tr data-cp-row="${key}-${i}">
+            <td><input type="date" value="${r.date||''}" data-cp-cell="${key}-${i}-date" style="border:none;font-family:inherit;font-size:.8rem;width:110px"></td>
+            <td><input type="text" value="${r.format||''}" data-cp-cell="${key}-${i}-format" placeholder="Reel/Post/Story" style="border:none;font-family:inherit;font-size:.8rem;width:80px"></td>
+            <td><input type="text" value="${r.topic||''}" data-cp-cell="${key}-${i}-topic" placeholder="Topic..." style="border:none;font-family:inherit;font-size:.8rem;width:160px"></td>
+            <td><select data-cp-cell="${key}-${i}-status" style="border:none;font-family:inherit;font-size:.8rem"><option ${r.status==='Planned'?'selected':''}>Planned</option><option ${r.status==='In Progress'?'selected':''}>In Progress</option><option ${r.status==='Done'?'selected':''}>Done</option></select></td>
+            <td><button onclick="deleteCpRow('${key}',${i})" style="border:none;background:none;color:#EF4444;cursor:pointer;font-size:1rem">×</button></td>
+          </tr>`).join(''):'<tr><td colspan="5" style="color:#999;text-align:center">No content planned yet</td></tr>'}</tbody>
+      </table>
+      <button onclick="addCpRow('${key}')" style="margin-top:.5rem;padding:.3rem .8rem;border:1.5px dashed #2ABFBF;background:none;color:#2ABFBF;border-radius:4px;cursor:pointer;font-size:.8rem;font-weight:700">+ Add Row</button>
+    </div>`;
+  }
+  document.getElementById('ct-planner-body').innerHTML =
+    contentPlannerHTML('hq_ig','Instagram HQ') +
+    contentPlannerHTML('fb','Facebook HQ') +
+    contentPlannerHTML('on_ig','Instagram Online') +
+    contentPlannerHTML('yt','YouTube');
+
+  // ── Charts
+  setTimeout(() => {
+    lineChart('ch_ct_hq_reach', D30, [
+      { label:'Instagram HQ', data: ighq.reachTrend, borderColor:'#2ABFBF', backgroundColor:'rgba(42,191,191,.08)', fill:true },
+      { label:'Facebook',     data: fb.reachTrend,   borderColor:'#1B2A4A', backgroundColor:'rgba(27,42,74,.06)', fill:true },
+    ]);
+    lineChart('ch_ct_fb_reach', D30, [
+      { label:'Facebook', data: fb.reachTrend, borderColor:'#1B2A4A', backgroundColor:'rgba(27,42,74,.06)', fill:true },
+    ]);
+    lineChart('ch_ct_on_reach', D30, [
+      { label:'Instagram Online', data: igon.reachTrend, borderColor:'#D4B896' },
+    ]);
+    lineChart('ch_ct_yt_views', D30, [
+      { label:'YouTube Views', data: yt.viewsTrend, borderColor:'#1B2A4A' },
+    ]);
+    const hqPillarVals = Object.values(pillarsHQ);
+    const hqPillarKeys = Object.keys(pillarsHQ).map(k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()));
+    barChart('ch_ct_hq_pillars', hqPillarKeys, [{ label:'Coverage %', data: hqPillarVals, backgroundColor:'#2ABFBF' }], { horizontal: true });
+    const onPillarVals = Object.values(pillarsOn);
+    const onPillarKeys = Object.keys(pillarsOn).map(k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()));
+    barChart('ch_ct_on_pillars', onPillarKeys, [{ label:'Coverage %', data: onPillarVals, backgroundColor:'#D4B896' }], { horizontal: true });
+  }, 50);
+
+  // ── Pillar input listeners — HQ
+  el.querySelectorAll('[data-pillar-hq]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const stored = JSON.parse(localStorage.getItem(LS_PILLARS + '_hq') || 'null') || ighq.pillars;
+      stored[inp.dataset.pillarHq] = Number(inp.value);
+      localStorage.setItem(LS_PILLARS + '_hq', JSON.stringify(stored));
+      destroyChart('ch_ct_hq_pillars');
+      barChart('ch_ct_hq_pillars', Object.keys(stored).map(k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase())), [{ label:'Coverage %', data: Object.values(stored), backgroundColor:'#2ABFBF' }], { horizontal: true });
+    });
+  });
+
+  // ── Pillar input listeners — Online
+  el.querySelectorAll('[data-pillar-on]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const stored = JSON.parse(localStorage.getItem(LS_PILLARS + '_on') || 'null') || igon.pillars;
+      stored[inp.dataset.pillarOn] = Number(inp.value);
+      localStorage.setItem(LS_PILLARS + '_on', JSON.stringify(stored));
+      destroyChart('ch_ct_on_pillars');
+      barChart('ch_ct_on_pillars', Object.keys(stored).map(k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase())), [{ label:'Coverage %', data: Object.values(stored), backgroundColor:'#D4B896' }], { horizontal: true });
+    });
+  });
+
+  // ── Voice toggle listeners — HQ
+  el.querySelectorAll('[data-voice-hq]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const st = JSON.parse(localStorage.getItem(LS_VOICE_HQ) || 'null') || voiceDefaultsHQ.map(()=>false);
+      st[Number(cb.dataset.voiceHq)] = cb.checked;
+      cb.nextElementSibling.textContent = cb.checked ? 'Yes' : 'No';
+      localStorage.setItem(LS_VOICE_HQ, JSON.stringify(st));
+      document.getElementById('ct-hq-voice-score').textContent = st.filter(Boolean).length + '/5';
+    });
+  });
+
+  // ── Voice toggle listeners — Online
+  el.querySelectorAll('[data-voice-on]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const st = JSON.parse(localStorage.getItem(LS_VOICE_ON) || 'null') || voiceDefaultsOn.map(()=>false);
+      st[Number(cb.dataset.voiceOn)] = cb.checked;
+      cb.nextElementSibling.textContent = cb.checked ? 'Yes' : 'No';
+      localStorage.setItem(LS_VOICE_ON, JSON.stringify(st));
+      document.getElementById('ct-on-voice-score').textContent = st.filter(Boolean).length + '/5';
+    });
+  });
+
+  // ── Content Planner listeners
+  el.querySelectorAll('[data-cp-goal]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const k = inp.dataset.cpGoal;
+      const c = JSON.parse(localStorage.getItem(LS_CONTENT)||'null') || {};
+      if (!c[k] || typeof c[k] !== 'object') c[k] = [];
+      c[k].goal = inp.value;
+      localStorage.setItem(LS_CONTENT, JSON.stringify(c));
+    });
+  });
+  el.querySelectorAll('[data-cp-cell]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const [key,i,field] = inp.dataset.cpCell.split('-');
+      const c = JSON.parse(localStorage.getItem(LS_CONTENT)||'null') || {};
+      if (c[key] && c[key][i]) { c[key][i][field] = inp.value; localStorage.setItem(LS_CONTENT, JSON.stringify(c)); }
+    });
+  });
+  window.addCpRow = function(key) {
+    const c = JSON.parse(localStorage.getItem(LS_CONTENT)||'null') || { hq_ig:[], fb:[], on_ig:[], yt:[] };
+    if (!c[key]) c[key] = [];
+    c[key].push({ date:'', format:'', topic:'', status:'Planned' });
+    localStorage.setItem(LS_CONTENT, JSON.stringify(c));
+    BUILT['content'] = false; switchTab('content');
+  };
+  window.deleteCpRow = function(key, i) {
+    const c = JSON.parse(localStorage.getItem(LS_CONTENT)||'null') || {};
+    if (c[key]) { c[key].splice(i,1); localStorage.setItem(LS_CONTENT, JSON.stringify(c)); }
+    BUILT['content'] = false; switchTab('content');
+  };
+
+  // ── AI Content Ideas handlers
+  let activeBrand = 'HQ';
+  window.aiContentBrand = function(brand) {
+    activeBrand = brand;
+    document.getElementById('ai-content-hq-btn').className = brand === 'HQ' ? 'btn active' : 'btn btn-secondary';
+    document.getElementById('ai-content-on-btn').className = brand === 'Online' ? 'btn active' : 'btn btn-secondary';
+  };
+  document.getElementById('ai-content-gen-btn').addEventListener('click', async function() {
+    const btn     = this;
+    const loading = document.getElementById('ai-content-loading');
+    const result  = document.getElementById('ai-content-result');
+    btn.disabled = true; btn.textContent = 'Generating…';
+    loading.style.display = 'block'; result.innerHTML = '';
+    try {
+      const payload = { brand: activeBrand, instagramHQ: (D||MOCK).instagramHQ, instagramOnline: (D||MOCK).instagramOnline };
+      const res  = await fetch('/.netlify/functions/ai-content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error||'Generation failed. Try again.'}</div>`;
+        return;
+      }
+      const ideas = json.ideas?.ideas || json.ideas || [];
+      if (!Array.isArray(ideas) || !ideas.length) {
+        result.innerHTML = `<div class="card" style="padding:1.25rem;color:#aaa">No ideas returned. Try again.</div>`;
+        return;
+      }
+      const formatBadge = f => {
+        const colours = { reel:'#8B5CF6', carousel:'#2ABFBF', post:'#22C55E' };
+        return `<span style="display:inline-block;background:${colours[f]||'#666'};color:#fff;font-size:.7rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;text-transform:uppercase;letter-spacing:.4px">${f}</span>`;
+      };
+      result.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          ${ideas.map((idea,i)=>`
+            <div class="card" style="padding:1.5rem">
+              <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+                <span style="font-size:.8rem;font-weight:700;color:#888">#${i+1}</span>
+                ${formatBadge(idea.format||'post')}
+              </div>
+              <div style="margin-bottom:.6rem">
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#2ABFBF;margin-bottom:.3rem">Hook</div>
+                <p style="color:#fff;margin:0;font-weight:600;line-height:1.5">${idea.hook||'—'}</p>
+              </div>
+              <div style="margin-bottom:.6rem">
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#999;margin-bottom:.3rem">Caption</div>
+                <p style="color:#ddd;margin:0;line-height:1.6;font-size:.9rem">${idea.caption||'—'}</p>
+              </div>
+              <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:.6rem;margin-top:.6rem">
+                <span style="font-size:.78rem;color:#888;font-style:italic">${idea.why||''}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } catch(e) {
+      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Regenerate';
+      loading.style.display = 'none';
+    }
+  });
+};
+
 'use strict';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
@@ -3424,242 +3713,58 @@ function widgetCard({ label, value, prev, cur, format='n', benchmark, benchmarkL
   </div>`;
 }
 
-// ── TAB 10 — AI MARKETING INSIGHTS ───────────────────────────────────────────
-BUILDERS['ai-insights'] = function buildTabAIInsights() {
-  const el = document.getElementById('tab-ai-insights');
-  el.innerHTML = `
-    <div class="section-banner">AI Marketing Insights</div>
-    <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">Analyses this week's data across all channels and surfaces key wins, concerns and recommended actions. Powered by Claude AI.</p>
-    <button class="btn" id="ai-insights-btn" style="margin-bottom:1.5rem">Generate Insights</button>
-    <div id="ai-insights-loading" style="display:none;color:#aaa;padding:1rem 0">Analysing your data…</div>
-    <div id="ai-insights-result"></div>
-  `;
-
-  document.getElementById('ai-insights-btn').addEventListener('click', async function() {
-    const btn     = this;
-    const loading = document.getElementById('ai-insights-loading');
-    const result  = document.getElementById('ai-insights-result');
-    btn.disabled = true; btn.textContent = 'Generating…';
-    loading.style.display = 'block'; result.innerHTML = '';
-
-    try {
-      const res  = await fetch('/.netlify/functions/ai-insights', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(D || MOCK),
-      });
-      const json = await res.json();
-      if (!res.ok || json.error) {
-        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error || 'Generation failed. Try again.'}</div>`;
-        return;
-      }
-      const ins = json.insights || {};
-      if (ins.raw) { result.innerHTML = `<div class="card" style="padding:1.5rem;white-space:pre-wrap;color:#ddd;line-height:1.6">${ins.raw}</div>`; return; }
-
-      result.innerHTML = `
-        <div class="g2" style="margin-bottom:1.5rem">
-          <div class="card" style="padding:1.5rem;border-left:4px solid #22C55E">
-            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#22C55E;margin-bottom:.6rem">Top Win</div>
-            <p style="color:#ddd;margin:0;line-height:1.6">${ins.topWin||'—'}</p>
-          </div>
-          <div class="card" style="padding:1.5rem;border-left:4px solid #EF4444">
-            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#EF4444;margin-bottom:.6rem">Watch Out</div>
-            <p style="color:#ddd;margin:0;line-height:1.6">${ins.watchOut||'—'}</p>
-          </div>
-        </div>
-        <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
-          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2ABFBF;margin-bottom:.75rem">Weekly Summary</div>
-          <p style="color:#ddd;margin:0;line-height:1.6">${ins.summary||'—'}</p>
-        </div>
-        <h3 style="color:#fff;margin:0 0 1rem">Key Insights</h3>
-        <div class="g3" style="margin-bottom:1.5rem">
-          ${(ins.insights||[]).map(i=>`<div class="card" style="padding:1.25rem"><p style="color:#ddd;margin:0;line-height:1.5;font-size:.9rem">${i}</p></div>`).join('')}
-        </div>
-        <h3 style="color:#fff;margin:0 0 1rem">Recommended Actions</h3>
-        <div class="card" style="padding:1.5rem">
-          <ol style="margin:0;padding-left:1.25rem;color:#ddd;line-height:1.8">
-            ${(ins.actions||[]).map(a=>`<li>${a}</li>`).join('')}
-          </ol>
-        </div>
-      `;
-    } catch(e) {
-      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
-    } finally {
-      btn.disabled = false; btn.textContent = 'Regenerate';
-      loading.style.display = 'none';
-    }
-  });
-};
-
-// ── TAB 11 — AI CONTENT IDEAS ─────────────────────────────────────────────────
-BUILDERS['ai-content'] = function buildTabAIContent() {
-  const el = document.getElementById('tab-ai-content');
-  el.innerHTML = `
-    <div class="section-banner">AI Content Ideas</div>
-    <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">Generates 5 Instagram content ideas based on your best-performing posts and audience data. Powered by Claude AI.</p>
-    <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap">
-      <div style="display:flex;gap:.5rem">
-        <button class="btn active" id="ai-content-hq-btn" onclick="aiContentBrand('HQ')" style="font-size:.82rem;padding:.4rem .9rem">HQ</button>
-        <button class="btn btn-secondary" id="ai-content-on-btn" onclick="aiContentBrand('Online')" style="font-size:.82rem;padding:.4rem .9rem">Online</button>
-      </div>
-      <button class="btn" id="ai-content-gen-btn">Generate Ideas</button>
-    </div>
-    <div id="ai-content-loading" style="display:none;color:#aaa;padding:1rem 0">Generating content ideas…</div>
-    <div id="ai-content-result"></div>
-  `;
-
-  let activeBrand = 'HQ';
-  window.aiContentBrand = function(brand) {
-    activeBrand = brand;
-    document.getElementById('ai-content-hq-btn').className = brand === 'HQ' ? 'btn active' : 'btn btn-secondary';
-    document.getElementById('ai-content-on-btn').className = brand === 'Online' ? 'btn active' : 'btn btn-secondary';
-  };
-
-  document.getElementById('ai-content-gen-btn').addEventListener('click', async function() {
-    const btn     = this;
-    const loading = document.getElementById('ai-content-loading');
-    const result  = document.getElementById('ai-content-result');
-    btn.disabled = true; btn.textContent = 'Generating…';
-    loading.style.display = 'block'; result.innerHTML = '';
-
-    try {
-      const payload = { brand: activeBrand, instagramHQ: (D||MOCK).instagramHQ, instagramOnline: (D||MOCK).instagramOnline };
-      const res  = await fetch('/.netlify/functions/ai-content', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (!res.ok || json.error) {
-        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error||'Generation failed. Try again.'}</div>`;
-        return;
-      }
-      const ideas = json.ideas?.ideas || json.ideas || [];
-      if (!Array.isArray(ideas) || !ideas.length) {
-        result.innerHTML = `<div class="card" style="padding:1.25rem;color:#aaa">No ideas returned. Try again.</div>`;
-        return;
-      }
-      const formatBadge = f => {
-        const colours = { reel:'#8B5CF6', carousel:'#2ABFBF', post:'#22C55E' };
-        return `<span style="display:inline-block;background:${colours[f]||'#666'};color:#fff;font-size:.7rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;text-transform:uppercase;letter-spacing:.4px">${f}</span>`;
-      };
-      result.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:1rem">
-          ${ideas.map((idea,i)=>`
-            <div class="card" style="padding:1.5rem">
-              <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
-                <span style="font-size:.8rem;font-weight:700;color:#888">#${i+1}</span>
-                ${formatBadge(idea.format||'post')}
-              </div>
-              <div style="margin-bottom:.6rem">
-                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#2ABFBF;margin-bottom:.3rem">Hook</div>
-                <p style="color:#fff;margin:0;font-weight:600;line-height:1.5">${idea.hook||'—'}</p>
-              </div>
-              <div style="margin-bottom:.6rem">
-                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#999;margin-bottom:.3rem">Caption</div>
-                <p style="color:#ddd;margin:0;line-height:1.6;font-size:.9rem">${idea.caption||'—'}</p>
-              </div>
-              <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:.6rem;margin-top:.6rem">
-                <span style="font-size:.78rem;color:#888;font-style:italic">${idea.why||''}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } catch(e) {
-      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
-    } finally {
-      btn.disabled = false; btn.textContent = 'Regenerate';
-      loading.style.display = 'none';
-    }
-  });
-};
-
-// ── TAB 12 — AI SEO AUDIT ─────────────────────────────────────────────────────
-BUILDERS['ai-seo'] = function buildTabAISEO() {
-  const el = document.getElementById('tab-ai-seo');
-  el.innerHTML = `
-    <div class="section-banner">AI SEO Audit</div>
-    <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">Analyses your Search Console keywords and top pages to identify quick wins, ranking opportunities and content gaps. Powered by Claude AI.</p>
-    <button class="btn" id="ai-seo-btn" style="margin-bottom:1.5rem">Run Audit</button>
-    <div id="ai-seo-loading" style="display:none;color:#aaa;padding:1rem 0">Auditing your SEO data…</div>
-    <div id="ai-seo-result"></div>
-  `;
-
-  document.getElementById('ai-seo-btn').addEventListener('click', async function() {
-    const btn     = this;
-    const loading = document.getElementById('ai-seo-loading');
-    const result  = document.getElementById('ai-seo-result');
-    btn.disabled = true; btn.textContent = 'Auditing…';
-    loading.style.display = 'block'; result.innerHTML = '';
-
-    try {
-      const d = D || MOCK;
-      const res = await fetch('/.netlify/functions/ai-seo', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seo: d.seo, ga4TopPages: d.ga4TopPages, ga4: d.ga4 }),
-      });
-      const json = await res.json();
-      if (!res.ok || json.error) {
-        result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">${json.error||'Audit failed. Try again.'}</div>`;
-        return;
-      }
-      const audit = json.audit || {};
-      if (audit.raw) { result.innerHTML = `<div class="card" style="padding:1.5rem;white-space:pre-wrap;color:#ddd;line-height:1.6">${audit.raw}</div>`; return; }
-
-      const score = Number(audit.score||0);
-      const scoreColour = score >= 70 ? '#22C55E' : score >= 45 ? '#F59E0B' : '#EF4444';
-      const scoreLabel  = score >= 70 ? 'Good' : score >= 45 ? 'Fair' : 'Needs Work';
-
-      const listItems = (arr, colour) => (arr||[]).map(item=>`
-        <div style="border-left:3px solid ${colour};padding:.75rem 1rem;margin-bottom:.75rem;background:rgba(255,255,255,.03);border-radius:0 4px 4px 0">
-          <div style="font-weight:700;color:#fff;margin-bottom:.3rem;font-size:.9rem">${item.title||item.topic||'—'}</div>
-          ${item.keyword?`<div style="font-size:.78rem;color:#2ABFBF;margin-bottom:.3rem">Target: ${item.keyword}${item.intent?' · '+item.intent:''}</div>`:''}
-          <div style="font-size:.85rem;color:#bbb;line-height:1.5">${item.description||''}</div>
-        </div>
-      `).join('');
-
-      result.innerHTML = `
-        <div class="g2" style="margin-bottom:1.5rem">
-          <div class="card" style="padding:1.5rem;display:flex;align-items:center;gap:1.5rem">
-            <div style="font-size:3rem;font-weight:800;color:${scoreColour};line-height:1">${score}</div>
-            <div>
-              <div style="font-weight:700;color:${scoreColour};font-size:1rem">${scoreLabel}</div>
-              <div style="font-size:.8rem;color:#888">SEO Health Score</div>
-            </div>
-          </div>
-          <div class="card" style="padding:1.5rem">
-            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2ABFBF;margin-bottom:.75rem">Summary</div>
-            <p style="color:#ddd;margin:0;line-height:1.6;font-size:.9rem">${audit.summary||'—'}</p>
-          </div>
-        </div>
-        <div class="g3">
-          <div>
-            <h3 style="color:#22C55E;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Quick Wins</h3>
-            ${listItems(audit.quickWins, '#22C55E')}
-          </div>
-          <div>
-            <h3 style="color:#2ABFBF;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Opportunities</h3>
-            ${listItems(audit.opportunities, '#2ABFBF')}
-          </div>
-          <div>
-            <h3 style="color:#F59E0B;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin:0 0 .75rem">Content Gaps</h3>
-            ${listItems(audit.contentGaps, '#F59E0B')}
-          </div>
-        </div>
-      `;
-    } catch(e) {
-      result.innerHTML = `<div class="card" style="color:#EF4444;padding:1.25rem">Network error: ${e.message}</div>`;
-    } finally {
-      btn.disabled = false; btn.textContent = 'Re-run Audit';
-      loading.style.display = 'none';
-    }
-  });
-};
-
 // ── AD BUILD TAB ──────────────────────────────────────────────────────────────
 BUILDERS['ad-build'] = function buildAdBuild() {
   const LS_BUILD    = 'PM_AD_BUILD';
   const LS_LP_URL   = 'PM_LP_URL';
   const LS_FEEDBACK = 'PM_LP_FEEDBACK';
+  const LS_AB_PAGES  = 'pm_landing_pages';
+  const LS_AB_BUILDS = 'pm_ad_builds';
+
+  const defaultPages = [
+    { id: 1, name: 'Landing Page 1', slug: 'lp-1', status: 'Draft', history: [] },
+    { id: 2, name: 'Landing Page 2', slug: 'lp-2', status: 'Draft', history: [] },
+    { id: 3, name: 'Landing Page 3', slug: 'lp-3', status: 'Draft', history: [] },
+  ];
+  const defaultBuilds = [
+    { id: 1, name: 'HQ Tier 1 Launch', status: 'Active' },
+  ];
+
+  let pages  = JSON.parse(localStorage.getItem(LS_AB_PAGES)  || 'null') || defaultPages;
+  let builds = JSON.parse(localStorage.getItem(LS_AB_BUILDS) || 'null') || defaultBuilds;
+
+  function landingPageHTML() {
+    return pages.map((p, pi) => `
+      <div class="chart-card" style="margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+          <div>
+            <input value="${p.name}" onchange="updatePageName(${pi},this.value)" style="font-size:1rem;font-weight:700;border:none;background:none;color:#1B2A4A;font-family:inherit;width:220px;outline:none;border-bottom:2px solid transparent" onfocus="this.style.borderBottomColor='#2ABFBF'" onblur="this.style.borderBottomColor='transparent'">
+            <div style="font-size:.75rem;color:#888;margin-top:.2rem">Slug: /${p.slug} · Status: <span style="color:${p.status==='Live'?'#10B981':p.status==='Draft'?'#F59E0B':'#94A3B8'};font-weight:700">${p.status}</span></div>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <select onchange="updatePageStatus(${pi},this.value)" style="border:1px solid #e2e8f0;border-radius:4px;font-family:inherit;font-size:.82rem;padding:.3rem .5rem">
+              <option ${p.status==='Draft'?'selected':''}>Draft</option>
+              <option ${p.status==='Review'?'selected':''}>Review</option>
+              <option ${p.status==='Live'?'selected':''}>Live</option>
+              <option ${p.status==='Paused'?'selected':''}>Paused</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:.75rem">
+          <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">Page Notes / Briefing</div>
+          <textarea data-page-notes="${pi}" placeholder="Headline, offer, CTA, target audience…" style="width:100%;min-height:80px;border:1.5px solid #e2e8f0;border-radius:6px;padding:.75rem;font-family:inherit;font-size:.85rem;resize:vertical;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">${p.notes||''}</textarea>
+        </div>
+        <div>
+          <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">Version History</div>
+          ${p.history && p.history.length ? `<table class="dash-table" style="font-size:.8rem"><thead><tr><th>Date</th><th>Note</th></tr></thead><tbody>${p.history.map(h=>`<tr><td>${h.date}</td><td>${h.note}</td></tr>`).join('')}</tbody></table>` : '<div style="color:#aaa;font-size:.82rem;padding:.5rem 0">No version history yet — add a note and save to create an entry.</div>'}
+          <div style="display:flex;gap:.5rem;margin-top:.5rem">
+            <input id="page-history-input-${pi}" placeholder="Version note (e.g. Updated headline)" style="flex:1;border:1px solid #e2e8f0;border-radius:4px;padding:.3rem .6rem;font-family:inherit;font-size:.82rem;outline:none">
+            <button onclick="addPageHistory(${pi})" style="padding:.3rem .8rem;background:#1B2A4A;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:.82rem;font-weight:700">Save Version</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
 
   const el = document.getElementById('tab-ad-build');
 
@@ -3722,59 +3827,88 @@ BUILDERS['ad-build'] = function buildAdBuild() {
     : '<div style="font-size:.8rem;color:#bbb;padding:.25rem 0">No notes yet.</div>';
 
   el.innerHTML = `
-    <div class="section-banner" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
-      <div>
-        <div>HQ Tier 1 Ad Launch — Build Tracker</div>
-        <div style="font-size:.8rem;font-weight:400;color:#aaa;margin-top:.2rem">Perf Core · Plus · Prime — 40+ Brisbane</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:2rem;font-weight:800;color:#2ABFBF">${pct}%</div>
-        <div style="font-size:.75rem;color:#aaa">${doneCount}/${STEPS.length} steps done</div>
-      </div>
+    <div class="inner-tabs">
+      <button class="inner-tab-btn active" data-itab="ab-tier1" onclick="switchInnerTab('ab','tier1')">Tier 1 Launch</button>
+      <button class="inner-tab-btn" data-itab="ab-new" onclick="switchInnerTab('ab','new')">New Ad Build</button>
+      <button class="inner-tab-btn" data-itab="ab-pages" onclick="switchInnerTab('ab','pages')">Landing Pages</button>
     </div>
 
-    <div class="chart-card" style="padding:.75rem 1.25rem;margin-bottom:1.25rem">
-      <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#888;margin-bottom:.35rem">
-        <span>Overall progress</span><span>${pct}%</span>
-      </div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
-
-      <div class="chart-card">
-        <h3 style="margin-bottom:1rem">Launch Steps</h3>
-        ${stepsHtml}
-      </div>
-
-      <div>
-        <div class="chart-card" style="margin-bottom:1rem">
-          <h3>Landing Page Preview</h3>
-          <p style="font-size:.8rem;color:#888;margin-bottom:.75rem">Build your page in ActiveCampaign, then paste the URL here to preview and review it.</p>
-          <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
-            <input type="url" id="lp-url-input" value="${lpUrl.replace(/"/g, '&quot;')}" placeholder="https://…activehosted.com/…"
-                   style="flex:1;padding:.4rem .7rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.83rem;outline:none"
-                   onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">
-            <button class="btn" style="font-size:.8rem;padding:.4rem .9rem;white-space:nowrap" onclick="saveLpUrl()">Load</button>
-          </div>
-          <div id="lp-preview-wrap">
-            ${lpUrl
-              ? `<iframe src="${lpUrl.replace(/"/g, '&quot;')}" style="width:100%;height:520px;border:2px solid #e2e8f0;border-radius:8px" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`
-              : `<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:8px;height:200px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.88rem;text-align:center;padding:1rem">
-                   Paste your ActiveCampaign landing page URL above to preview it here
-                 </div>`}
-          </div>
+    <!-- Tier 1 Launch -->
+    <div id="ab-tier1" class="inner-tab-section active">
+      <div class="section-banner" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+        <div>
+          <div>HQ Tier 1 Ad Launch — Build Tracker</div>
+          <div style="font-size:.8rem;font-weight:400;color:#aaa;margin-top:.2rem">Perf Core · Plus · Prime — 40+ Brisbane</div>
         </div>
+        <div style="text-align:right">
+          <div style="font-size:2rem;font-weight:800;color:#2ABFBF">${pct}%</div>
+          <div style="font-size:.75rem;color:#aaa">${doneCount}/${STEPS.length} steps done</div>
+        </div>
+      </div>
+
+      <div class="chart-card" style="padding:.75rem 1.25rem;margin-bottom:1.25rem">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#888;margin-bottom:.35rem">
+          <span>Overall progress</span><span>${pct}%</span>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
 
         <div class="chart-card">
-          <h3>Landing Page Notes</h3>
-          <p style="font-size:.8rem;color:#888;margin-bottom:.6rem">Record what needs changing, what's working, or feedback from your course.</p>
-          <textarea id="lp-feedback-input" class="priority-box" placeholder="e.g. Headline too generic — try adding Brisbane. CTA button needs brand teal. Need a photo of the gym." style="min-height:90px"></textarea>
-          <button class="btn" style="font-size:.8rem;padding:.4rem .9rem;margin-top:.5rem" onclick="saveLpFeedback()">Save Note</button>
-          <div id="lp-feedback-history" style="margin-top:.75rem">${feedbackHistoryHtml}</div>
+          <h3 style="margin-bottom:1rem">Launch Steps</h3>
+          ${stepsHtml}
         </div>
-      </div>
 
+        <div>
+          <div class="chart-card" style="margin-bottom:1rem">
+            <h3>Landing Page Preview</h3>
+            <p style="font-size:.8rem;color:#888;margin-bottom:.75rem">Build your page in ActiveCampaign, then paste the URL here to preview and review it.</p>
+            <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+              <input type="url" id="lp-url-input" value="${lpUrl.replace(/"/g, '&quot;')}" placeholder="https://…activehosted.com/…"
+                     style="flex:1;padding:.4rem .7rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.83rem;outline:none"
+                     onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">
+              <button class="btn" style="font-size:.8rem;padding:.4rem .9rem;white-space:nowrap" onclick="saveLpUrl()">Load</button>
+            </div>
+            <div id="lp-preview-wrap">
+              ${lpUrl
+                ? `<iframe src="${lpUrl.replace(/"/g, '&quot;')}" style="width:100%;height:520px;border:2px solid #e2e8f0;border-radius:8px" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`
+                : `<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:8px;height:200px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.88rem;text-align:center;padding:1rem">
+                     Paste your ActiveCampaign landing page URL above to preview it here
+                   </div>`}
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3>Landing Page Notes</h3>
+            <p style="font-size:.8rem;color:#888;margin-bottom:.6rem">Record what needs changing, what's working, or feedback from your course.</p>
+            <textarea id="lp-feedback-input" class="priority-box" placeholder="e.g. Headline too generic — try adding Brisbane. CTA button needs brand teal. Need a photo of the gym." style="min-height:90px"></textarea>
+            <button class="btn" style="font-size:.8rem;padding:.4rem .9rem;margin-top:.5rem" onclick="saveLpFeedback()">Save Note</button>
+            <div id="lp-feedback-history" style="margin-top:.75rem">${feedbackHistoryHtml}</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- New Ad Build -->
+    <div id="ab-new" class="inner-tab-section">
+      <div class="section-banner">New Ad Build</div>
+      <div class="chart-card" style="margin-bottom:1rem">
+        <h3>Active Ad Builds</h3>
+        <div id="ab-builds-list"></div>
+        <button onclick="addNewBuild()" style="margin-top:.75rem;padding:.4rem .9rem;background:#2ABFBF;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:700;font-size:.85rem">+ New Ad Build</button>
+      </div>
+      <div class="card" style="border-left:4px solid #F59E0B;padding:1.25rem">
+        <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#F59E0B;margin-bottom:.5rem">How to use</div>
+        <p style="margin:0;font-size:.85rem;color:#333;line-height:1.6">Each Ad Build tracks a campaign from landing page → email sequence → ad creative → launch checklist. Start a new build for each distinct offer or audience you're targeting. Tier 1 Launch is the template.</p>
+      </div>
+    </div>
+
+    <!-- Landing Pages -->
+    <div id="ab-pages" class="inner-tab-section">
+      <div class="section-banner">Landing Pages</div>
+      <div id="ab-pages-list">${landingPageHTML()}</div>
     </div>
   `;
 
@@ -3806,22 +3940,146 @@ BUILDERS['ad-build'] = function buildAdBuild() {
         <div style="font-size:.82rem;color:#333;white-space:pre-wrap">${f.text}</div>
       </div>`).join('');
   };
+
+  // Landing page functions
+  window.updatePageName = function(pi, val) {
+    const pg = JSON.parse(localStorage.getItem(LS_AB_PAGES)||'null') || defaultPages;
+    pg[pi].name = val;
+    localStorage.setItem(LS_AB_PAGES, JSON.stringify(pg));
+  };
+  window.updatePageStatus = function(pi, val) {
+    const pg = JSON.parse(localStorage.getItem(LS_AB_PAGES)||'null') || defaultPages;
+    pg[pi].status = val;
+    localStorage.setItem(LS_AB_PAGES, JSON.stringify(pg));
+    BUILT['ad-build'] = false; switchTab('ad-build'); setTimeout(()=>switchInnerTab('ab','pages'),50);
+  };
+  window.addPageHistory = function(pi) {
+    const inp = document.getElementById('page-history-input-' + pi);
+    if (!inp || !inp.value.trim()) return;
+    const pg = JSON.parse(localStorage.getItem(LS_AB_PAGES)||'null') || defaultPages;
+    if (!pg[pi].history) pg[pi].history = [];
+    pg[pi].history.push({ date: new Date().toLocaleDateString('en-AU'), note: inp.value.trim() });
+    localStorage.setItem(LS_AB_PAGES, JSON.stringify(pg));
+    BUILT['ad-build'] = false; switchTab('ad-build'); setTimeout(()=>switchInnerTab('ab','pages'),50);
+  };
+
+  // Page notes listener
+  el.querySelectorAll('[data-page-notes]').forEach(ta => {
+    ta.addEventListener('input', () => {
+      const pi = Number(ta.dataset.pageNotes);
+      const pg = JSON.parse(localStorage.getItem(LS_AB_PAGES)||'null') || defaultPages;
+      pg[pi].notes = ta.value;
+      localStorage.setItem(LS_AB_PAGES, JSON.stringify(pg));
+    });
+  });
+
+  // Builds list render
+  function renderBuilds() {
+    const bl = JSON.parse(localStorage.getItem(LS_AB_BUILDS)||'null') || defaultBuilds;
+    const cont = document.getElementById('ab-builds-list');
+    if (!cont) return;
+    cont.innerHTML = bl.length ? `<table class="dash-table" style="font-size:.85rem"><thead><tr><th>Build Name</th><th>Status</th></tr></thead><tbody>${bl.map(b=>`<tr><td style="font-weight:700">${b.name}</td><td><span style="color:${b.status==='Active'?'#10B981':'#94A3B8'};font-weight:700">${b.status}</span></td></tr>`).join('')}</tbody></table>` : '<div style="color:#aaa;font-size:.85rem;padding:.5rem 0">No builds yet. Click + New Ad Build to start.</div>';
+  }
+  renderBuilds();
+
+  window.addNewBuild = function() {
+    const name = prompt('New Ad Build name:');
+    if (!name) return;
+    const bl = JSON.parse(localStorage.getItem(LS_AB_BUILDS)||'null') || defaultBuilds;
+    bl.push({ id: Date.now(), name, status: 'Active' });
+    localStorage.setItem(LS_AB_BUILDS, JSON.stringify(bl));
+    renderBuilds();
+  };
+};
+
+BUILDERS['files-skills'] = function buildFilesSkillsTab() {
+  const el = document.getElementById('tab-files-skills');
+  const skills = [
+    { name:'/overview', file:'overview', desc:'Command centre — daily summary across all channels. Open this first.' },
+    { name:'/analytics', file:'analytics', desc:'Marketing Analytics & Reporting — pull structured reports from connected channels.' },
+    { name:'/ads', file:'ads', desc:'Paid Ads Strategy & Management — plan, analyse and optimise Meta campaigns.' },
+    { name:'/ad-creative', file:'ad-creative', desc:'Ad Creative Production — generate and review ad copy, images and video briefs.' },
+    { name:'/emails', file:'emails', desc:'Email Marketing — draft, review and schedule ActiveCampaign sequences.' },
+    { name:'/social', file:'social', desc:'Social Media Content — plan and draft posts across Facebook, Instagram, LinkedIn and YouTube.' },
+    { name:'/content-strategy', file:'content-strategy', desc:'Content Strategy — build a quarterly content plan aligned to business goals.' },
+    { name:'/copywriting', file:'copywriting', desc:'Brand Copywriting — write on-brand copy in the PerforMotion voice.' },
+    { name:'/copy-edit', file:'copy-edit', desc:'Copy Editing & Proofreading — review drafts for tone, clarity and errors.' },
+    { name:'/seo-audit', file:'seo-audit', desc:'SEO Audit — crawl the site and surface critical SEO issues and fixes.' },
+    { name:'/ai-seo', file:'ai-seo', desc:'AI-Powered SEO — use AI to identify content gaps and ranking opportunities.' },
+    { name:'/schema', file:'schema', desc:'Schema Markup — generate and validate structured data for the website.' },
+    { name:'/cro', file:'cro', desc:'Conversion Rate Optimisation — identify friction points and improve booking rates.' },
+    { name:'/ab-testing', file:'ab-testing', desc:'A/B Testing — set up and analyse split tests across ads, pages and emails.' },
+    { name:'/lead-magnet', file:'lead-magnet', desc:'Lead Magnet Creation — design and build offers that capture email subscribers.' },
+    { name:'/popups', file:'popups', desc:'Popups & On-site Lead Capture — configure opt-in triggers and sequences.' },
+    { name:'/signup', file:'signup', desc:'Sign-up Flow Optimisation — audit and improve the booking and registration flow.' },
+    { name:'/onboarding', file:'onboarding', desc:'Member Onboarding — design the welcome sequence for new clients and members.' },
+    { name:'/churn-prevent', file:'churn-prevent', desc:'Churn Prevention & Retention — identify at-risk members and action retention sequences.' },
+    { name:'/referrals', file:'referrals', desc:'Referral & Word of Mouth — build referral mechanisms into the client journey.' },
+    { name:'/cold-email', file:'cold-email', desc:'Cold Outreach — write and sequence cold email campaigns for B2B or corporate wellness.' },
+    { name:'/customer-research', file:'customer-research', desc:'Customer Research & Insights — analyse client data and surface audience insights.' },
+    { name:'/comp-profile', file:'comp-profile', desc:'Competitor Profile — build a detailed profile of a specific competitor.' },
+    { name:'/competitors', file:'competitors', desc:'Competitor Intelligence — ongoing monitoring and comparison across the category.' },
+    { name:'/pricing', file:'pricing', desc:'Pricing Strategy — model and review service pricing and packaging.' },
+    { name:'/product-marketing', file:'product-marketing', desc:'PerforMotion Master Brand & Marketing Context — the full brand brief and positioning.' },
+    { name:'/mktg-psych', file:'mktg-psych', desc:'Marketing Psychology — apply behavioural principles to messaging and design.' },
+    { name:'/mktg-ideas', file:'mktg-ideas', desc:'Marketing Ideas Generation — rapid ideation across any channel or challenge.' },
+    { name:'/launch', file:'launch', desc:'Campaign & Product Launch Planning — build a launch plan for a new offer or event.' },
+    { name:'/community', file:'community', desc:'Community Building — design and grow a community around PerforMotion.' },
+    { name:'/co-marketing', file:'co-marketing', desc:'Partnership & Co-Marketing — identify and activate referral or co-brand partners.' },
+    { name:'/revops', file:'revops', desc:'Revenue Operations — connect sales, marketing and service for better attribution.' },
+    { name:'/sales-enable', file:'sales-enable', desc:'Sales Enablement — build collateral and frameworks for the sales conversation.' },
+    { name:'/paywalls', file:'paywalls', desc:'Gated Content & Paywall Strategy — design and deploy gated content offers.' },
+    { name:'/free-tools', file:'free-tools', desc:'Free Tools & Resources — create free tools that generate leads and backlinks.' },
+    { name:'/programmatic-seo', file:'programmatic-seo', desc:'Programmatic SEO — build templated pages at scale for long-tail keywords.' },
+    { name:'/video', file:'video', desc:'Video Content Strategy — plan YouTube and short-form video for growth.' },
+    { name:'/image', file:'image', desc:'Visual Content Direction — brief and direct visual assets across all channels.' },
+    { name:'/aso', file:'aso', desc:'App Store & Profile Optimisation — improve discoverability on social and app platforms.' },
+    { name:'/directory', file:'directory', desc:'Directory & Citation Management — build and maintain local business citations.' },
+    { name:'/add-goal', file:'add-goal', desc:'Add a Goal to the Dashboard — adds a new goal card via URL param. Use with Goals tab.' },
+    { name:'/site-arch', file:'site-arch', desc:'Site Architecture — plan or audit the website\'s information architecture.' },
+  ];
+
+  el.innerHTML = `
+    <div class="section-banner">Files & Skills Index</div>
+    <p style="color:#aaa;margin-bottom:1.5rem;max-width:640px;line-height:1.6">All installed Claude Code skills — what each does and when to use it. Skills are invoked with <code style="background:rgba(255,255,255,.08);padding:.1rem .35rem;border-radius:3px;font-size:.85em">/skill-name</code> in the Claude Code prompt.</p>
+    <div style="margin-bottom:1rem">
+      <input id="skills-search" placeholder="Search skills…" oninput="filterSkills(this.value)" style="width:100%;max-width:400px;border:1.5px solid #e2e8f0;border-radius:6px;padding:.5rem .75rem;font-family:inherit;font-size:.9rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">
+    </div>
+    <div class="chart-card">
+      <table class="dash-table" id="skills-table">
+        <thead><tr><th style="width:160px">Skill</th><th>What it does &amp; when to use it</th></tr></thead>
+        <tbody>
+          ${skills.map(s=>`
+            <tr class="skill-row">
+              <td><code style="background:#f0f4f8;color:#1B2A4A;padding:.2rem .4rem;border-radius:3px;font-size:.82rem;font-weight:700">${s.name}</code></td>
+              <td style="font-size:.85rem;color:#444;line-height:1.5">${s.desc}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  window.filterSkills = function(q) {
+    const rows = document.querySelectorAll('.skill-row');
+    const lq = q.toLowerCase();
+    rows.forEach(r => {
+      r.style.display = r.textContent.toLowerCase().includes(lq) ? '' : 'none';
+    });
+  };
 };
 
 // ── SHELL BUILDER ─────────────────────────────────────────────────────────────
 const TABS = [
-  { id:'all-channels',   label:'All Channels' },
-  { id:'hq-overview',    label:'HQ Overview' },
-  { id:'online-overview',label:'Online Overview' },
-  { id:'seo',            label:'SEO Rankings' },
-  { id:'email',          label:'Email' },
-  { id:'paid-ads',       label:'Paid Ads' },
+  { id:'overview',       label:'Overview' },
+  { id:'content',        label:'Content' },
+  { id:'meta-ads',       label:'Meta Ads' },
   { id:'ad-build',       label:'Ad Build' },
+  { id:'activecampaign', label:'ActiveCampaign' },
+  { id:'website',        label:'Website' },
   { id:'brand-strategy', label:'Brand Strategy' },
   { id:'goals',          label:'Goals' },
-  { id:'ai-insights',    label:'AI Insights' },
-  { id:'ai-content',     label:'Content Ideas' },
-  { id:'ai-seo',         label:'SEO Audit' },
+  { id:'files-skills',   label:'Files & Skills' },
 ];
 
 function buildShell() {
