@@ -32,13 +32,15 @@
  *  Tip: set a recurring calendar reminder for every 50 days so you never miss it.
  */
 
-const GRAPH = 'https://graph.facebook.com/v19.0';
+const GRAPH   = 'https://graph.facebook.com/v19.0';
+const WINDSOR = 'https://connectors.windsor.ai/all';
 
 exports.handler = async () => {
-  const token       = process.env.META_ACCESS_TOKEN;
-  const adAccountId = (process.env.META_AD_ACCOUNT_ID || '').replace(/^act_/, '');
-  const hqPageId    = process.env.META_HQ_PAGE_ID;
+  const token        = process.env.META_ACCESS_TOKEN;
+  const adAccountId  = (process.env.META_AD_ACCOUNT_ID || '').replace(/^act_/, '');
+  const hqPageId     = process.env.META_HQ_PAGE_ID;
   const onlinePageId = process.env.META_ONLINE_PAGE_ID;
+  const windsorKey   = process.env.WINDSOR_API_KEY;
 
   if (!token) {
     return {
@@ -147,17 +149,23 @@ exports.handler = async () => {
     ]);
 
     // Fetch per-post insights for IG HQ and Online (reach + saved per post)
-    const [igHqPostInsights, igOnPostInsights] = await Promise.all([
+    const [igHqPostInsights, igOnPostInsights, windsor7d, windsor30d, windsor14d] = await Promise.all([
       igHqMedia ? fetchPostInsights(igHqMedia.data   || [], token) : [],
       igOnMedia ? fetchPostInsights(igOnMedia.data   || [], token) : [],
+      windsorKey ? windsorFetch(windsorKey, 'last_7d',  'date,account_name,reach,accounts_engaged').catch(() => null) : null,
+      windsorKey ? windsorFetch(windsorKey, 'last_30d', 'date,account_name,reach,accounts_engaged').catch(() => null) : null,
+      windsorKey ? windsorFetch(windsorKey, 'last_14d', 'date,account_name,reach,accounts_engaged').catch(() => null) : null,
     ]);
+
+    const windsorHQ   = buildWindsorIG(windsor7d,  windsor30d, windsor14d, 'performotion_hq');
+    const windsorOnline = buildWindsorIG(windsor7d, windsor30d, windsor14d, 'performotion_online');
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        instagramHQ:     buildIGData(igHqAccount,   igHqInsights7d,  igHqInsights7dPrev,  igHqInsights30d,  igHqMedia,  igHqPostInsights,  igHqAudience),
-        instagramOnline: buildIGData(igOnAccount,   igOnInsights7d,  igOnInsights7dPrev,  igOnInsights30d,  igOnMedia,  igOnPostInsights,  igOnAudience),
+        instagramHQ:     mergeWindsor(buildIGData(igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqPostInsights, igHqAudience), windsorHQ),
+        instagramOnline: mergeWindsor(buildIGData(igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnPostInsights, igOnAudience), windsorOnline),
         facebook:        buildFBData(fbInsights, fbInsightsPrev, hqPageMeta, fbPosts),
         meta:            buildMetaAdsData(adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives),
       }),
@@ -513,4 +521,47 @@ async function metaGet(path, params = {}, retries = 3) {
 // ─── DATE HELPERS ─────────────────────────────────────────────────────────────
 function fmtDate(unixSeconds) {
   return new Date(unixSeconds * 1000).toISOString().slice(0, 10);
+}
+
+// ─── WINDSOR.AI HELPERS ───────────────────────────────────────────────────────
+async function windsorFetch(apiKey, datePreset, fields) {
+  const url = `${WINDSOR}?api_key=${apiKey}&date_preset=${datePreset}&fields=${fields}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Windsor API ${res.status}`);
+  return res.json();
+}
+
+function buildWindsorIG(data7d, data30d, data14d, accountName) {
+  const rows7d  = (data7d?.data  || []).filter(r => r.account_name === accountName);
+  const rows30d = (data30d?.data || []).filter(r => r.account_name === accountName);
+  const rows14d = (data14d?.data || []).filter(r => r.account_name === accountName);
+  if (!rows7d.length && !rows30d.length) return null;
+
+  const reach7d      = rows7d.reduce((s, r)  => s + (Number(r.reach) || 0), 0);
+  // Previous 7d = days 8-14 (14d total minus first 7d)
+  const reach14d     = rows14d.reduce((s, r) => s + (Number(r.reach) || 0), 0);
+  const reach7dPrev  = Math.max(0, reach14d - reach7d);
+  const engaged7d    = rows7d.reduce((s, r)  => s + (Number(r.accounts_engaged) || 0), 0);
+  const engRate      = reach7d > 0 ? +((engaged7d / reach7d) * 100).toFixed(2) : 0;
+
+  // 30-day reach trend (fill to 30 points)
+  const sortedDates = [...new Set(rows30d.map(r => r.date))].sort();
+  const reachByDate = {};
+  rows30d.forEach(r => { reachByDate[r.date] = (reachByDate[r.date] || 0) + (Number(r.reach) || 0); });
+  const reachTrend = padTo30(sortedDates.map(d => reachByDate[d] || 0));
+
+  return { reach7d, reach7dPrev, engagementRate: engRate, reachTrend, impressions7d: reach7d };
+}
+
+function mergeWindsor(igData, windsorData) {
+  if (!igData) return windsorData ? { ...windsorData, followers: 0, posts: [], posts7d: 0 } : null;
+  if (!windsorData) return igData;
+  return {
+    ...igData,
+    reach7d:         windsorData.reach7d         ?? igData.reach7d,
+    reach7dPrev:     windsorData.reach7dPrev     ?? igData.reach7dPrev,
+    impressions7d:   windsorData.impressions7d   ?? igData.impressions7d,
+    engagementRate:  windsorData.engagementRate  ?? igData.engagementRate,
+    reachTrend:      windsorData.reachTrend?.some(v => v > 0) ? windsorData.reachTrend : igData.reachTrend,
+  };
 }
