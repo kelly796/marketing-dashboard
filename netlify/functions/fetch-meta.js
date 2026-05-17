@@ -90,7 +90,7 @@ exports.handler = async () => {
 
       // ── FACEBOOK PAGE (use HQ page) ────────────────────────────────────────
       hqPageId ? metaGet(`/${hqPageId}/insights`, {
-        metric: 'page_impressions_unique,page_impressions,page_engaged_users,page_fans',
+        metric: 'page_impressions_unique,page_impressions,page_engaged_users',
         period: 'week',
         access_token: token,
       }) : null,
