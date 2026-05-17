@@ -75,19 +75,19 @@ exports.handler = async () => {
     ] = await Promise.all([
 
       // ── IG HQ ──────────────────────────────────────────────────────────────
-      igHqId ? metaGet(`/${igHqId}`, { fields: 'followers_count,media_count,name', access_token: token }) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions,profile_views', period: 'day', since: since7,  until: now,    access_token: token }) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since14, until: since7, access_token: token }) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since30, until: now,    access_token: token }) : null,
-      igHqId ? metaGet(`/${igHqId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }) : null,
+      igHqId ? metaGet(`/${igHqId}`, { fields: 'followers_count,media_count,name', access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }).catch(() => null) : null,
       igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'audience_gender_age',            period: 'lifetime',                            access_token: token }).catch(() => null) : null,
 
       // ── IG ONLINE ──────────────────────────────────────────────────────────
-      igOnlineId ? metaGet(`/${igOnlineId}`, { fields: 'followers_count,media_count,name', access_token: token }) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions,profile_views', period: 'day', since: since7,  until: now,    access_token: token }) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since14, until: since7, access_token: token }) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since30, until: now,    access_token: token }) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}`, { fields: 'followers_count,media_count,name', access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }).catch(() => null) : null,
       igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'audience_gender_age',            period: 'lifetime',                            access_token: token }).catch(() => null) : null,
 
       // ── FACEBOOK PAGE (use HQ page) ────────────────────────────────────────
