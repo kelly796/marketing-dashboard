@@ -2661,7 +2661,8 @@ BUILDERS['goals'] = function buildTab9() {
 
 // ── INNER TAB HELPER ──────────────────────────────────────────────────────────
 window.switchInnerTab = function(prefix, name) {
-  const container = document.getElementById('tab-' + (prefix==='em'?'email':'brand-strategy'));
+  const tabId = { em:'email', bs:'brand-strategy', seo:'seo' }[prefix] || prefix;
+  const container = document.getElementById('tab-' + tabId);
   if (!container) return;
   container.querySelectorAll('.inner-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.itab === prefix+'-'+name));
   container.querySelectorAll('.inner-tab-section').forEach(s => s.classList.toggle('active', s.id === prefix+'-'+name));
