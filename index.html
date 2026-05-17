@@ -380,7 +380,7 @@
           <label for="login-pass">Password</label>
           <input type="password" id="login-pass" placeholder="Password" autocomplete="off">
         </div>
-        <button class="login-btn" onclick="doLogin()">Sign In</button>
+        <button class="login-btn" id="login-btn">Sign In</button>
         <div class="login-error" id="login-error">Incorrect username or password</div>
       </div>
     </div>
@@ -2702,7 +2702,7 @@ function doLogin() {
   const pass = document.getElementById('login-pass').value;
   const err  = document.getElementById('login-error');
   if (user === CREDS.username && pass === CREDS.password) {
-    sessionStorage.setItem(AUTH_KEY, '1');
+    localStorage.setItem(AUTH_KEY, '1');
     document.getElementById('login-screen').classList.add('hidden');
     err.classList.remove('visible');
     init();
@@ -2714,23 +2714,22 @@ function doLogin() {
 }
 
 function doLogout() {
-  sessionStorage.removeItem(AUTH_KEY);
+  localStorage.removeItem(AUTH_KEY);
   location.reload();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Allow Enter key to submit the login form
+  document.getElementById('login-btn').addEventListener('click', doLogin);
   ['login-user', 'login-pass'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
     });
   });
 
-  if (sessionStorage.getItem(AUTH_KEY) === '1') {
+  if (localStorage.getItem(AUTH_KEY) === '1') {
     document.getElementById('login-screen').classList.add('hidden');
     init();
   }
-  // else: login screen remains visible; init() called only after successful login
 });
 
 // ── TAB 1 — ALL CHANNELS ──────────────────────────────────────────────────────
