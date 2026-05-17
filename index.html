@@ -1317,31 +1317,51 @@ BUILDERS['seo'] = function buildTab4() {
 
       // ── SITE AUDIT DISPLAY ─────────────────────────────────────────────────
       const goodPages = (siteAudit?.pages || []).filter(p => !p.error && p.title !== undefined);
+      const sm = siteAudit?.summary || {};
       const siteAuditHTML = goodPages.length ? `
         <div style="margin-bottom:1.25rem">
-          <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#1B2A4A;letter-spacing:.04em;margin-bottom:.6rem">Live Site Crawl — What's Actually on Your Pages</div>
-          <div style="display:flex;flex-direction:column;gap:.75rem">
+          <div style="display:flex;align-items:baseline;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap">
+            <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#1B2A4A;letter-spacing:.04em">Live Site Crawl — ${sm.totalCrawled || goodPages.length} pages found via sitemap</div>
+            <div style="font-size:.75rem;color:#888">Crawled ${new Date(siteAudit.auditedAt||Date.now()).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'})}</div>
+          </div>
+          ${sm.totalCrawled ? `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.5rem;margin-bottom:1rem">
+            ${[
+              { label:'Pages crawled', val: sm.totalCrawled, color:'#1B2A4A' },
+              { label:'Missing title', val: sm.missingTitle, color: sm.missingTitle?'#EF4444':'#10B981' },
+              { label:'Missing meta', val: sm.missingMeta, color: sm.missingMeta?'#EF4444':'#10B981' },
+              { label:'Missing H1', val: sm.missingH1, color: sm.missingH1?'#EF4444':'#10B981' },
+              { label:'No schema', val: sm.missingSchema, color: sm.missingSchema?'#F59E0B':'#10B981' },
+              { label:'Alt issues', val: sm.missingAltImages, color: sm.missingAltImages?'#F59E0B':'#10B981' },
+              { label:'Critical issues', val: sm.criticalIssues, color: sm.criticalIssues?'#EF4444':'#10B981' },
+              { label:'Warnings', val: sm.warnings, color: sm.warnings?'#F59E0B':'#10B981' },
+            ].map(s => `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.6rem;text-align:center">
+              <div style="font-size:1.4rem;font-weight:800;color:${s.color}">${s.val}</div>
+              <div style="font-size:.68rem;color:#888;margin-top:.1rem">${s.label}</div>
+            </div>`).join('')}
+          </div>` : ''}
+          <div style="display:flex;flex-direction:column;gap:.6rem">
             ${goodPages.map(p => {
-              const allIssues = p.issues || [];
-              const criticals = allIssues.filter(i => i.severity === 'critical');
+              const criticals = (p.issues||[]).filter(i => i.severity === 'critical');
+              const warnings  = (p.issues||[]).filter(i => i.severity === 'warning');
+              const slug = p.url.replace(/https?:\/\/performotion\.com\.au/,'').replace(/^\/$/,'(homepage)') || '(homepage)';
               return `
-              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem">
-                <div style="font-size:.78rem;font-weight:700;color:#2ABFBF;margin-bottom:.6rem">${p.url}</div>
-                <div style="display:grid;grid-template-columns:auto 1fr;gap:.3rem .75rem;font-size:.82rem;margin-bottom:.75rem">
-                  <span style="color:#888;white-space:nowrap">Title (${p.titleLength}ch)</span><span style="font-weight:600">${p.title || '<em style="color:#EF4444">MISSING</em>'}</span>
-                  <span style="color:#888;white-space:nowrap">Meta desc (${p.metaDescLength}ch)</span><span style="color:#555">${p.metaDescription ? p.metaDescription.slice(0,100)+(p.metaDescription.length>100?'…':'') : '<em style="color:#EF4444">MISSING</em>'}</span>
-                  <span style="color:#888">H1</span><span style="font-weight:600">${p.h1 || '<em style="color:#EF4444">MISSING</em>'}</span>
-                  ${p.h2s?.length ? `<span style="color:#888">H2s</span><span style="color:#555;font-size:.78rem">${p.h2s.slice(0,4).join(' · ')}</span>` : ''}
+              <div style="background:#f8fafc;border:1px solid ${criticals.length?'#fca5a5':warnings.length?'#fde68a':'#e2e8f0'};border-radius:8px;padding:.85rem 1rem">
+                <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;flex-wrap:wrap">
+                  <span style="font-size:.78rem;font-weight:700;color:#2ABFBF">${slug}</span>
+                  ${criticals.length?`<span style="font-size:.7rem;background:#EF4444;color:#fff;padding:.1rem .4rem;border-radius:3px;font-weight:700">${criticals.length} critical</span>`:''}
+                  ${warnings.length?`<span style="font-size:.7rem;background:#F59E0B;color:#fff;padding:.1rem .4rem;border-radius:3px;font-weight:700">${warnings.length} warnings</span>`:''}
+                  <div style="margin-left:auto;display:flex;gap:.5rem;font-size:.75rem">
+                    <span title="Schema">${p.hasSchema?'<span style="color:#10B981">✓ Schema</span>':'<span style="color:#EF4444">✗ Schema</span>'}</span>
+                    <span title="OG">${p.openGraph?.title?'<span style="color:#10B981">✓ OG</span>':'<span style="color:#888">✗ OG</span>'}</span>
+                    <span title="Canonical">${p.canonical?'<span style="color:#10B981">✓ Canon</span>':'<span style="color:#888">✗ Canon</span>'}</span>
+                  </div>
                 </div>
-                <div style="display:flex;gap:.75rem;flex-wrap:wrap;font-size:.78rem;margin-bottom:.5rem">
-                  <span>${tick(p.hasSchema)} Schema</span>
-                  <span>${tick(!p.images?.missingAlt)} Alt text (${p.images?.missingAlt||0} missing)</span>
-                  <span>${tick(!!p.openGraph?.title)} Open Graph</span>
-                  <span>${tick(!!p.canonical)} Canonical</span>
-                  <span style="color:#888">${p.links?.internal||0} internal links · ~${p.wordCountEstimate} words</span>
+                <div style="display:grid;grid-template-columns:auto 1fr;gap:.2rem .75rem;font-size:.8rem">
+                  <span style="color:#888">Title</span><span style="font-weight:600">${p.title?`${p.title} <span style="color:#888;font-weight:400">(${p.titleLength}ch)</span>`:'<em style="color:#EF4444">MISSING</em>'}</span>
+                  <span style="color:#888">H1</span><span>${p.h1||'<em style="color:#EF4444">MISSING</em>'}</span>
+                  ${criticals.concat(warnings).length?`<span style="color:#888">Issues</span><span style="font-size:.75rem;color:#555">${criticals.concat(warnings).map(i=>`<span style="color:${i.severity==='critical'?'#EF4444':'#F59E0B'}">${i.text}</span>`).join(' · ')}</span>`:''}
                 </div>
-                ${criticals.length ? `<div style="font-size:.78rem;color:#EF4444;font-weight:700">⚠ ${criticals.map(i=>i.text).join(' · ')}</div>` : ''}
-                ${p.hasSchema && p.schemaTypes?.length ? `<div style="font-size:.75rem;color:#8B5CF6;margin-top:.25rem">Schema: ${p.schemaTypes.join(', ')}</div>` : ''}
               </div>`;
             }).join('')}
           </div>
