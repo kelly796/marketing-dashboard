@@ -5,6 +5,11 @@
 
 [functions]
   node_bundler = "esbuild"
+
+[functions."fetch-site-audit"]
+  timeout = 26
+
+[functions."ai-seo-enhanced"]
   timeout = 26
 
 [[redirects]]
