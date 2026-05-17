@@ -1150,64 +1150,85 @@ BUILDERS['seo'] = function buildTab4() {
 
   const el = document.getElementById('tab-seo');
   el.innerHTML = `
-    <!-- GA4 WEBSITE ANALYTICS -->
-    <div class="chart-card" style="margin-bottom:1rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
-        <div>
-          <h3 style="margin:0">Website Analytics — GA4</h3>
-          <div style="font-size:.75rem;color:#888;margin-top:.2rem">Last 30 days · ${sourceBadgeHTML(DATA_SOURCE)}</div>
-        </div>
-        <button class="btn" onclick="refreshData()" style="font-size:.8rem;padding:.4rem .9rem">↻ Refresh</button>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.25rem">
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
-          <div style="font-size:1.4rem;font-weight:800;color:#1B2A4A">${fmtN(ga4data.sessions)}</div>
-          <div style="font-size:.72rem;color:#888;margin-top:.15rem">Sessions (30d)</div>
-          <div style="margin-top:.2rem">${wowBadge(ga4data.sessions, ga4data.sessionsPrev)}</div>
-        </div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
-          <div style="font-size:1.4rem;font-weight:800;color:#2ABFBF">${fmtN(ga4data.activeUsers)}</div>
-          <div style="font-size:.72rem;color:#888;margin-top:.15rem">Active Users (30d)</div>
-        </div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
-          <div style="font-size:1.4rem;font-weight:800;color:#10B981">${fmtPct(ga4data.conversionRate)}</div>
-          <div style="font-size:.72rem;color:#888;margin-top:.15rem">Conversion Rate</div>
-        </div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
-          <div style="font-size:1.4rem;font-weight:800;color:#1B2A4A">${fmtN(ga4data.pagesPerSession, 1)}</div>
-          <div style="font-size:.72rem;color:#888;margin-top:.15rem">Pages / Session</div>
-        </div>
-      </div>
-      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.04em;margin-bottom:.6rem">Top Pages (30d)</div>
-      <table class="dash-table">
-        <thead><tr><th>Page</th><th>Sessions</th><th>Page Views</th><th>Active Users</th></tr></thead>
-        <tbody>${topPages.map(p => `<tr>
-          <td style="font-weight:600;font-size:.82rem" title="${p.page}">${p.title || p.page}</td>
-          <td>${fmtN(p.sessions)}</td>
-          <td>${fmtN(p.views)}</td>
-          <td>${fmtN(p.activeUsers)}</td>
-        </tr>`).join('')}</tbody>
-      </table>
+    <div class="inner-tabs">
+      <button class="inner-tab-btn active" data-itab="seo-rankings" onclick="switchInnerTab('seo','rankings')">Rankings & Analytics</button>
+      <button class="inner-tab-btn" data-itab="seo-ai" onclick="switchInnerTab('seo','ai')">AI Analysis</button>
     </div>
 
-    <div class="card" style="margin-bottom:1rem;padding:1rem;border-left:4px solid #2ABFBF">
-      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.25rem">GSC Connection Status</div>
-      <div style="font-size:.9rem;color:#333">${seo.connectionNote}</div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:1rem">
-      <h3>Keyword Position Distribution — 30 Days (stacked)</h3>
-      <div style="height:260px"><canvas id="ch_seo_rank"></canvas></div>
-    </div>
-
-    <div class="chart-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
-        <h3 style="margin:0">Keywords Table</h3>
-        <div class="toggle-row" style="margin:0">
-          ${['All','HQ','Online'].map(f=>`<button class="toggle-btn ${f==='All'?'active':''}" data-kfilter="${f}" onclick="setKFilter('${f}')">${f}</button>`).join('')}
+    <div id="seo-rankings" class="inner-tab-section active">
+      <!-- GA4 WEBSITE ANALYTICS -->
+      <div class="chart-card" style="margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+          <div>
+            <h3 style="margin:0">Website Analytics — GA4</h3>
+            <div style="font-size:.75rem;color:#888;margin-top:.2rem">Last 30 days · ${sourceBadgeHTML(DATA_SOURCE)}</div>
+          </div>
+          <button class="btn" onclick="refreshData()" style="font-size:.8rem;padding:.4rem .9rem">↻ Refresh</button>
         </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.25rem">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
+            <div style="font-size:1.4rem;font-weight:800;color:#1B2A4A">${fmtN(ga4data.sessions)}</div>
+            <div style="font-size:.72rem;color:#888;margin-top:.15rem">Sessions (30d)</div>
+            <div style="margin-top:.2rem">${wowBadge(ga4data.sessions, ga4data.sessionsPrev)}</div>
+          </div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
+            <div style="font-size:1.4rem;font-weight:800;color:#2ABFBF">${fmtN(ga4data.activeUsers)}</div>
+            <div style="font-size:.72rem;color:#888;margin-top:.15rem">Active Users (30d)</div>
+          </div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
+            <div style="font-size:1.4rem;font-weight:800;color:#10B981">${fmtPct(ga4data.conversionRate)}</div>
+            <div style="font-size:.72rem;color:#888;margin-top:.15rem">Conversion Rate</div>
+          </div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;text-align:center">
+            <div style="font-size:1.4rem;font-weight:800;color:#1B2A4A">${fmtN(ga4data.pagesPerSession, 1)}</div>
+            <div style="font-size:.72rem;color:#888;margin-top:.15rem">Pages / Session</div>
+          </div>
+        </div>
+        <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.04em;margin-bottom:.6rem">Top Pages (30d)</div>
+        <table class="dash-table">
+          <thead><tr><th>Page</th><th>Sessions</th><th>Page Views</th><th>Active Users</th></tr></thead>
+          <tbody>${topPages.map(p => `<tr>
+            <td style="font-weight:600;font-size:.82rem" title="${p.page}">${p.title || p.page}</td>
+            <td>${fmtN(p.sessions)}</td>
+            <td>${fmtN(p.views)}</td>
+            <td>${fmtN(p.activeUsers)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
       </div>
-      <div id="seo-kw-table"></div>
+
+      <div class="card" style="margin-bottom:1rem;padding:1rem;border-left:4px solid #2ABFBF">
+        <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.25rem">GSC Connection Status</div>
+        <div style="font-size:.9rem;color:#333">${seo.connectionNote}</div>
+      </div>
+
+      <div class="chart-card" style="margin-bottom:1rem">
+        <h3>Keyword Position Distribution — 30 Days (stacked)</h3>
+        <div style="height:260px"><canvas id="ch_seo_rank"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+          <h3 style="margin:0">Keywords Table</h3>
+          <div class="toggle-row" style="margin:0">
+            ${['All','HQ','Online'].map(f=>`<button class="toggle-btn ${f==='All'?'active':''}" data-kfilter="${f}" onclick="setKFilter('${f}')">${f}</button>`).join('')}
+          </div>
+        </div>
+        <div id="seo-kw-table"></div>
+      </div>
+    </div>
+
+    <div id="seo-ai" class="inner-tab-section">
+      <div class="chart-card" style="margin-bottom:1rem">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+          <div>
+            <h3 style="margin:0">AI Analysis — SEO, AEO & Speed</h3>
+            <div style="font-size:.75rem;color:#888;margin-top:.25rem;line-height:1.5">Website speed check · SEO fixes · AI search optimisation (AEO) · Blog ideas · CTA improvements · Internal links</div>
+          </div>
+          <button class="btn" id="seo-ai-btn" onclick="runSEOAIAnalysis()" style="white-space:nowrap">Run Analysis</button>
+        </div>
+        <div id="seo-ai-loading" style="display:none;padding:1rem 0;color:#888">Checking site speed and generating recommendations — takes ~15 seconds…</div>
+        <div id="seo-ai-result"></div>
+      </div>
     </div>`;
 
   window.setKFilter = function(f) {
@@ -1240,6 +1261,157 @@ BUILDERS['seo'] = function buildTab4() {
         }).join('')}</tbody>
       </table>`;
   }
+
+  window.runSEOAIAnalysis = async function() {
+    const btn     = document.getElementById('seo-ai-btn');
+    const loading = document.getElementById('seo-ai-loading');
+    const result  = document.getElementById('seo-ai-result');
+    btn.disabled = true; btn.textContent = 'Running…';
+    loading.style.display = 'block'; result.innerHTML = '';
+
+    try {
+      const [speedRes, analysisRes] = await Promise.all([
+        fetch('/.netlify/functions/fetch-pagespeed'),
+        (async () => {
+          const speedData = await fetch('/.netlify/functions/fetch-pagespeed').then(r => r.json()).catch(() => null);
+          return fetch('/.netlify/functions/ai-seo-enhanced', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ seo: (D||MOCK).seo, ga4TopPages: (D||MOCK).ga4TopPages, ga4: (D||MOCK).ga4, speed: speedData }),
+          });
+        })(),
+      ]);
+
+      const speed = await speedRes.json().catch(() => ({}));
+      const analysisJson = await analysisRes.json().catch(() => ({}));
+      const a = analysisJson.analysis || {};
+
+      const scoreColor = s => s >= 90 ? '#10B981' : s >= 50 ? '#F59E0B' : '#EF4444';
+      const gradeColor = g => g === 'Good' ? '#10B981' : g === 'Fair' ? '#F59E0B' : '#EF4444';
+      const priorityBadge = p => {
+        const c = p === 'high' ? '#EF4444' : p === 'medium' ? '#F59E0B' : '#10B981';
+        return `<span style="background:${c};color:#fff;font-size:.68rem;font-weight:700;padding:.15rem .45rem;border-radius:3px;text-transform:uppercase">${p}</span>`;
+      };
+      const typeBadge = t => {
+        const c = { schema:'#8B5CF6', faq:'#2ABFBF', eeat:'#1B2A4A', content:'#10B981', links:'#F59E0B' }[t] || '#888';
+        return `<span style="background:${c};color:#fff;font-size:.68rem;font-weight:700;padding:.15rem .45rem;border-radius:3px;text-transform:uppercase">${t}</span>`;
+      };
+      const actionBadge = a => ({ scale:'▲ Scale', pause:'⏸ Pause', adjust:'⚙ Adjust', hold:'— Hold' }[a] || a);
+      const effortBadge = e => {
+        const c = { easy:'#10B981', medium:'#F59E0B', hard:'#EF4444' }[e] || '#888';
+        return `<span style="color:${c};font-weight:700;font-size:.78rem">${e}</span>`;
+      };
+
+      const speedBlock = (label, data) => data && !data.error ? `
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.5rem">${label}</div>
+          <div style="font-size:2.2rem;font-weight:800;color:${scoreColor(data.score)};line-height:1">${data.score}</div>
+          <div style="font-size:.75rem;color:${gradeColor(data.grade)};font-weight:700;margin-bottom:.75rem">${data.grade}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.78rem">
+            <div><span style="color:#888">FCP</span> <strong>${data.fcp}</strong></div>
+            <div><span style="color:#888">LCP</span> <strong>${data.lcp}</strong></div>
+            <div><span style="color:#888">TBT</span> <strong>${data.tbt}</strong></div>
+            <div><span style="color:#888">CLS</span> <strong>${data.cls}</strong></div>
+            <div><span style="color:#888">Speed Index</span> <strong>${data.si}</strong></div>
+          </div>
+        </div>` : `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem"><div style="color:#888;font-size:.85rem">${label}: unavailable</div></div>`;
+
+      const cardList = (items, renderFn) => (items||[]).map(renderFn).join('');
+
+      result.innerHTML = `
+        <!-- SPEED SCORES -->
+        <div style="margin-bottom:1.25rem">
+          <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.04em;margin-bottom:.6rem">Page Speed — performotion.com.au</div>
+          <div class="g2">${speedBlock('Mobile', speed.mobile)}${speedBlock('Desktop', speed.desktop)}</div>
+        </div>
+
+        <!-- SEO FIXES -->
+        <div style="margin-bottom:1.25rem">
+          <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#EF4444;letter-spacing:.04em;margin-bottom:.6rem">SEO Fixes</div>
+          <div style="display:flex;flex-direction:column;gap:.6rem">
+            ${cardList(a.seoFixes, f => `
+              <div style="background:#fef2f2;border-left:3px solid #EF4444;border-radius:0 6px 6px 0;padding:.75rem 1rem">
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">${priorityBadge(f.priority)}<strong style="font-size:.9rem">${f.title}</strong></div>
+                <div style="font-size:.85rem;color:#555;margin-bottom:.2rem">${f.action}</div>
+                <div style="font-size:.78rem;color:#10B981;font-weight:600">${f.impact}</div>
+              </div>`)}
+          </div>
+        </div>
+
+        <!-- AEO -->
+        <div style="margin-bottom:1.25rem">
+          <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#8B5CF6;letter-spacing:.04em;margin-bottom:.4rem">AEO — AI Search Optimisation</div>
+          <div style="font-size:.75rem;color:#888;margin-bottom:.6rem">How to get more traffic from ChatGPT, Perplexity & Google AI Overviews</div>
+          <div style="display:flex;flex-direction:column;gap:.6rem">
+            ${cardList(a.aeo, r => `
+              <div style="background:#f5f3ff;border-left:3px solid #8B5CF6;border-radius:0 6px 6px 0;padding:.75rem 1rem">
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">${typeBadge(r.type)}<strong style="font-size:.9rem">${r.title}</strong></div>
+                <div style="font-size:.85rem;color:#555">${r.description}</div>
+              </div>`)}
+          </div>
+        </div>
+
+        <!-- BLOG IDEAS -->
+        <div style="margin-bottom:1.25rem">
+          <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#2ABFBF;letter-spacing:.04em;margin-bottom:.6rem">Blog & Page Ideas</div>
+          <table class="dash-table">
+            <thead><tr><th>Title</th><th>Keyword</th><th>Intent</th><th>AI Search</th><th>Notes</th></tr></thead>
+            <tbody>${cardList(a.blogIdeas, b => `<tr>
+              <td style="font-weight:600">${b.title}</td>
+              <td style="color:#2ABFBF">${b.keyword}</td>
+              <td style="color:#888">${b.intent}</td>
+              <td style="text-align:center">${b.aiSearchPotential ? '<span style="color:#10B981;font-weight:700">✓</span>' : '—'}</td>
+              <td style="font-size:.8rem;color:#666">${b.notes}</td>
+            </tr>`)}</tbody>
+          </table>
+        </div>
+
+        <div class="g2" style="margin-bottom:1.25rem">
+          <!-- CTA IMPROVEMENTS -->
+          <div>
+            <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#F59E0B;letter-spacing:.04em;margin-bottom:.6rem">CTA Improvements</div>
+            <div style="display:flex;flex-direction:column;gap:.6rem">
+              ${cardList(a.ctaImprovements, c => `
+                <div style="background:#fffbeb;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:.75rem 1rem">
+                  <div style="font-size:.72rem;color:#888;margin-bottom:.2rem">${c.page}</div>
+                  <div style="font-size:.8rem;color:#EF4444;margin-bottom:.3rem">Issue: ${c.issue}</div>
+                  <div style="font-size:.85rem;font-weight:600;color:#1B2A4A">→ ${c.suggestion}</div>
+                </div>`)}
+            </div>
+          </div>
+
+          <!-- INTERNAL LINKS -->
+          <div>
+            <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#1B2A4A;letter-spacing:.04em;margin-bottom:.6rem">Internal Links to Add</div>
+            <div style="display:flex;flex-direction:column;gap:.6rem">
+              ${cardList(a.internalLinks, l => `
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:.75rem 1rem">
+                  <div style="font-size:.82rem"><strong>${l.from}</strong> <span style="color:#2ABFBF">→</span> <strong>${l.to}</strong></div>
+                  <div style="font-size:.78rem;color:#888;margin:.2rem 0">Anchor: <em>"${l.anchorText}"</em></div>
+                  <div style="font-size:.78rem;color:#555">${l.reason}</div>
+                </div>`)}
+            </div>
+          </div>
+        </div>
+
+        <!-- SPEED FIXES -->
+        <div>
+          <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.04em;margin-bottom:.6rem">Speed Fixes</div>
+          <div style="display:flex;flex-direction:column;gap:.6rem">
+            ${cardList(a.speedFixes, f => `
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:.75rem 1rem">
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem">${effortBadge(f.effort)}<strong style="font-size:.9rem">${f.title}</strong></div>
+                <div style="font-size:.85rem;color:#555">${f.description}</div>
+              </div>`)}
+          </div>
+        </div>
+      `;
+    } catch(e) {
+      result.innerHTML = `<div style="color:#EF4444;padding:1rem">Error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Re-run Analysis';
+      loading.style.display = 'none';
+    }
+  };
 
   setTimeout(() => {
     const rt = seo.rankTrend30;
@@ -1572,10 +1744,24 @@ BUILDERS['email'] = function buildTab5() {
       <button class="inner-tab-btn" data-itab="em-online" onclick="switchInnerTab('em','online')">Online List</button>
       <button class="inner-tab-btn" data-itab="em-combined" onclick="switchInnerTab('em','combined')">Combined</button>
       <button class="inner-tab-btn" data-itab="em-analysis" onclick="switchInnerTab('em','analysis')">Analysis</button>
+      <button class="inner-tab-btn" data-itab="em-ai" onclick="switchInnerTab('em','ai')">AI Coaching</button>
     </div>
     <div id="em-hq" class="inner-tab-section active">${emailSubTab(em,'hq')}</div>
     <div id="em-online" class="inner-tab-section">${emailSubTab(em,'online')}</div>
     <div id="em-analysis" class="inner-tab-section">${renderAnalysisTab()}</div>
+    <div id="em-ai" class="inner-tab-section">
+      <div class="chart-card" style="margin-bottom:1rem">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+          <div>
+            <h3 style="margin:0">Email Marketing Coach</h3>
+            <div style="font-size:.75rem;color:#888;margin-top:.25rem;line-height:1.5">Sequence improvements · Subject line tips · Conversion strategy · Next campaign recommendation</div>
+          </div>
+          <button class="btn" id="em-ai-btn" onclick="runEmailCoaching()">Run Coaching</button>
+        </div>
+        <div id="em-ai-loading" style="display:none;padding:1rem 0;color:#888">Analysing your email data…</div>
+        <div id="em-ai-result"></div>
+      </div>
+    </div>
     <div id="em-combined" class="inner-tab-section">
       <div class="g2">
         <div class="chart-card">
@@ -1628,6 +1814,84 @@ BUILDERS['email'] = function buildTab5() {
   }, 50);
 };
 
+  window.runEmailCoaching = async function() {
+    const btn     = document.getElementById('em-ai-btn');
+    const loading = document.getElementById('em-ai-loading');
+    const result  = document.getElementById('em-ai-result');
+    if (!btn) return;
+    btn.disabled = true; btn.textContent = 'Analysing…';
+    loading.style.display = 'block'; result.innerHTML = '';
+
+    try {
+      const res  = await fetch('/.netlify/functions/ai-email-insights', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: (D||MOCK).email }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) { result.innerHTML = `<div style="color:#EF4444">${json.error||'Failed. Try again.'}</div>`; return; }
+      const c = json.coaching || {};
+
+      const scoreColor = s => s >= 70 ? '#10B981' : s >= 45 ? '#F59E0B' : '#EF4444';
+      const impactBadge = impact => `<span style="font-size:.75rem;color:#10B981;font-weight:700">${impact}</span>`;
+
+      result.innerHTML = `
+        <div class="g2" style="margin-bottom:1.25rem">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1.25rem;display:flex;align-items:center;gap:1.25rem">
+            <div style="font-size:3rem;font-weight:800;color:${scoreColor(c.overallScore||0)};line-height:1">${c.overallScore||'—'}</div>
+            <div>
+              <div style="font-weight:700;font-size:.95rem;color:#1B2A4A">Email Score</div>
+              <div style="font-size:.85rem;color:#555;margin-top:.2rem;line-height:1.4">${c.verdict||'—'}</div>
+            </div>
+          </div>
+          <div style="background:#eff6ff;border-left:3px solid #2ABFBF;border-radius:0 10px 10px 0;padding:1.25rem">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#0369a1;margin-bottom:.5rem">Next Campaign Recommendation</div>
+            ${c.nextCampaign ? `
+              <div style="font-weight:700;font-size:.95rem;color:#1B2A4A;margin-bottom:.3rem">"${c.nextCampaign.subject}"</div>
+              <div style="font-size:.82rem;color:#555;margin-bottom:.2rem">Audience: <strong>${c.nextCampaign.audience}</strong></div>
+              <div style="font-size:.82rem;color:#555;margin-bottom:.2rem">Goal: ${c.nextCampaign.goal}</div>
+              <div style="font-size:.82rem;font-weight:700;color:#2ABFBF">CTA: ${c.nextCampaign.cta}</div>
+            ` : '—'}
+          </div>
+        </div>
+
+        <div class="g3" style="margin-bottom:1.25rem">
+          <div>
+            <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#EF4444;letter-spacing:.04em;margin-bottom:.6rem">Sequence Improvements</div>
+            <div style="display:flex;flex-direction:column;gap:.6rem">
+              ${(c.sequenceImprovements||[]).map(i => `
+                <div style="background:#fef2f2;border-left:3px solid #EF4444;border-radius:0 6px 6px 0;padding:.75rem 1rem">
+                  <div style="font-size:.72rem;color:#888;margin-bottom:.2rem">${i.list}</div>
+                  <div style="font-size:.82rem;color:#EF4444;margin-bottom:.25rem">${i.issue}</div>
+                  <div style="font-size:.85rem;font-weight:600;color:#1B2A4A;margin-bottom:.25rem">Fix: ${i.fix}</div>
+                  ${impactBadge(i.expectedImpact)}
+                </div>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#F59E0B;letter-spacing:.04em;margin-bottom:.6rem">Subject Line Tips</div>
+            <div style="display:flex;flex-direction:column;gap:.6rem">
+              ${(c.subjectLineTips||[]).map(t => `
+                <div style="background:#fffbeb;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:.75rem 1rem;font-size:.85rem;color:#1B2A4A;line-height:1.4">${t}</div>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#10B981;letter-spacing:.04em;margin-bottom:.6rem">Conversion Tips</div>
+            <div style="display:flex;flex-direction:column;gap:.6rem">
+              ${(c.conversionTips||[]).map(t => `
+                <div style="background:#f0fdf4;border-left:3px solid #10B981;border-radius:0 6px 6px 0;padding:.75rem 1rem;font-size:.85rem;color:#1B2A4A;line-height:1.4">${t}</div>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    } catch(e) {
+      result.innerHTML = `<div style="color:#EF4444">Error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Re-run Coaching';
+      loading.style.display = 'none';
+    }
+  };
+};
+
 // ── TAB 6 — PAID ADS ──────────────────────────────────────────────────────────
 BUILDERS['paid-ads'] = function buildTab6() {
   const d    = D || MOCK;
@@ -1635,8 +1899,24 @@ BUILDERS['paid-ads'] = function buildTab6() {
   const src  = DATA_SOURCE;
   let adFilter = 'All';
 
+  const LS_ADS_INSIGHTS = 'PM_ADS_INSIGHTS';
+  const cachedAdsInsights = JSON.parse(localStorage.getItem(LS_ADS_INSIGHTS) || 'null');
+
   const el = document.getElementById('tab-paid-ads');
   el.innerHTML = `
+    <!-- DAILY ACTIONS PANEL -->
+    <div class="chart-card" style="margin-bottom:1.5rem;border-left:4px solid #F59E0B">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+        <div>
+          <h3 style="margin:0">Daily Ad Actions</h3>
+          <div id="ads-actions-ts" style="font-size:.75rem;color:#888;margin-top:.25rem">${cachedAdsInsights ? 'Last run: ' + new Date(cachedAdsInsights.generatedAt).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'}) : 'Not yet run today'}</div>
+        </div>
+        <button class="btn" id="ads-ai-btn" onclick="runAdAnalysis()" style="background:#F59E0B;border-color:#F59E0B">Run Daily Analysis</button>
+      </div>
+      <div id="ads-ai-loading" style="display:none;padding:1rem 0;color:#888">Analysing campaign performance…</div>
+      <div id="ads-ai-result">${cachedAdsInsights ? renderAdsInsights(cachedAdsInsights) : '<div style="color:#aaa;font-size:.85rem;padding:.5rem 0">Press Run Daily Analysis to get per-campaign recommendations.</div>'}</div>
+    </div>
+
     <div class="toggle-row">
       ${['All','HQ','Online'].map(f=>`<button class="toggle-btn ${f==='All'?'active':''}" data-adfilter="${f}" onclick="setAdFilter('${f}')">${f}</button>`).join('')}
     </div>
@@ -1752,6 +2032,70 @@ BUILDERS['paid-ads'] = function buildTab6() {
   window.setAdFilter = function(f) {
     origSetAdFilter(f);
     renderWhatsWorking();
+  };
+
+  function renderAdsInsights(ins) {
+    if (!ins) return '';
+    const actionColor = { scale:'#10B981', pause:'#EF4444', adjust:'#F59E0B', hold:'#94A3B8' };
+    const actionLabel = { scale:'▲ Scale', pause:'⏸ Pause', adjust:'⚙ Adjust', hold:'— Hold' };
+    const priorityColor = { high:'#EF4444', medium:'#F59E0B', low:'#10B981' };
+    return `
+      <div class="g2" style="margin-bottom:1rem">
+        <div style="background:#f0fdf4;border-left:3px solid #10B981;border-radius:0 8px 8px 0;padding:.85rem 1rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#166534;margin-bottom:.3rem">Biggest Opportunity</div>
+          <div style="font-size:.88rem;color:#1B2A4A;line-height:1.45">${ins.topOpportunity||'—'}</div>
+        </div>
+        <div style="background:#fef2f2;border-left:3px solid #EF4444;border-radius:0 8px 8px 0;padding:.85rem 1rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#991B1B;margin-bottom:.3rem">Biggest Risk</div>
+          <div style="font-size:.88rem;color:#1B2A4A;line-height:1.45">${ins.biggestRisk||'—'}</div>
+        </div>
+      </div>
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.04em;margin-bottom:.5rem">Per-Campaign Actions</div>
+      <table class="dash-table" style="margin-bottom:1rem">
+        <thead><tr><th>Campaign</th><th>Action</th><th>Priority</th><th>Budget</th><th>Reason</th></tr></thead>
+        <tbody>${(ins.campaigns||[]).map(c=>`<tr>
+          <td style="font-weight:600">${c.name}</td>
+          <td><span style="background:${actionColor[c.action]||'#888'};color:#fff;font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:4px">${actionLabel[c.action]||c.action}</span></td>
+          <td><span style="color:${priorityColor[c.priority]||'#888'};font-weight:700;font-size:.82rem">${c.priority}</span></td>
+          <td style="font-weight:700;color:${c.budgetChange&&c.budgetChange!=='none'?c.budgetChange.startsWith('+')?'#10B981':'#EF4444':'#888'}">${c.budgetChange&&c.budgetChange!=='none'?c.budgetChange:'—'}</td>
+          <td style="font-size:.8rem;color:#555">${c.reason}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.04em;margin-bottom:.5rem">Advertising Improvements</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        ${(ins.improvements||[]).map((imp,i)=>`
+          <div style="display:flex;gap:.75rem;align-items:flex-start;padding:.6rem .85rem;background:#f8fafc;border-radius:6px">
+            <span style="font-size:.72rem;font-weight:800;color:#F59E0B;min-width:1.4rem">${i+1}.</span>
+            <span style="font-size:.85rem;color:#1B2A4A;line-height:1.45">${imp}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  window.runAdAnalysis = async function() {
+    const btn     = document.getElementById('ads-ai-btn');
+    const loading = document.getElementById('ads-ai-loading');
+    const result  = document.getElementById('ads-ai-result');
+    const ts      = document.getElementById('ads-actions-ts');
+    if (!btn) return;
+    btn.disabled = true; btn.textContent = 'Analysing…';
+    loading.style.display = 'block'; result.innerHTML = '';
+    try {
+      const res  = await fetch('/.netlify/functions/ai-ads-insights', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meta: (D||MOCK).meta }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) { result.innerHTML = `<div style="color:#EF4444">${json.error||'Failed.'}</div>`; return; }
+      const ins = json.insights || {};
+      localStorage.setItem(LS_ADS_INSIGHTS, JSON.stringify(ins));
+      result.innerHTML = renderAdsInsights(ins);
+      if (ts) ts.textContent = 'Last run: ' + new Date(ins.generatedAt||Date.now()).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'});
+    } catch(e) {
+      result.innerHTML = `<div style="color:#EF4444">Error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Re-run Analysis';
+      loading.style.display = 'none';
+    }
   };
 
   setTimeout(() => {
@@ -2147,6 +2491,26 @@ Focus on educational content, reach growth, and conversion optimisation. Evidenc
 BUILDERS['goals'] = function buildTab9() {
   const defaultGoals = (D||MOCK).goals || MOCK.goals;
   let goals = JSON.parse(localStorage.getItem(LS_GOALS)||'null') || defaultGoals.map(g=>({...g}));
+
+  // Handle ?addGoal= query param — used by the /add-goal Claude skill
+  const urlParams = new URLSearchParams(window.location.search);
+  const addGoalParam = urlParams.get('addGoal');
+  if (addGoalParam) {
+    try {
+      const g = JSON.parse(addGoalParam);
+      if (g && g.name) {
+        goals.push({
+          name: g.name, brand: g.brand||'HQ', platform: g.platform||'',
+          target: Number(g.target)||0, current: Number(g.current)||0,
+          status: g.status||'On Track', interval: g.interval||'Monthly',
+        });
+        localStorage.setItem(LS_GOALS, JSON.stringify(goals));
+      }
+    } catch(_) {}
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete('addGoal');
+    window.history.replaceState({}, '', cleanUrl.toString());
+  }
 
   function save() { localStorage.setItem(LS_GOALS, JSON.stringify(goals)); }
 
