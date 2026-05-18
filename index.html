@@ -1470,18 +1470,29 @@ BUILDERS['activecampaign'] = function buildTab5() {
       <div class="chart-card">
         <h3 style="margin-bottom:1rem">Overall Combined Suggestion</h3>
         <div style="display:flex;flex-direction:column;gap:.75rem">
-          <div style="padding:.85rem 1rem;background:#F0FDF4;border-left:3px solid #10B981;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
-            <strong>What's working:</strong> The Online Coaches List (${fmtPct(sorted.find(l=>l.id==='on_coaches')?.openRate||0)} open rate) and HQ Post-Appointment Follow-Up sequence (71% email 1 open rate) are your highest-performing assets. Both align with your top IG content pillars — prioritise these audiences in Meta retargeting campaigns.
-          </div>
-          <div style="padding:.85rem 1rem;background:#FEF2F2;border-left:3px solid #EF4444;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
-            <strong>Critical gap:</strong> Online General Subscribers (${fmtPct(sorted.find(l=>l.id==='on_general')?.openRate||0)} open rate, 28% drop-off after email 1) is your largest list but worst performer. Segment by engagement level immediately — move active openers into the Coaches List nurture path and run a dedicated re-engagement campaign for inactive contacts before suppressing them.
-          </div>
-          <div style="padding:.85rem 1rem;background:#EFF6FF;border-left:3px solid #3B82F6;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
-            <strong>Cross-channel opportunity:</strong> Your Education pillar on IG Online (${fmtN(onBestPillar?.[1]?.avgReach||0)} avg reach, ${(onBestPillar?.[1]?.avgEngagement||0).toFixed(1)}% engagement) and the Powerlifting Education email sequence are both resonating with the same 25-34 M audience. Build a content loop: IG reel → email sequence → booking CTA → Meta retargeting for non-converters. UTM tracking via the AC+WordPress sync (see Netlify function) will let GA4 measure this attribution accurately.
-          </div>
-          <div style="padding:.85rem 1rem;background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
-            <strong>Next send recommendation:</strong> Send the HQ Re-engagement sequence's "Special Offer" email (12.4% click rate) to the inactive segment of HQ Main Newsletter this week. Run parallel Meta awareness campaign targeting 35-44 F in Brisbane to warm cold contacts before the email lands.
-          </div>
+          ${(()=>{
+            const best    = sorted[0];
+            const worst   = sorted[sorted.length - 1];
+            const largest = [...allLists].sort((a,b) => b.subscribers - a.subscribers)[0];
+            const hasRates = allLists.some(l => l.openRate > 0);
+            if (!hasRates) return `
+              <div style="padding:.85rem 1rem;background:#FEF3C7;border-left:3px solid #F59E0B;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
+                <strong>Campaign analytics still processing.</strong> Open and click rates will appear here once ActiveCampaign finishes processing your most recent send (typically within 24–48 hours). Refresh the dashboard tomorrow to see insights.
+              </div>`;
+            return `
+              <div style="padding:.85rem 1rem;background:#F0FDF4;border-left:3px solid #10B981;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
+                <strong>Best performing list:</strong> ${best?.name||'—'} (${fmtPct(best?.openRate||0)} open rate, ${fmtPct(best?.clickRate||0)} click rate, ${fmtN(best?.subscribers||0)} subscribers). Mirror this list's send timing, subject line style, and content angle across your other ${sorted.length > 1 ? sorted.length - 1 : ''} lists.
+              </div>
+              <div style="padding:.85rem 1rem;background:#FEF2F2;border-left:3px solid #EF4444;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
+                <strong>Needs attention:</strong> ${worst?.name||'—'} (${fmtPct(worst?.openRate||0)} open rate). ${largest?.id === worst?.id ? 'This is also your largest list — low engagement on your biggest audience is the highest-priority fix.' : 'Run a re-engagement campaign to this list before suppressing inactive contacts.'} Compare subject lines and send times against ${best?.name||'your best list'}.
+              </div>
+              <div style="padding:.85rem 1rem;background:#EFF6FF;border-left:3px solid #3B82F6;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
+                <strong>Cross-channel opportunity:</strong> Your Education pillar on IG Online (${fmtN(onBestPillar?.[1]?.avgReach||0)} avg reach, ${(onBestPillar?.[1]?.avgEngagement||0).toFixed(1)}% engagement) is resonating with the same audience as your Online email lists. Build a content loop: IG reel → email sequence → booking CTA → Meta retargeting for non-converters.
+              </div>
+              <div style="padding:.85rem 1rem;background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:6px;font-size:.85rem;color:#1B2A4A;line-height:1.55">
+                <strong>Largest list:</strong> ${largest?.name||'—'} with ${fmtN(largest?.subscribers||0)} subscribers. ${largest?.openRate > 0 ? `Open rate ${fmtPct(largest.openRate)} — ${largest.openRate >= 21 ? 'above industry average, keep the current cadence.' : 'below 21% industry average — test a shorter subject line and send on Tuesday or Thursday morning.'}` : 'No campaign data yet — this list should be your first priority send.'}
+              </div>`;
+          })()}
         </div>
       </div>`;
   }
