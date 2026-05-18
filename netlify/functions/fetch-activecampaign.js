@@ -41,13 +41,14 @@ exports.handler = async () => {
     const allACLists    = allListsData.lists || [];
     const totalContacts = Number(contactsData.meta?.total || 0);
 
-    // Auto-classify by name prefix — no config needed
-    const hqLists     = allACLists.filter(l => /^\[HQ\]/i.test(l.name));
-    const onlineLists = allACLists.filter(l => /^\[Online\]/i.test(l.name));
-    const trackedLists = [...hqLists, ...onlineLists];
-    const trackedIds   = trackedLists.map(l => String(l.id));
-    const hqIds        = hqLists.map(l => String(l.id));
-    const onlineIds    = onlineLists.map(l => String(l.id));
+    // Track every list in the account — no filtering, no config needed.
+    // Brand is read from the list name if it contains [HQ] or [Online].
+    // Lists without a prefix appear in the combined view and All Account Lists.
+    const trackedIds = allACLists.map(l => String(l.id));
+    const hqIds      = allACLists.filter(l => /\[HQ\]/i.test(l.name)).map(l => String(l.id));
+    const onlineIds  = allACLists.filter(l => /\[Online\]/i.test(l.name)).map(l => String(l.id));
+    // Lists with no brand prefix — still tracked, surfaced in combined/all views
+    const otherIds   = trackedIds.filter(id => !hqIds.includes(id) && !onlineIds.includes(id));
 
     // Build name lookup from the lists we already have
     const listNameMap = {};
@@ -84,6 +85,7 @@ exports.handler = async () => {
 
     const hq      = buildBrandData(hqIds,     listNameMap, listCampaignMap, listCountMap, allCampaigns, allAutomations);
     const online  = buildBrandData(onlineIds, listNameMap, listCampaignMap, listCountMap, allCampaigns, allAutomations);
+    const other   = buildBrandData(otherIds,  listNameMap, listCampaignMap, listCountMap, allCampaigns, allAutomations);
     const overall = buildOverallStats(totalContacts, allCampaigns);
 
     // All-account list index for the diagnostic panel
@@ -102,7 +104,7 @@ exports.handler = async () => {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ overall, hq, online, allLists: accountLists }),
+      body: JSON.stringify({ overall, hq, online, other, allLists: accountLists }),
     };
   } catch (err) {
     console.error('fetch-activecampaign error:', err);

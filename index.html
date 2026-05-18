@@ -1275,7 +1275,7 @@ BUILDERS['website'] = function buildTab4() {
 // ── TAB 5 — EMAIL ─────────────────────────────────────────────────────────────
 BUILDERS['activecampaign'] = function buildTab5() {
   const d  = D || MOCK;
-  const em = d.email || MOCK.email;
+  const em = { ...(d.email || MOCK.email), other: d.email?.other || { lists:[], subscribers:0 } };
   const src = DATA_SOURCE;
   const months = ['Dec','Jan','Feb','Mar','Apr','May'];
 
@@ -1320,6 +1320,7 @@ BUILDERS['activecampaign'] = function buildTab5() {
     const allLists = [
       ...(em.hq?.lists||[]).map(l => ({ ...l, brand: 'HQ' })),
       ...(em.online?.lists||[]).map(l => ({ ...l, brand: 'Online' })),
+      ...(em.other?.lists||[]).map(l => ({ ...l, brand: '—' })),
     ];
     const sorted = [...allLists].sort((a,b) => b.openRate - a.openRate);
     const avgOpen  = allLists.reduce((s,l) => s+l.openRate,          0) / (allLists.length||1);
@@ -1433,11 +1434,28 @@ BUILDERS['activecampaign'] = function buildTab5() {
           <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #e2e8f0">
             <div style="display:flex;align-items:baseline;gap:.75rem;margin-bottom:.75rem">
               <span style="font-weight:800;font-size:.95rem;color:#1B2A4A">${lst.name}</span>
-              <span style="font-size:.8rem;color:#888">${fmtN(lst.subscribers)} subscribers · Open: <strong>${fmtPct(lst.openRate)}</strong> · Click: <strong>${fmtPct(lst.clickRate)}</strong> · → Web: <strong>${fmtPct(lst.clickToWebsiteRate)}</strong></span>
+              <span style="font-size:.8rem;color:#888">${fmtN(lst.subscribers)} subscribers · Open: <strong>${fmtPct(lst.openRate)}</strong> · Click: <strong>${fmtPct(lst.clickRate)}</strong></span>
             </div>
             ${sequenceBlock({...lst, brand:'Online'})}
           </div>`).join('')}
       </div>
+
+      ${em.other?.lists?.length ? `
+      <!-- SEQUENCE ANALYSIS — OTHER LISTS -->
+      <div class="chart-card" style="margin-bottom:1rem">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <h3 style="margin:0">Sequence Analysis — Other Lists</h3>
+          <span style="font-size:.78rem;color:#888">Lists without a [HQ] or [Online] prefix</span>
+        </div>
+        ${(em.other?.lists||[]).map(lst => `
+          <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #e2e8f0">
+            <div style="display:flex;align-items:baseline;gap:.75rem;margin-bottom:.75rem">
+              <span style="font-weight:800;font-size:.95rem;color:#1B2A4A">${lst.name}</span>
+              <span style="font-size:.8rem;color:#888">${fmtN(lst.subscribers)} subscribers · Open: <strong>${fmtPct(lst.openRate)}</strong> · Click: <strong>${fmtPct(lst.clickRate)}</strong></span>
+            </div>
+            ${sequenceBlock({...lst, brand:'—'})}
+          </div>`).join('')}
+      </div>` : ''}
 
       <!-- CROSS-REFERENCE INSIGHTS -->
       <div class="chart-card" style="margin-bottom:1rem">
@@ -1504,7 +1522,9 @@ BUILDERS['activecampaign'] = function buildTab5() {
       : '';
     const voiceNote = key === 'hq'
       ? 'HQ emails use a warm, clinical community tone. Subject lines should feel personal and local. Avoid jargon.'
-      : 'Online emails use a professional, educational tone. Lead with value — research, tips, and outcomes. Clear CTAs.';
+      : key === 'online'
+      ? 'Online emails use a professional, educational tone. Lead with value — research, tips, and outcomes. Clear CTAs.'
+      : 'These lists have no [HQ] or [Online] prefix — add one to the list name in ActiveCampaign to assign them to a brand.';
 
     return `
       <div style="background:#f0f9ff;border-left:3px solid #2ABFBF;padding:.6rem 1rem;border-radius:4px;margin-bottom:1rem;font-size:.83rem;color:#444">${voiceNote}</div>
@@ -1622,6 +1642,7 @@ BUILDERS['activecampaign'] = function buildTab5() {
     <div class="inner-tabs">
       <button class="inner-tab-btn active" data-itab="em-hq" onclick="switchInnerTab('em','hq')">HQ Lists</button>
       <button class="inner-tab-btn" data-itab="em-online" onclick="switchInnerTab('em','online')">Online Lists</button>
+      ${em.other?.lists?.length ? `<button class="inner-tab-btn" data-itab="em-other" onclick="switchInnerTab('em','other')">Other Lists</button>` : ''}
       <button class="inner-tab-btn" data-itab="em-combined" onclick="switchInnerTab('em','combined')">Combined</button>
       <button class="inner-tab-btn" data-itab="em-analysis" onclick="switchInnerTab('em','analysis')">Analysis</button>
       <button class="inner-tab-btn" data-itab="em-alllists" onclick="switchInnerTab('em','alllists')">All Account Lists</button>
@@ -1629,6 +1650,7 @@ BUILDERS['activecampaign'] = function buildTab5() {
     </div>
     <div id="em-hq" class="inner-tab-section active">${emailSubTab(em,'hq')}</div>
     <div id="em-online" class="inner-tab-section">${emailSubTab(em,'online')}</div>
+    <div id="em-other" class="inner-tab-section">${em.other?.lists?.length ? emailSubTab(em,'other') : ''}</div>
     <div id="em-analysis" class="inner-tab-section">${renderAnalysisTab()}</div>
     <div id="em-alllists" class="inner-tab-section">${(()=>{
       const accountLists = d.allLists || [];
@@ -1708,7 +1730,8 @@ BUILDERS['activecampaign'] = function buildTab5() {
             <tbody>
               <tr><td>HQ</td><td>${fmtN(em.hq?.subscribers)}</td><td>${fmtPct(em.hq?.openRate)}</td></tr>
               <tr><td>Online</td><td>${fmtN(em.online?.subscribers)}</td><td>${fmtPct(em.online?.openRate)}</td></tr>
-              <tr style="font-weight:800"><td>Total</td><td>${fmtN((em.hq?.subscribers||0)+(em.online?.subscribers||0))}</td><td>—</td></tr>
+              ${em.other?.lists?.length ? `<tr><td>Other</td><td>${fmtN(em.other?.subscribers)}</td><td>${fmtPct(em.other?.openRate)}</td></tr>` : ''}
+              <tr style="font-weight:800"><td>Total</td><td>${fmtN((em.hq?.subscribers||0)+(em.online?.subscribers||0)+(em.other?.subscribers||0))}</td><td>—</td></tr>
             </tbody>
           </table>
         </div>
