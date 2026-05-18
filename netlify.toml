@@ -9,6 +9,10 @@
 [functions."fetch-site-audit"]
   timeout = 26
 
+[functions."sync-gymmaster-to-ac"]
+  timeout = 60
+  schedule = "0 18 * * *"
+
 [functions."ai-seo-enhanced"]
   timeout = 26
 
