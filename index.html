@@ -2889,9 +2889,13 @@ BUILDERS['goals'] = function buildTab9() {
   const defaultGoals = (D||MOCK).goals || MOCK.goals;
   let goals = JSON.parse(localStorage.getItem(LS_GOALS)||'null') || defaultGoals.map(g=>({...g}));
 
-  // Merge system goals (id >= 900) that aren't already present
+  // Merge system goals (id >= 900) — add missing ones, update status of existing ones
   const systemGoals = (D||MOCK).goals?.filter(g => g.id >= 900) || [];
-  systemGoals.forEach(sg => { if (!goals.find(g => g.id === sg.id)) goals.push({...sg}); });
+  systemGoals.forEach(sg => {
+    const existing = goals.find(g => g.id === sg.id);
+    if (!existing) goals.push({...sg});
+    else { existing.current = sg.current; existing.status = sg.status; }
+  });
 
   // Handle ?addGoal= query param — used by the /add-goal Claude skill
   const urlParams = new URLSearchParams(window.location.search);
@@ -4139,9 +4143,9 @@ const MOCK = {
     { id: 6, name: 'YouTube Subscribers', brand: 'Online', platform: 'YouTube', target: 1000, current: 890, interval: 'Quarterly', status: 'On Track' },
     { id: 7, name: 'Facebook Reach 7d', brand: 'HQ', platform: 'Facebook', target: 4000, current: 3100, interval: 'Weekly', status: 'Off Track' },
     { id: 9, name: 'Meta Cost Per Lead', brand: 'Both', platform: 'Meta Ads', target: 35, current: 30, interval: 'Monthly', status: 'Complete' },
-    { id: 901, name: 'Connect GA4 + Search Console', brand: 'Both', platform: 'Website', target: 1, current: 0, interval: 'One-time', status: 'Off Track' },
+    { id: 901, name: 'Connect GA4 + Search Console', brand: 'Both', platform: 'Website', target: 1, current: 1, interval: 'One-time', status: 'Complete' },
     { id: 902, name: 'Connect WordPress', brand: 'HQ', platform: 'Website', target: 1, current: 0, interval: 'One-time', status: 'Off Track' },
-    { id: 903, name: 'Connect Meta Ads (ad account + app secret)', brand: 'Both', platform: 'Meta Ads', target: 1, current: 0, interval: 'One-time', status: 'Off Track' },
+    { id: 903, name: 'Connect Meta Ads', brand: 'Both', platform: 'Meta Ads', target: 1, current: 1, interval: 'One-time', status: 'Complete' },
     { id: 904, name: 'Connect Halaxy (EP client data)', brand: 'HQ', platform: 'Email', target: 1, current: 0, interval: 'One-time', status: 'Off Track' },
     { id: 905, name: 'Connect Instagram Online (META_ONLINE_PAGE_ID)', brand: 'Online', platform: 'Instagram', target: 1, current: 0, interval: 'One-time', status: 'Off Track' },
   ],
