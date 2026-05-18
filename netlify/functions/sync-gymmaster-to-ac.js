@@ -15,7 +15,7 @@
  */
 
 const GM_BASE         = 'https://performotion.gymmasteronline.com/portal/api';
-const PERF_CORE_TYPE  = 'Perf Core - Exercise Physiology Membership';
+const PERF_CORE_TYPE  = 'Perf Core';
 const PERF_CORE_LIST  = 'Perf Core';
 const BATCH_PAUSE_MS  = 120; // stay well inside AC rate limits
 
@@ -40,7 +40,7 @@ exports.handler = async (event) => {
     // ── 2. FILTER TO PERF CORE ────────────────────────────────────────────────
     const perfCoreMembers = allMembers.filter(m => {
       const type = m.membershipType || m.membership || m.membershipname || m.membership_name || '';
-      return type.trim() === PERF_CORE_TYPE;
+      return type.toLowerCase().includes(PERF_CORE_TYPE.toLowerCase());
     });
 
     if (!perfCoreMembers.length) {
