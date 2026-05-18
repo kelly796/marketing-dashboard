@@ -1,33 +1,36 @@
 /**
  * Fetch ActiveCampaign Data
  *
- * Returns { overall, hq, online } matching MOCK.email in index.html.
+ * Returns { overall, hq, online, allLists } matching MOCK.email in index.html.
  *
  * ─── REQUIRED ENV VARS ───────────────────────────────────────────────────────
  *  AC_BASE_URL         — https://performotion.activehosted.com
  *  AC_API_KEY          — AC → Settings → Developer → API Access
  *
  * ─── HQ LIST IDS (clinical / Brisbane) ───────────────────────────────────────
- *  AC_HALAXY_CLIENTS   = 31
- *  AC_MMM_WEBINAR      = 5
- *  AC_NEWS_EVENTS      = 9
+ *  AC_HALAXY_CLIENTS   = 31   ([HQ] Halaxy Clients 2026)
+ *  AC_MMM_WEBINAR      = 5    ([HQ] Monthly Muscle Management)
+ *  AC_NEWS_EVENTS      = 9    ([HQ] News & Events)
  *
  * ─── ONLINE LIST IDS (powerlifting / coaching) ───────────────────────────────
- *  AC_PERF_CLASSROOM   = 20
- *  AC_PERF_NETWORK     = 12
+ *  AC_PERF_CLASSROOM   = 20   ([Online] Perf Classroom)
+ *  AC_PERF_NETWORK     = 12   ([Online] Perf Network)
+ *
+ * NOTE: subscriber counts are fetched via the contacts API (listid filter)
+ * rather than list.subscriber_count, which AC does not reliably keep in sync.
  */
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // List config: env var name + fallback default ID
 const HQ_LISTS = [
-  { env: 'AC_HALAXY_CLIENTS', id: '31' },
-  { env: 'AC_MMM_WEBINAR',    id: '5'  },
-  { env: 'AC_NEWS_EVENTS',    id: '9'  },
+  { env: 'AC_HALAXY_CLIENTS', id: '31', label: '[HQ] Halaxy Clients 2026' },
+  { env: 'AC_MMM_WEBINAR',    id: '5',  label: '[HQ] Monthly Muscle Management' },
+  { env: 'AC_NEWS_EVENTS',    id: '9',  label: '[HQ] News & Events' },
 ];
 const ONLINE_LISTS = [
-  { env: 'AC_PERF_CLASSROOM', id: '20' },
-  { env: 'AC_PERF_NETWORK',   id: '12' },
+  { env: 'AC_PERF_CLASSROOM', id: '20', label: '[Online] Perf Classroom' },
+  { env: 'AC_PERF_NETWORK',   id: '12', label: '[Online] Perf Network' },
 ];
 
 exports.handler = async () => {
@@ -51,46 +54,74 @@ exports.handler = async () => {
   try {
     // ── FIRE ALL REQUESTS IN PARALLEL ─────────────────────────────────────────
     // Per-list calls: list detail + last 5 campaigns, interleaved
-    // [list0, camps0, list1, camps1, ...]
     const perListPromises = allIds.flatMap(id => [
       acGet(base, `/api/3/lists/${id}`, headers),
       acGet(base, `/api/3/campaigns?filters[listid]=${id}&filters[status]=5&orders[sdate]=DESC&limit=5`, headers),
     ]);
 
+    // Per-list ACTIVE subscriber count via contacts API — more reliable than subscriber_count field
+    const perListCountPromises = allIds.map(id =>
+      acGet(base, `/api/3/contacts?listid=${id}&status=1&limit=0`, headers)
+    );
+
     const [
       contactsData,
       allCampaignsData,
       automationsData,
-      ...perListResults
+      allListsData,
+      ...parallelResults
     ] = await Promise.all([
-      // Overall account stats
       acGet(base, '/api/3/contacts?limit=1', headers),
       acGet(base, '/api/3/campaigns?filters[status]=5&orders[sdate]=DESC&limit=100', headers),
       acGet(base, '/api/3/automations?filters[status]=1&limit=100', headers),
-      // Per-list detail
+      // All lists in account — for the dashboard diagnostic panel
+      acGet(base, '/api/3/lists?limit=100&orders[name]=ASC', headers),
       ...perListPromises,
+      ...perListCountPromises,
     ]);
 
-    // Map list ID → { listDetail, campaignRows }
+    // Split parallelResults back out: first (allIds.length * 2) are perList, remainder are counts
+    const perListResults = parallelResults.slice(0, allIds.length * 2);
+    const countResults   = parallelResults.slice(allIds.length * 2);
+
+    // Map list ID → { listDetail, campaignRows, activeCount }
     const listDetailMap   = {};
     const listCampaignMap = {};
+    const listCountMap    = {};
     allIds.forEach((id, i) => {
       listDetailMap[id]   = perListResults[i * 2];
       listCampaignMap[id] = perListResults[i * 2 + 1];
+      listCountMap[id]    = Number(countResults[i]?.meta?.total || 0);
     });
 
     const allCampaigns   = allCampaignsData.campaigns  || [];
     const allAutomations = automationsData.automations  || [];
     const totalContacts  = Number(contactsData.meta?.total || 0);
 
-    const hq      = buildBrandData(hqIds,     listDetailMap, listCampaignMap, allCampaigns, allAutomations);
-    const online  = buildBrandData(onlineIds, listDetailMap, listCampaignMap, allCampaigns, allAutomations);
+    const hq      = buildBrandData(hqIds,     listDetailMap, listCampaignMap, listCountMap, allCampaigns, allAutomations);
+    const online  = buildBrandData(onlineIds, listDetailMap, listCampaignMap, listCountMap, allCampaigns, allAutomations);
     const overall = buildOverallStats(totalContacts, allCampaigns);
+
+    // All-account lists for the diagnostic panel
+    const accountLists = (allListsData.lists || []).map(l => ({
+      id:          String(l.id),
+      name:        l.name || `List ${l.id}`,
+      subscribers: Number(l.subscriber_count || 0),
+      created:     (l.cdate || '').slice(0, 10),
+      isTarget:    allIds.includes(String(l.id)),
+    })).sort((a, b) => a.name.localeCompare(b.name));
+
+    // Patch target-list counts into accountLists using the accurate contacts API count
+    accountLists.forEach(l => {
+      if (l.isTarget && listCountMap[l.id] !== undefined) {
+        l.subscribers = listCountMap[l.id];
+      }
+    });
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ overall, hq, online }),
+      body: JSON.stringify({ overall, hq, online, allLists: accountLists }),
     };
   } catch (err) {
     console.error('fetch-activecampaign error:', err);
@@ -100,12 +131,11 @@ exports.handler = async () => {
 
 // ─── BRAND DATA BUILDER ───────────────────────────────────────────────────────
 
-function buildBrandData(listIds, listDetailMap, listCampaignMap, allCampaigns, allAutomations) {
+function buildBrandData(listIds, listDetailMap, listCampaignMap, listCountMap, allCampaigns, allAutomations) {
   const now = Date.now();
   const d30 = now - 30 * 24 * 60 * 60 * 1000;
   const d60 = now - 60 * 24 * 60 * 60 * 1000;
 
-  // From the account-wide campaign fetch, filter campaigns belonging to this brand's lists
   const listIdSet = new Set(listIds);
   const brandCampaignsForTrend = allCampaigns.filter(c =>
     (c.lists || []).map(String).some(id => listIdSet.has(id))
@@ -123,13 +153,15 @@ function buildBrandData(listIds, listDetailMap, listCampaignMap, allCampaigns, a
     const listObj    = listResp.list || {};
     const campaigns  = campsResp.campaigns || [];
 
-    const subscribers = Number(listObj.subscriber_count || 0);
+    // Use contacts API count (listCountMap) — subscriber_count is unreliable in AC
+    const subscribers = listCountMap[id] !== undefined
+      ? listCountMap[id]
+      : Number(listObj.subscriber_count || 0);
     totalSubscribers += subscribers;
 
-    const lstStats    = aggregateCampaignStats(campaigns);
-    const lastCamp    = campaigns[0];
+    const lstStats = aggregateCampaignStats(campaigns);
+    const lastCamp = campaigns[0];
 
-    // Deduplicated campaign rows for the brand campaigns table
     for (const c of campaigns) {
       if (!seenCampaignIds.has(c.id)) {
         seenCampaignIds.add(c.id);
@@ -137,7 +169,6 @@ function buildBrandData(listIds, listDetailMap, listCampaignMap, allCampaigns, a
       }
     }
 
-    // 6-month open rate trend for this specific list
     const listTrendCamps = brandCampaignsForTrend.filter(c =>
       (c.lists || []).map(String).includes(id)
     );
@@ -149,16 +180,16 @@ function buildBrandData(listIds, listDetailMap, listCampaignMap, allCampaigns, a
       subscribers,
       openRate:           lstStats.openRate,
       clickRate:          lstStats.clickRate,
-      clickToWebsiteRate: 0, // requires WordPress sync — see ac-wordpress-sync.js
+      clickToWebsiteRate: 0,
       lastCampaign: lastCamp
         ? { name: lastCamp.name, sent: (lastCamp.sdate || '').slice(0, 10) }
         : { name: '—', sent: '—' },
       engagementTrend: lstBuckets.map(b => b.openRate),
-      sequences: [], // per-email data requires WordPress webhook sync
+      sequences: [],
     };
   });
 
-  // ── BRAND CAMPAIGNS TABLE (last 5, deduped, most recent first) ────────────
+  // ── BRAND CAMPAIGNS TABLE ─────────────────────────────────────────────────
   const campaigns = mergedCampaignRows
     .sort((a, b) => new Date(b.sdate) - new Date(a.sdate))
     .slice(0, 5)
@@ -179,7 +210,7 @@ function buildBrandData(listIds, listDetailMap, listCampaignMap, allCampaigns, a
       };
     });
 
-  // ── AGGREGATE STATS (current 30d vs prev 30-60d) ─────────────────────────
+  // ── AGGREGATE STATS ───────────────────────────────────────────────────────
   const recentCamps = brandCampaignsForTrend.filter(c => new Date(c.sdate).getTime() > d30);
   const prevCamps   = brandCampaignsForTrend.filter(c => {
     const t = new Date(c.sdate).getTime();
@@ -192,15 +223,13 @@ function buildBrandData(listIds, listDetailMap, listCampaignMap, allCampaigns, a
   const recentUnsubs = recentCamps.reduce((s, c) => s + Number(c.unsubscribes || 0), 0);
   const prevUnsubs   = prevCamps.reduce((s,   c) => s + Number(c.unsubscribes || 0), 0);
 
-  // ── 6-MONTH TREND ARRAYS ─────────────────────────────────────────────────
   const monthlyBuckets = buildMonthlyBuckets(brandCampaignsForTrend, 6);
 
-  // ── AUTOMATIONS ───────────────────────────────────────────────────────────
   const automations = allAutomations.slice(0, 6).map(a => ({
     name:      a.name,
     status:    'Active',
     triggered: Number(a.contactGoalCount || a.contacts || 0),
-    openRate:  0, // not available from the automations list endpoint
+    openRate:  0,
   }));
 
   return {
@@ -248,8 +277,6 @@ function buildOverallStats(totalContacts, allCampaigns) {
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
-// Weighted-average rates across a set of campaigns
-// Uses exact AC field names: sendamt, uniqueopens, subscriberclicks, unsubscribes
 function aggregateCampaignStats(campaigns) {
   const totalSends = campaigns.reduce((s, c) => s + Number(c.sendamt || 0), 0);
   if (!totalSends) return { openRate: 0, clickRate: 0, unsubRate: 0 };
@@ -265,7 +292,6 @@ function aggregateCampaignStats(campaigns) {
   };
 }
 
-// Group campaigns into N monthly buckets (oldest → newest for sparkline order)
 function buildMonthlyBuckets(campaigns, months) {
   const now = new Date();
   const buckets = Array.from({ length: months }, (_, i) => {
@@ -290,7 +316,6 @@ function buildMonthlyBuckets(campaigns, months) {
   }));
 }
 
-// GET with retry — AC rate-limits at ~5 req/s
 async function acGet(base, path, headers, retries = 3) {
   for (let attempt = 0; attempt < retries; attempt++) {
     const res = await fetch(base + path, { headers });

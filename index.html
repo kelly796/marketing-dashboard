@@ -1585,16 +1585,96 @@ BUILDERS['activecampaign'] = function buildTab5() {
       </div>
     </div>
 
+    ${(()=>{
+      const totalSubs = (em.hq?.subscribers||0) + (em.online?.subscribers||0);
+      const totalContacts = ov.totalContacts || 0;
+      if (totalContacts > 0 && totalSubs === 0) {
+        return `<div style="background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;gap:1rem;align-items:flex-start">
+          <span style="font-size:1.25rem;line-height:1">⚠</span>
+          <div>
+            <div style="font-weight:700;color:#92400E;margin-bottom:.35rem">Contacts not mapped to lists — ${fmtN(totalContacts)} contacts in account, 0 subscribed to tracked lists</div>
+            <div style="font-size:.85rem;color:#78350F;line-height:1.6">
+              The contacts exist in ActiveCampaign but haven't been subscribed to any list. See the <strong>All Account Lists</strong> tab to confirm list IDs, then assign contacts in AC:
+              <ul style="margin:.4rem 0 0 1.2rem;padding:0">
+                <li><strong>Halaxy clients</strong> → [HQ] Halaxy Clients 2026 (List ID set via AC_HALAXY_CLIENTS env var, default: 31)</li>
+                <li><strong>Webinar attendees</strong> → [HQ] Monthly Muscle Management (AC_MMM_WEBINAR, default: 5)</li>
+                <li><strong>Perf Classroom students</strong> → [Online] Perf Classroom (AC_PERF_CLASSROOM, default: 20)</li>
+                <li><strong>Perf Network members</strong> → [Online] Perf Network (AC_PERF_NETWORK, default: 12)</li>
+              </ul>
+            </div>
+          </div>
+        </div>`;
+      }
+      return '';
+    })()}
+
     <div class="inner-tabs">
-      <button class="inner-tab-btn active" data-itab="em-hq" onclick="switchInnerTab('em','hq')">HQ List</button>
-      <button class="inner-tab-btn" data-itab="em-online" onclick="switchInnerTab('em','online')">Online List</button>
+      <button class="inner-tab-btn active" data-itab="em-hq" onclick="switchInnerTab('em','hq')">HQ Lists</button>
+      <button class="inner-tab-btn" data-itab="em-online" onclick="switchInnerTab('em','online')">Online Lists</button>
       <button class="inner-tab-btn" data-itab="em-combined" onclick="switchInnerTab('em','combined')">Combined</button>
       <button class="inner-tab-btn" data-itab="em-analysis" onclick="switchInnerTab('em','analysis')">Analysis</button>
+      <button class="inner-tab-btn" data-itab="em-alllists" onclick="switchInnerTab('em','alllists')">All Account Lists</button>
       <button class="inner-tab-btn" data-itab="em-ai" onclick="switchInnerTab('em','ai')">AI Coaching</button>
     </div>
     <div id="em-hq" class="inner-tab-section active">${emailSubTab(em,'hq')}</div>
     <div id="em-online" class="inner-tab-section">${emailSubTab(em,'online')}</div>
     <div id="em-analysis" class="inner-tab-section">${renderAnalysisTab()}</div>
+    <div id="em-alllists" class="inner-tab-section">${(()=>{
+      const accountLists = d.allLists || [];
+      const targetIds = new Set([
+        ...(em.hq?.lists||[]).map(l=>String(l.id)),
+        ...(em.online?.lists||[]).map(l=>String(l.id)),
+      ]);
+      if (!accountLists.length) return `
+        <div class="chart-card">
+          <h3 style="margin-bottom:.75rem">All Account Lists</h3>
+          <div style="color:#aaa;font-size:.85rem;padding:.5rem 0">No list data yet — press <strong>↻ Refresh</strong> to fetch your ActiveCampaign lists.</div>
+        </div>`;
+      const totalMapped = accountLists.filter(l=>l.isTarget).reduce((s,l)=>s+l.subscribers,0);
+      const totalAccount = ov.totalContacts || 0;
+      const unmapped = Math.max(0, totalAccount - totalMapped);
+      return `
+        <div class="chart-card" style="margin-bottom:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+            <h3 style="margin:0">All Account Lists — ${accountLists.length} lists found</h3>
+            <div style="display:flex;gap:.75rem;font-size:.82rem;color:#888">
+              <span>Total contacts: <strong style="color:#1B2A4A">${fmtN(totalAccount)}</strong></span>
+              <span>Mapped to tracked lists: <strong style="color:${totalMapped>0?'#10B981':'#EF4444'}">${fmtN(totalMapped)}</strong></span>
+              <span>Unmapped: <strong style="color:${unmapped>0?'#F59E0B':'#10B981'}">${fmtN(unmapped)}</strong></span>
+            </div>
+          </div>
+          <table class="dash-table">
+            <thead><tr><th>List Name</th><th>List ID</th><th>Active Subscribers</th><th>Created</th><th>Tracked</th></tr></thead>
+            <tbody>
+              ${accountLists.map(l=>`
+                <tr style="${l.isTarget?'background:#f0fdf4':''}">
+                  <td style="font-weight:${l.isTarget?'700':'400'};color:#1B2A4A">${l.name}</td>
+                  <td><code style="background:#f4f6f8;padding:.1rem .35rem;border-radius:3px;font-size:.82rem">${l.id}</code></td>
+                  <td style="font-weight:700;color:${l.subscribers>0?'#10B981':'#EF4444'}">${fmtN(l.subscribers)}</td>
+                  <td style="color:#888;font-size:.82rem">${l.created||'—'}</td>
+                  <td>${l.isTarget?'<span style="color:#10B981;font-weight:700">✓ Yes</span>':'<span style="color:#94A3B8">—</span>'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="chart-card" style="border-left:4px solid #1B2A4A">
+          <h3 style="margin-bottom:.75rem">How to assign contacts to lists in ActiveCampaign</h3>
+          <div style="font-size:.85rem;color:#444;line-height:1.7">
+            <p style="margin:0 0 .75rem">If contacts show 0 subscribers above, they exist in AC but haven't been added to a list. Fix this in AC with one of these methods:</p>
+            <ol style="margin:0 0 .75rem;padding-left:1.4rem">
+              <li><strong>Bulk import:</strong> Export contacts by tag/source from AC → re-import with the target list selected during import</li>
+              <li><strong>Automation:</strong> Create an AC automation triggered by a tag (e.g. "Halaxy") → action: Subscribe to [HQ] Halaxy Clients 2026</li>
+              <li><strong>Manual segment:</strong> AC → Contacts → Filter by tag or custom field → select all → Actions → Add to list</li>
+            </ol>
+            <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;padding:.75rem 1rem;font-size:.82rem;color:#166534">
+              <strong>Recommended for PerforMotion:</strong><br>
+              Halaxy sync imports contacts with source tags — run Contacts → filter by tag "halaxy" → add to [HQ] Halaxy Clients 2026.<br>
+              Webinar signups → filter by tag or form source → add to [HQ] Monthly Muscle Management.<br>
+              Perf Classroom / Network students → filter by tag → add to [Online] Perf Classroom or [Online] Perf Network.
+            </div>
+          </div>
+        </div>`;
+    })()}</div>
     <div id="em-ai" class="inner-tab-section">
       <div class="chart-card" style="margin-bottom:1rem">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
