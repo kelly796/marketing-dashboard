@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PerforMotion — Email Sequences Phase 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; color: #1B2A4A; background: #fff; padding: 3rem 2rem; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 2rem; color: #1B2A4A; margin-bottom: .35rem; }
+  .subtitle { color: #2ABFBF; font-size: 1rem; margin-bottom: 2.5rem; font-family: Arial, sans-serif; }
+  h2 { font-size: 1.3rem; color: #fff; background: #1B2A4A; padding: .75rem 1.25rem; border-radius: 8px; margin: 2.5rem 0 1.25rem; }
+  h3 { font-size: .82rem; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #2ABFBF; margin: 1.75rem 0 .6rem; }
+  .seq-intro { font-family: Arial, sans-serif; font-size: .88rem; color: #555; background: #f8fafc; border-left: 3px solid #2ABFBF; padding: .75rem 1rem; margin-bottom: 1.5rem; line-height: 1.6; border-radius: 0 6px 6px 0; }
+  .email-card { border: 1.5px solid #e2e8f0; border-radius: 10px; margin-bottom: 1.75rem; overflow: hidden; }
+  .email-header { background: #1B2A4A; color: #fff; padding: .75rem 1.25rem; display: flex; align-items: center; gap: 1rem; font-family: Arial, sans-serif; }
+  .day-badge { background: #2ABFBF; color: #fff; font-weight: 800; font-size: .75rem; padding: .25rem .75rem; border-radius: 20px; white-space: nowrap; }
+  .email-title { font-weight: 700; font-size: .95rem; }
+  .email-body { padding: 1.25rem 1.5rem; }
+  .field-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #2ABFBF; font-family: Arial, sans-serif; margin-bottom: .35rem; margin-top: 1rem; }
+  .field-label:first-child { margin-top: 0; }
+  .subject-vars { display: flex; flex-direction: column; gap: .4rem; margin-bottom: .25rem; }
+  .subject-var { font-family: Arial, sans-serif; font-size: .88rem; padding: .4rem .75rem; border-radius: 6px; }
+  .var-a { background: #f0fdf4; border-left: 3px solid #10B981; }
+  .var-b { background: #eff6ff; border-left: 3px solid #2ABFBF; }
+  .var-c { background: #fefce8; border-left: 3px solid #F59E0B; }
+  .var-label { font-size: .7rem; font-weight: 700; color: #888; margin-right: .4rem; }
+  .preview { font-family: Arial, sans-serif; font-size: .85rem; color: #555; font-style: italic; background: #f8fafc; padding: .4rem .75rem; border-radius: 6px; }
+  .body-copy { font-size: .9rem; line-height: 1.8; white-space: pre-wrap; }
+  .cta-row { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+  .cta-btn { display: inline-block; background: #2ABFBF; color: #fff; font-family: Arial, sans-serif; font-size: .82rem; font-weight: 700; padding: .5rem 1.25rem; border-radius: 6px; text-decoration: none; }
+  .segment { font-family: Arial, sans-serif; font-size: .78rem; color: #888; }
+  .placeholder { background: #FEF3C7; color: #92400E; font-weight: 700; font-family: monospace; padding: .05rem .3rem; border-radius: 3px; font-size: .82rem; }
+  .toc { background: #f8fafc; border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 2rem; font-family: Arial, sans-serif; font-size: .88rem; }
+  .toc a { color: #2ABFBF; text-decoration: none; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: .78rem; color: #aaa; font-family: Arial, sans-serif; }
+  @media print { .email-card { page-break-inside: avoid; } body { padding: 1.5rem; } }
+</style>
+</head>
+<body>
+
+<h1>PerforMotion</h1>
+<div class="subtitle">Email Sequences — Phase 1 &nbsp;|&nbsp; HQ Brand &nbsp;|&nbsp; Memberships, Upsell &amp; Pass Offers</div>
+
+<div class="toc">
+  <strong>Sequences in this document:</strong><br><br>
+  1. <a href="#seq1">Pay As You Go EP → EP Membership</a> (6 emails, primary)<br>
+  2. <a href="#seq2">EP Membership → Gym + Group Classes Upsell</a> (6 emails)<br>
+  3. <a href="#seq3">Pay As You Go EP → Group Classes</a> (6 emails, sub-sequence)<br>
+  4. <a href="#seq4">Pay As You Go EP → Base/Base Plus</a> (6 emails, sub-sequence)<br>
+  5. <a href="#seq5">10 Pack Class Pass</a> (3 emails, tag-triggered)<br>
+  6. <a href="#seq6">1 Week Free Group Classes Pass</a> (3 emails, tag-triggered)<br>
+  7. <a href="#seq7">2 Week Free Base Gym Pass</a> (3 emails, tag-triggered)<br><br>
+  <span style="color:#F59E0B;font-weight:700">⚠ Placeholders:</span> Replace <span class="placeholder">[EP PAYG PRICE]</span> <span class="placeholder">[EP MEMBERSHIP PRICE]</span> <span class="placeholder">[BASE PRICE]</span> <span class="placeholder">[BASE PLUS PRICE]</span> <span class="placeholder">[GROUP CLASSES PRICE]</span> <span class="placeholder">[BOOKING LINK]</span> <span class="placeholder">[EP NAME]</span> before sending.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="seq1">Sequence 1 — Pay As You Go EP → EP Membership</h2>
+<div class="seq-intro">
+  <strong>Triggered by:</strong> Added to [HQ] Pay As You Go EP list (id: 51) via Halaxy Zap<br>
+  <strong>Goal:</strong> Convert pay as you go EP clients into EP membership<br>
+  <strong>Voice:</strong> Warm, clinical, personal — from Kelly or the EP team
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 1</span>
+    <span class="email-title">You took the first step</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> The hardest part is already done</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> What happens after your first EP session</div>
+      <div class="subject-var var-c"><span class="var-label">C — Personal</span> From the PerforMotion team — thank you for coming in</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Here's what we want you to know before your next step.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Thank you for coming in.
+
+Whether you came in because of pain, an injury, a health concern, or just not knowing where to start — we want you to know that walking through the door is always the hardest part.
+
+Your Exercise Physiologist has now seen where you're at. You have a clearer picture of what's going on and what needs to happen next.
+
+That matters more than most people realise.
+
+Over the next few weeks, we're going to share a little more about the journey from here — what ongoing Exercise Physiology looks like, how people progress, and how to know when you're ready for the next level of training.
+
+No pressure. Just useful information to help you make the right call for where you are right now.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book Your Next Session</a>
+      <span class="segment">Segment: All Pay As You Go EP clients</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 5</span>
+    <span class="email-title">Why one session rarely tells the whole story</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> Why the first session is just the beginning</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> What consistent EP support actually does</div>
+      <div class="subject-var var-c"><span class="var-label">C — Proof</span> Most people feel the difference by session three</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Assessment tells us where you are. Consistency is what moves you forward.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Here's something we see often.
+
+Someone comes in for their first session. Their EP assesses them, explains what's happening, and gives them a clear direction. They feel better just having a plan.
+
+Then they don't come back.
+
+Not because they don't want to. Life gets busy. The pain eases a little. They figure they'll book when they need to.
+
+And six months later, they're back where they started.
+
+The thing is — an assessment tells us where you are. What actually creates change is consistency.
+
+Your body adapts slowly. Pain patterns take time to shift. Strength is built progressively. And when something flares up or changes, having an EP who already knows your history means we can adjust quickly instead of starting over.
+
+That's why our EP memberships exist.
+
+Not to lock you into appointments forever — but to give you the right amount of support for where you are right now, with the flexibility to step up or down as things change.
+
+More on what that looks like in a few days.
+
+Warm regards,
+[EP NAME]
+Exercise Physiologist, PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book Your Follow-Up</a>
+      <span class="segment">Segment: All Pay As You Go EP clients</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 9</span>
+    <span class="email-title">What an EP membership actually gives you</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> What changes when you go from pay as you go to a membership?</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> Here's what an EP membership actually gives you</div>
+      <div class="subject-var var-c"><span class="var-label">C — Simple</span> The difference between one-off sessions and a real plan</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">It's not just more sessions — it's a different kind of support.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+A lot of people ask us: what's actually different about an EP membership versus just booking when I need to?
+
+Here's the honest answer.
+
+Pay as you go is great for triage — for getting assessed, understanding what's going on, and getting a direction. It's reactive by nature. You book when something's wrong, you get help, you leave.
+
+An EP membership is different. It's a structured, ongoing relationship with your Exercise Physiologist.
+
+That means:
+
+→ A clear program that progresses — not starting from scratch each time
+→ Regular reviews so your training adapts as you do
+→ An EP who knows your history and can adjust quickly when things change
+→ Clinical oversight while you build confidence and independence
+→ A pathway forward — not just management of where you are right now
+
+The level of contact is tailored to where you're at. Some people need to see their EP weekly. Others check in monthly and train mostly independently. Your EP will recommend what makes sense for your situation.
+
+EP membership from <span class="placeholder">[EP MEMBERSHIP PRICE]</span>/week.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Talk to Your EP</a>
+      <span class="segment">Segment: All Pay As You Go EP clients</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 13</span>
+    <span class="email-title">From "I'll just book when I need it" to actually getting better</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> What changed for one of our clients after 3 months</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> The difference between one-off sessions and a real plan</div>
+      <div class="subject-var var-c"><span class="var-label">C — Story</span> "I kept booking when it flared up. Then I stopped doing that."</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">It's not about how many sessions. It's about having a direction.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+We had a client come in with persistent lower back pain.
+
+She'd been booking appointments with various providers for two years — physio when it flared up, a GP visit here and there, the occasional massage. Always reactive. Never a clear plan.
+
+She started with pay as you go EP — same as you. Her EP assessed her, found the patterns, and gave her a plan.
+
+Three months into her EP membership, she was back to training consistently. Six months in, she joined our Group Classes. A year later, she considers herself a strength trainer.
+
+She told us: "I kept booking when it flared up. Then I stopped doing that. I had a plan, it was working, and I stopped waiting for things to go wrong."
+
+That's what we're trying to build for every client — not a dependency on appointments, but a pathway that makes appointments less necessary over time.
+
+If you're still trying to figure out whether ongoing support makes sense for you, we're happy to have a no-pressure conversation about it.
+
+Warm regards,
+[EP NAME]
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book a Membership Chat</a>
+      <span class="segment">Segment: All Pay As You Go EP clients</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 16</span>
+    <span class="email-title">The most common question we get</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> "Is an EP membership worth it if I'm mostly okay?"</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> How to know if you're ready for an EP membership</div>
+      <div class="subject-var var-c"><span class="var-label">C — Direct</span> Honest answer: here's when a membership makes sense</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">We get asked this a lot. Here's our honest take.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+"Is a membership worth it if I'm mostly okay now?"
+
+We get asked this all the time. Here's our honest answer.
+
+If you're booking appointments reactively — only when something flares up — a membership probably isn't the right fit yet. Pay as you go is fine for that.
+
+But if any of these sound familiar, it's worth a conversation:
+
+→ You know you need to keep moving, but you're not confident training alone
+→ Your symptoms are mostly managed, but you don't want to fall off
+→ You've finished formal rehab but you're not sure what to do next
+→ You want to start exercising properly but you don't know where to begin
+→ You've had setbacks every time you've tried to be more independent
+
+A membership isn't about needing more treatment. It's about having the right level of support so you can actually progress — and having someone in your corner when things change.
+
+EP membership from <span class="placeholder">[EP MEMBERSHIP PRICE]</span>/week. That's less than most people spend on one casual appointment.
+
+If you'd like to talk through whether a membership makes sense for your situation, your EP can do that at your next session — or you can reach out to us directly.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Let's Talk Options</a>
+      <span class="segment">Segment: All Pay As You Go EP clients</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 20</span>
+    <span class="email-title">Ready when you are</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> Still thinking it over? This might help.</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> Start your EP membership this week</div>
+      <div class="subject-var var-c"><span class="var-label">C — Soft close</span> No pressure — but the door is open</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">One conversation is all it takes to figure out the right next step.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+We've shared a lot over the past few weeks — what ongoing EP support looks like, how people progress, and when a membership makes sense.
+
+If you're still on the fence, that's completely okay.
+
+Everyone moves at their own pace, and an EP membership is only worth it when it's the right fit for where you are right now.
+
+But if you've been thinking about it and just haven't made the move yet — we're here when you're ready.
+
+You can:
+→ Book your next session and ask your EP directly
+→ Call or email admin and we'll talk through your options
+→ Reply to this email with any questions
+
+EP membership from <span class="placeholder">[EP MEMBERSHIP PRICE]</span>/week.
+No lock-in contracts. Step up or down as your needs change.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book Your EP Session</a>
+      <span class="segment">Segment: All Pay As You Go EP clients</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="seq2">Sequence 2 — EP Membership → Gym + Group Classes Upsell</h2>
+<div class="seq-intro">
+  <strong>Triggered by:</strong> Added to [HQ] EP Members list (id: 53) via GymMaster Zap<br>
+  <strong>Goal:</strong> Add gym access (Base/Base Plus) or Group Classes to existing EP members<br>
+  <strong>Send timing:</strong> Starts 7 days after joining — give them time to settle in first
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 7</span>
+    <span class="email-title">How's your first week going?</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> Most people ask us this by week two</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> What to do between your EP sessions</div>
+      <div class="subject-var var-c"><span class="var-label">C — Personal</span> Checking in — how's the first week feeling?</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Your EP sessions are working. Here's how to make the most of the time between them.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Welcome to the PerforMotion family — we're glad you're here.
+
+One of the most common questions we get from new EP members is: what do I do between sessions?
+
+The honest answer is that consistent movement between appointments is one of the biggest factors in how quickly you progress. But we know "just train more" isn't always helpful advice — especially if you're not confident yet or you're managing a condition.
+
+That's why we offer gym access and Group Classes specifically designed to complement your EP work.
+
+Over the next few weeks we'll share what's available to you. No pressure to add anything right now — just want you to know the full picture of what's here.
+
+Talk soon,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">See What's Available</a>
+      <span class="segment">Segment: New EP members</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 14</span>
+    <span class="email-title">Training between sessions — what actually helps</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> What your EP wants you doing between sessions</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> How gym access speeds up your progress</div>
+      <div class="subject-var var-c"><span class="var-label">C — Simple</span> The one thing that makes EP work faster</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Consistency between sessions is where most of the progress actually happens.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Here's something we've noticed after working with hundreds of clients.
+
+The people who progress fastest aren't the ones who book the most EP sessions.
+
+They're the ones who do the work between sessions.
+
+That doesn't mean going hard at a commercial gym and hoping for the best. It means having access to a facility and programming that supports exactly what your EP is working on with you.
+
+Our Base membership gives you that — open gym access, programming through the Lumin Sports app, and a facility that's built around strength, rehab, and recovery. Not chaos.
+
+Your EP can also communicate directly with what's in your program, so your gym training and your EP sessions are working together instead of against each other.
+
+Base starts at <span class="placeholder">[BASE PRICE]</span>/week added to your current membership.
+
+Worth a conversation if you've been wondering what to do on your own days.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Add Gym Access</a>
+      <span class="segment">Segment: EP members</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 21</span>
+    <span class="email-title">You might be ready for Group Classes</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> Are Group Classes right for where you're at now?</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> Train with others — without losing your clinical safety net</div>
+      <div class="subject-var var-c"><span class="var-label">C — Warm</span> The Group Classes our EP clients love most</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Our Group Classes are built differently. Here's what makes them work for EP clients.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Group training gets a bad reputation in the rehab world — and often for good reason.
+
+Generic bootcamps don't account for injuries. Class instructors aren't always equipped to modify. And for someone coming out of rehab, being in a room of strangers moving at full pace can feel a long way off.
+
+Our Group Classes are different.
+
+Every class starts with an EP assessment. Movement is coached, not just counted. The environment is inclusive, the pace is appropriate, and the coaches know the people in the room.
+
+Our most popular classes for EP clients transitioning into group training:
+
+Master the Movement — technique-focused strength work, perfect for building confidence with the fundamentals.
+
+Strength — structured resistance training in a supportive group setting.
+
+Stronger for Longer — specifically designed for healthy ageing, bone loading, and long-term independence.
+
+Rest of Perform — mobility, stretch, and recovery. Ideal if you train hard or need a lower-intensity session in your week.
+
+If your EP has mentioned that Group Classes might be appropriate for you, this is where to start.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">See the Class Schedule</a>
+      <span class="segment">Segment: EP members</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 28</span>
+    <span class="email-title">Recovery — the piece most people skip</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> Why recovery matters as much as the training</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> Add recovery to your membership from <span class="placeholder">[RECOVERY PRICE]</span>/week</div>
+      <div class="subject-var var-c"><span class="var-label">C — Direct</span> Sauna, cold plunge, mobility — what each one does</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Consistency goes up when recovery is part of the plan.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+One of the quieter parts of the PerforMotion model is recovery.
+
+Not quiet because it's unimportant — the opposite. It's just not something most people think about until they start training consistently and realise how much it affects how they feel day to day.
+
+Our recovery room includes infrared sauna, cold plunge, and a mobility and stretch space. It's available as an add-on to your current membership, or as a standalone if recovery is your main focus right now.
+
+For EP clients, recovery supports:
+→ Reduced inflammation and muscle soreness between sessions
+→ Better sleep and stress regulation
+→ A lower-intensity option for days when full training isn't appropriate
+→ Consistency — because people who recover well, train more consistently
+
+Base Plus includes full recovery room access alongside gym membership.
+
+For EP members who want to add recovery without changing their current plan, we can talk through the options.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Ask About Recovery Access</a>
+      <span class="segment">Segment: All EP members</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 35</span>
+    <span class="email-title">Gym or Group Classes — which is right for you?</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> Not sure if gym or Group Classes suits you better? Here's the answer.</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> Choose the add-on that matches how you train</div>
+      <div class="subject-var var-c"><span class="var-label">C — Simple</span> Two ways to train more. One of them will feel right.</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Gym access vs Group Classes — here's the honest breakdown.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+By now you might be thinking about adding something to your EP membership — but not sure which direction to go.
+
+Here's a simple way to think about it:
+
+Choose Base (gym access) if:
+→ You prefer training at your own pace
+→ You're confident with your program
+→ You want open access to train when it suits you
+→ You like having direction without someone in the room
+
+Choose Group Classes if:
+→ You do better with structure and accountability
+→ You want to train alongside other people
+→ You're finishing rehab and want a supported transition into group movement
+→ You like the energy of a coached class
+
+Both options complement your EP membership. Your EP can guide which makes the most sense for your current goals.
+
+Base from <span class="placeholder">[BASE PRICE]</span>/week
+Group Classes from <span class="placeholder">[GROUP CLASSES PRICE]</span>/week
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Add to My Membership</a>
+      <span class="segment">Segment: All EP members</span>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header">
+    <span class="day-badge">DAY 42</span>
+    <span class="email-title">You've been a member for 6 weeks — here's what's next</span>
+  </div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A — Curiosity</span> Six weeks in — most people are asking about this now</div>
+      <div class="subject-var var-b"><span class="var-label">B — Benefit</span> Ready to add the next layer?</div>
+      <div class="subject-var var-c"><span class="var-label">C — Milestone</span> You've built the foundation. Here's how to build on it.</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Six weeks is usually when people are ready to add something more.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Six weeks in. That's a real commitment, and we notice it.
+
+At this stage, most EP members start thinking about what else is available to them. Gym access, Group Classes, recovery, nutrition — there's more here than a lot of people realise when they first join.
+
+If you've been curious about any of it, now is a good time to have that conversation.
+
+Your next EP session is a great opportunity to ask your EP what they'd recommend as your next step. Or reach out to admin directly — we're happy to walk through the options with you.
+
+We're proud of what we've built here. We'd love for you to feel the full picture of it.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Talk to Us</a>
+      <span class="segment">Segment: All EP members</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="seq3">Sequence 3 — Pay As You Go EP → Group Classes (Sub-sequence)</h2>
+<div class="seq-intro">
+  <strong>Triggered by:</strong> Same list as Sequence 1 — split in AC automation based on EP recommendation tag<br>
+  <strong>Goal:</strong> Route pay as you go clients who are ready for group training into Group Classes<br>
+  <strong>Who receives this:</strong> Clients whose EP has flagged them as suitable for Group Classes
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 3</span><span class="email-title">There's a class built for exactly where you are</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Not ready for a normal gym? Neither were most of our members.</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Group training that actually meets you where you are</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> The class our EP clients transition into first</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Built for people coming out of rehab, not for people who've never had one.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Most people who come to us for Exercise Physiology have tried group training before.
+
+A lot of them had a bad experience — too fast, not enough instruction, no one asking if anything was sore, movements that aggravated an injury.
+
+Our Group Classes are designed from the ground up to be different.
+
+Every new member starting Group Classes has an EP assessment first. Our coaches understand injury, load management, and how to modify for different bodies and different days. The environment is supportive, the pace is appropriate, and you won't be judged for needing to scale.
+
+Your EP may have already mentioned that Group Classes could be a good next step for you. If so — here's more about what to expect.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">See the Classes</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 8</span><span class="email-title">Meet the classes</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Which class is right for you? Here's the breakdown.</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Five classes. One of them is exactly what you need.</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Strength, conditioning, movement, recovery — all under one roof</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Not all classes are the same. Here's how to choose.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Here's a quick breakdown of what's on at PerforMotion:
+
+Strength — Structured resistance training for building confidence and strength safely. Great starting point for most people.
+
+Strength and Conditioning — Strength work combined with conditioning. Suitable once you have some baseline fitness and confidence.
+
+Master the Movement — Technique-focused. We slow it down and get the fundamentals right. Perfect for people who want to learn to move well before pushing harder.
+
+Stronger for Longer — Specifically designed for older adults, bone loading, healthy ageing, and people who want to stay strong and independent for life.
+
+Rest of Perform — Mobility, stretch, and active recovery. Ideal for rest days, high-stress weeks, or anyone who needs a lower-intensity session.
+
+Not sure which to start with? Master the Movement or Strength are where most of our EP clients begin.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book a Trial Class</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 13</span><span class="email-title">What your first Group Class actually looks like</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> First class nerves? Here's exactly what to expect.</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> What happens when you walk into your first class</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> We've thought about the things that put people off. Here's what we do differently.</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">No surprises. Here's the full picture before you book.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+If you're thinking about joining a Group Class but something is holding you back — this email is for you.
+
+Here's what actually happens:
+
+Before your first class, you'll have a brief check-in with the coach. They'll ask about any injuries or things they need to know. This is not optional — it's part of how we keep classes safe.
+
+During the class, the coach will demonstrate movements and offer modifications. You don't need to keep up with anyone else. You work at your own pace within the structure of the class.
+
+After class, there's usually a few minutes to ask questions, stretch, or just chat. Most people find the group more welcoming than they expected.
+
+We're not a bootcamp. We're not a high-intensity circuit gym. We're a strength-focused, community-minded facility where showing up at your own level is the whole point.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book My First Class</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 18</span><span class="email-title">Who's in the room</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> The people who train in our Group Classes</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> You'll recognise yourself in at least one of them</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Group Classes — what they actually mean at PerforMotion</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Real people. Real starting points. Real results.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Our Group Classes include people like:
+
+People finishing EP who needed a safe next step.
+Older adults building strength for long-term independence.
+People who've never set foot in a gym and didn't know where to start.
+People returning to training after injury or surgery.
+People who tried commercial gyms and found them intimidating or irrelevant.
+People who wanted to train in a space that felt inclusive and thoughtful.
+
+What they have in common: they showed up, they found their level, and they kept coming back.
+
+The group that trains here is one of the things we're most proud of.
+
+If you've been thinking about joining — this is your invitation.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Join Group Classes</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 23</span><span class="email-title">Group Classes — here's what's included</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> What you get with Group Classes</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Group Classes from <span class="placeholder">[GROUP CLASSES PRICE]</span>/week</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Simple, clear, no surprises — here's what's included</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Everything included, nothing hidden.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Group Classes at PerforMotion include:
+
+→ Access to all classes (Strength, Strength & Conditioning, Master the Movement, Stronger for Longer, Rest of Perform)
+→ Initial EP assessment to make sure you start in the right class
+→ Ongoing coach support in every session
+→ The ability to move between classes as you progress
+→ A welcoming, inclusive training environment
+
+Group Classes from <span class="placeholder">[GROUP CLASSES PRICE]</span>/week.
+
+No lock-in contracts. You can add gym access or recovery at any point.
+
+If you're ready, you can book your initial assessment to get started. Or reply to this email and we'll answer any questions first.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Start My Assessment</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 28</span><span class="email-title">Last one from us for now</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> We'll stop nudging after this — but the door stays open</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Still thinking? Here's all you need to know in one place.</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> One last thing before we leave you to it</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">When the time is right, we're here.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+This is the last email in this series.
+
+If Group Classes haven't felt like the right fit yet, that's completely okay. Everyone moves at their own pace, and we'd rather you join when it makes sense than sign up because we nudged you into it.
+
+But if you've been sitting on it and just needed a final push — here it is.
+
+Group Classes from <span class="placeholder">[GROUP CLASSES PRICE]</span>/week.
+Initial EP assessment included.
+No lock-in.
+
+Book your assessment at <span class="placeholder">[BOOKING LINK]</span> or reply to this email.
+
+We'd love to have you.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book My Assessment</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="seq4">Sequence 4 — Pay As You Go EP → Base/Base Plus (Sub-sequence)</h2>
+<div class="seq-intro">
+  <strong>Triggered by:</strong> Same list as Sequence 1 — split based on EP recommendation or self-identified independence<br>
+  <strong>Goal:</strong> Route independent or gym-ready EP clients into Base or Base Plus
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 3</span><span class="email-title">A gym that was built around people like you</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Why most gyms don't work for people coming out of rehab</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> A strength facility designed for serious training without the ego</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> This isn't your average gym — here's what makes it different</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Built for people who want to train properly, not just access equipment.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Most gyms sell you access to equipment.
+
+PerforMotion gives you access to a facility built around strength, rehab, and recovery — with the clinical team, the programming, and the environment to back it up.
+
+Our Base membership is for independent members who want to train on their own terms, with the structure and direction to do it properly.
+
+That means:
+→ Open gym access to a strength-focused facility
+→ Programming through the Lumin Sports app — written by our coaches, tailored to your goals
+→ An initial consult so your program actually suits where you are
+→ A pathway to add EP support, coaching, or recovery when you need it
+
+This is where a lot of our EP clients land after their condition is managed — they want to keep training, but they want independence with the right structure.
+
+More on the specifics coming your way soon.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Learn About Base</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 8</span><span class="email-title">Base vs Base Plus — which is right for you?</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Two gym memberships. Here's the honest difference.</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Is recovery worth adding to your gym membership?</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Base or Base Plus — here's how to choose</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">One is gym access. The other adds recovery. Both are worth knowing about.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Two options. Here's the simple version:
+
+─────────────────────────────────
+Base — <span class="placeholder">[BASE PRICE]</span>/week
+Open gym access + Lumin app programming + initial consult.
+
+For: Independent members who want to train consistently with the right direction.
+─────────────────────────────────
+Base Plus — <span class="placeholder">[BASE PLUS PRICE]</span>/week
+Everything in Base + full recovery room access (infrared sauna, cold plunge, mobility space).
+
+For: People who train multiple times per week and want recovery built into the membership. Athletes, busy professionals, anyone who wants to perform better by recovering better.
+─────────────────────────────────
+
+Recovery isn't a luxury add-on. For people training consistently, it's what keeps them consistent.
+
+But if you're just starting out, Base is the right starting point. You can always add Plus later.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Join Base</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 13</span><span class="email-title">How the Lumin app works</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Your gym program — in your pocket, built by our coaches</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> No more guessing what to do at the gym</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> How our members train with direction, not just access</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Access without direction is just an expensive door key.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+One of the things that separates Base from a standard gym membership is the Lumin Sports app.
+
+Every Base member gets programming written by our coaches and delivered through Lumin — so when you walk into the gym, you know exactly what you're doing, why you're doing it, and how to progress.
+
+No more guessing sets and reps.
+No more copying exercises from Instagram.
+No more doing the same thing every session and wondering why nothing is changing.
+
+Your program is built around your goals and your current capacity. It changes when you change. And if your EP has given you specific movements to include or avoid, that can be factored in.
+
+This is what "access plus direction" looks like in practice.
+
+Base from <span class="placeholder">[BASE PRICE]</span>/week.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Start Your Membership</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 18</span><span class="email-title">What training here actually feels like</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Serious facility. No ego. Here's what that means in practice.</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> A gym where rehabilitation and performance share the same floor</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Why our members stay</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">We built the facility we couldn't find anywhere else.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+When we designed PerforMotion, we wanted a space where someone finishing 6 months of rehab and a competitive powerlifter could both train in the same room without either of them feeling out of place.
+
+That's not easy to get right. But it's what we've built.
+
+The facility is strength-focused. The equipment is selected for serious training. The environment is inclusive, not intimidating. And when you need more support — clinical or coaching — it's already there, in the same building, with people who already know you.
+
+That's different from a normal gym. And it's why people stay.
+
+Base from <span class="placeholder">[BASE PRICE]</span>/week.
+Base Plus from <span class="placeholder">[BASE PLUS PRICE]</span>/week.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book a Tour</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 23</span><span class="email-title">When you're ready to add more</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Gym membership is just the start — here's what you can add</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Coaching, nutrition, recovery — how to build on your membership</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> The full PerforMotion model — and how you fit into it</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Start with Base. Build from there when the time is right.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Base is a strong starting point. But it's not the ceiling.
+
+As you settle into training, there are a few natural next steps depending on what you're after:
+
+Want coaching? Perf Core, Plus, or Prime gives you structured coaching oversight on top of gym access.
+
+Want nutrition support? We have nutrition coaching that can sit alongside your membership — particularly useful for performance or body composition goals.
+
+Want Group Classes? Our Group Classes run alongside the gym and can be added or swapped in when the time is right.
+
+Want to keep your EP connection? You can hold a Base membership and EP membership simultaneously — a lot of our members do exactly that.
+
+There's no pressure to do all of it at once. Most people start with one thing and add layers as their goals evolve.
+
+We're here when you're ready for the next one.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Explore All Options</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 28</span><span class="email-title">Ready to join?</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Last nudge — then we'll leave you to it</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Join Base this week</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Still thinking about it? Here's everything in one place.</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">When you're ready, we're here. No pressure, no hard sell.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Last one from us.
+
+Base — <span class="placeholder">[BASE PRICE]</span>/week. Open gym, Lumin programming, initial consult.
+Base Plus — <span class="placeholder">[BASE PLUS PRICE]</span>/week. Everything in Base plus full recovery room access.
+
+No lock-in contracts. Start when it makes sense for you.
+
+Book a tour or a member consult at <span class="placeholder">[BOOKING LINK]</span>.
+
+Or reply to this email — we're happy to answer any questions before you commit to anything.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Join Base</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="seq5">Sequence 5 — 10 Pack Class Pass</h2>
+<div class="seq-intro">
+  <strong>Triggered by:</strong> Tag <strong>Pass - 10 Pack Classes</strong> applied via ZAP 5<br>
+  <strong>Goal:</strong> Get pass holders into classes, build habit, convert to Group Classes membership<br>
+  <strong>Timing:</strong> Fires same day as purchase. 3 emails over the life of the pass.
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 1</span><span class="email-title">Your 10 pack is live — here's how to use it</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Your 10 pack is ready — here's everything you need to know</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> 10 classes. Here's how to make the most of them.</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Welcome to PerforMotion Group Classes — you're in</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Everything you need before your first class.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Your 10 pack is confirmed and ready to use.
+
+Here's what to know before you book:
+
+Every new class member starts with a brief check-in with the coach before their first session. Let them know about any injuries or conditions — this is how we keep classes safe and tailored to the people in the room.
+
+To book your first class: <span class="placeholder">[BOOKING LINK]</span>
+
+Our classes:
+Strength — resistance training, great starting point
+Strength and Conditioning — strength + conditioning, once you have some baseline
+Master the Movement — technique-focused, perfect for beginners or people returning from injury
+Stronger for Longer — for healthy ageing, bone loading, long-term independence
+Rest of Perform — mobility, stretch, active recovery
+
+Not sure which to start with? Master the Movement or Strength are the most popular first sessions.
+
+We'll check in with you after a few classes to see how it's going.
+
+See you soon,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book My First Class</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 10</span><span class="email-title">How are the classes going?</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> A few classes in — what's landing, what's not?</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> What to try next with your 10 pack</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Getting the most out of your classes</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">The first few classes are usually where things start to click.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+You should be a few classes in by now — how's it feeling?
+
+A couple of things worth knowing at this stage:
+
+Try different classes. Your 10 pack gives you access to everything on the schedule. If you've only done one type of class so far, now is a good time to explore. Strength and Master the Movement are very different experiences and a lot of people find one suits them much better than the other.
+
+Tell the coach what you're noticing. If something feels off, if you're sore in a way that doesn't seem right, or if you're finding a movement difficult — say something. The coaches are there to adjust, not just count reps.
+
+Think about consistency over intensity. 2–3 classes per week builds a habit faster than 5 in a week followed by a week off.
+
+If you've enjoyed what you've found so far, we'll share more about ongoing membership options before your pack runs out.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book More Classes</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 21</span><span class="email-title">Your pass is winding down — here's what comes next</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Keep the momentum going after your 10 pack</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Group Classes membership from <span class="placeholder">[GROUP CLASSES PRICE]</span>/week</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> What happens after your last class?</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">You've built the habit. Here's how to keep it going.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Your 10 pack is nearly done — and if you've been training consistently, you'll have already noticed the difference.
+
+The hardest part is always the start. You've done that.
+
+The next step is keeping it going. A Group Classes membership gives you unlimited access to all classes from <span class="placeholder">[GROUP CLASSES PRICE]</span>/week — no pack counting, no admin, just show up.
+
+It also includes:
+→ Continued coach support in every session
+→ The ability to move between classes as your fitness changes
+→ An EP safety net if you ever need clinical support alongside your training
+→ No lock-in contracts
+
+If you're ready to move to a membership, reply to this email or speak to admin at your next class.
+
+We'd love to have you stay.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Move to a Membership</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="seq6">Sequence 6 — 1 Week Free Group Classes Pass</h2>
+<div class="seq-intro">
+  <strong>Triggered by:</strong> Tag <strong>Pass - Free Class Week</strong> applied via ZAP 6<br>
+  <strong>Goal:</strong> Get pass holders into their first class and convert to paid membership<br>
+  <strong>Timing:</strong> Fires same day. 3 emails over 7 days.
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 1</span><span class="email-title">Your free week starts now</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Your free week is live — here's how to use it</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> One week, unlimited classes. Here's everything you need.</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Welcome to PerforMotion — your free week starts today</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Try as many classes as you like. Here's where to start.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Your 1 week free pass is active from today.
+
+You can attend as many Group Classes as you like this week — here's how to make the most of it.
+
+Book your first class here: <span class="placeholder">[BOOKING LINK]</span>
+
+Before your first session, let the coach know about any injuries or health conditions. This is standard for every new member and helps us make sure the class is right for you.
+
+Where to start:
+→ Master the Movement — perfect if you want to get the technique right before training harder
+→ Strength — the most popular starting point for people new to structured resistance training
+→ Rest of Perform — if you want something lower intensity to start, this is it
+
+Try more than one class if you can — they're genuinely different experiences and you'll quickly find out what suits you.
+
+Any questions before your first session? Just reply to this email.
+
+See you on the floor,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book My First Class</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 3</span><span class="email-title">Halfway through — how's it going?</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Three days in — have you tried a second class yet?</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> A quick check-in from the PerforMotion team</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> You've still got time — make the most of your free week</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">You've still got a few days left. Here's what to try.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+You're halfway through your free week — how have the classes been?
+
+If you haven't been in yet, there's still time. The schedule is live at <span class="placeholder">[BOOKING LINK]</span>.
+
+If you've already been to one class, try a different one before the week is out. Our classes have genuinely different feels — Strength vs Master the Movement vs Stronger for Longer are three quite different experiences. The more you try this week, the better picture you'll have of what suits you.
+
+The coaches are also a great resource. If you've got questions about which class to stick with, or what a regular schedule might look like for you, ask them before or after class.
+
+We'll be in touch before your pass ends.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Book Another Class</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 6</span><span class="email-title">Your free week ends tomorrow</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Last day of your free pass tomorrow — here's how to keep going</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Ready to keep training? Here's what's next.</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Don't lose the momentum — your options after this week</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">One more day on your pass. Here's how to keep it going.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Your free week wraps up tomorrow.
+
+If you've enjoyed it — great. Here's how to keep going without any gap in your training.
+
+Group Classes membership from <span class="placeholder">[GROUP CLASSES PRICE]</span>/week.
+Unlimited access to all classes. No lock-in contracts. Initial EP assessment included for all new members.
+
+You can also grab a 10 pack if you'd prefer flexibility over a weekly commitment — speak to admin about pricing.
+
+To continue, reply to this email or speak to any of the team at your next class. We can set you up before your pass expires so there's no break.
+
+If you're not ready yet, that's completely fine — the door is always open.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Continue My Membership</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="seq7">Sequence 7 — 2 Week Free Base Gym Pass</h2>
+<div class="seq-intro">
+  <strong>Triggered by:</strong> Tag <strong>Pass - 2 Week Gym</strong> applied via ZAP 7<br>
+  <strong>Goal:</strong> Get pass holders training consistently and convert to Base or Base Plus membership<br>
+  <strong>Timing:</strong> Fires same day. 3 emails over 14 days.
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 1</span><span class="email-title">Your 2 week gym pass is active</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Your 2 week pass is live — here's everything you need</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Two weeks of open gym access — here's how to use it well</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Welcome to the gym — your free access starts today</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Facility overview, Lumin app setup, and what to do on your first session.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Your 2 week free Base gym pass is active from today. Here's what you need to know.
+
+Access: You can train during open gym hours for the next two weeks. Bring your pass confirmation to your first session and the team will get you set up.
+
+Programming — Lumin Sports app: Base membership includes programming written by our coaches and delivered through the Lumin app. Download it before your first session and log in with the details we've sent separately. Your program tells you exactly what to do, how to progress, and why.
+
+Download Lumin: available on iOS and Android, search Lumin Sports.
+
+Your first session: come in, introduce yourself to whoever's on the floor, and follow your Lumin program. If you have any injuries or health conditions, let the team know — there may be movements to modify or avoid.
+
+The facility: strength-focused equipment, a separate recovery room (infrared sauna, cold plunge, mobility space — available separately or as part of Base Plus), and a clinical EP team onsite if you need support.
+
+Any questions? Reply to this email or speak to the team when you're in.
+
+See you soon,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Plan My First Session</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 7</span><span class="email-title">One week in — how's the training going?</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> A week into your pass — what have you noticed?</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> One more week left — here's what to focus on</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Checking in from the PerforMotion team</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">The second week is where training starts to feel like a habit.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+You've got one week of your pass left.
+
+If you've been in a few times, you'll be starting to get a feel for the space and your program. The second week is usually where things start to feel more familiar and training starts to feel like a habit rather than an effort.
+
+A few things worth knowing for your second week:
+
+If your Lumin program feels too easy or too hard, it can be adjusted. Speak to one of the coaches on the floor and they can dial it in.
+
+If you're feeling good and want to push a bit more, try increasing the load on your compound movements — the program will guide you on when to progress.
+
+If anything is feeling off — a joint, a movement pattern, something that doesn't seem right — the EP team is onsite. It's worth a quick conversation before it becomes something that slows you down.
+
+We'll be in touch before your pass ends to talk about what comes next.
+
+Warm regards,
+The PerforMotion Team</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">See the Full Schedule</a>
+    </div>
+  </div>
+</div>
+
+<div class="email-card">
+  <div class="email-header"><span class="day-badge">DAY 13</span><span class="email-title">Your pass ends tomorrow — here's how to continue</span></div>
+  <div class="email-body">
+    <div class="field-label">Subject Line Variants</div>
+    <div class="subject-vars">
+      <div class="subject-var var-a"><span class="var-label">A</span> Last day of your gym pass tomorrow — keep the momentum</div>
+      <div class="subject-var var-b"><span class="var-label">B</span> Base membership from <span class="placeholder">[BASE PRICE]</span>/week — here's how to continue</div>
+      <div class="subject-var var-c"><span class="var-label">C</span> Two weeks done. Don't stop here.</div>
+    </div>
+    <div class="field-label">Preview Text</div>
+    <div class="preview">Your pass wraps up tomorrow. Here's what to do next.</div>
+    <div class="field-label">Body</div>
+    <div class="body-copy">Hi [First Name],
+
+Your 2 week pass ends tomorrow.
+
+If you've been training consistently, the last thing you want is a gap. Here's how to keep going:
+
+─────────────────────────────────
+Base — <span class="placeholder">[BASE PRICE]</span>/week
+Open gym access + Lumin app programming. Everything you've been using this fortnight, ongoing.
+─────────────────────────────────
+Base Plus — <span class="placeholder">[BASE PLUS PRICE]</span>/week
+Everything in Base + full recovery room access (infrared sauna, cold plunge, mobility space).
+─────────────────────────────────
+
+No lock-in contracts. You can upgrade, downgrade, or pause if life gets in the way.
+
+To continue without any break in access, speak to admin at your next session or reply to this email. We can set you up today.
+
+If you're not ready yet, that's okay — we'll leave the door open.
+
+Warm regards,
+Kelly
+PerforMotion</div>
+    <div class="cta-row">
+      <a class="cta-btn" href="[BOOKING LINK]">Join Base</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  PerforMotion — performotion.com.au &nbsp;|&nbsp; Generated by Claude Code &nbsp;|&nbsp; 2026-05-19 &nbsp;|&nbsp; Phase 1 Email Sequences
+</footer>
+
+</body>
+</html>

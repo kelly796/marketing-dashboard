@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PerforMotion — Design System</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; color: #1B2A4A; background: #f8fafc; }
+  .page { max-width: 1000px; margin: 0 auto; padding: 3rem 2rem; }
+
+  /* Header */
+  .ds-header { background: #1B2A4A; color: #fff; padding: 3rem; border-radius: 12px; margin-bottom: 3rem; }
+  .ds-header h1 { font-family: Georgia, serif; font-size: 2.5rem; margin-bottom: .5rem; }
+  .ds-header .tagline { color: #2ABFBF; font-size: 1.1rem; margin-bottom: 1.5rem; }
+  .ds-header p { color: #94a3b8; font-size: .9rem; line-height: 1.7; max-width: 600px; }
+
+  /* Section */
+  .section { background: #fff; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 1px solid #e2e8f0; }
+  .section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #2ABFBF; margin-bottom: 1.5rem; padding-bottom: .5rem; border-bottom: 2px solid #e2e8f0; }
+
+  /* Colors */
+  .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+  .color-card { border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+  .color-swatch { height: 80px; }
+  .color-info { padding: .75rem; background: #fff; }
+  .color-name { font-weight: 700; font-size: .82rem; color: #1B2A4A; }
+  .color-hex { font-family: monospace; font-size: .78rem; color: #64748b; }
+  .color-use { font-size: .72rem; color: #94a3b8; margin-top: .25rem; }
+
+  /* Typography */
+  .type-row { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #f1f5f9; }
+  .type-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .type-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; margin-bottom: .5rem; }
+  .type-meta { font-size: .78rem; color: #64748b; margin-top: .35rem; font-family: monospace; }
+
+  .t-h1 { font-family: Georgia, serif; font-size: 2.5rem; font-weight: 700; color: #1B2A4A; line-height: 1.2; }
+  .t-h2 { font-family: Georgia, serif; font-size: 1.75rem; font-weight: 700; color: #1B2A4A; line-height: 1.3; }
+  .t-h3 { font-family: Georgia, serif; font-size: 1.25rem; font-weight: 700; color: #1B2A4A; }
+  .t-h4 { font-family: Arial, sans-serif; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #2ABFBF; }
+  .t-body { font-family: Georgia, serif; font-size: 1rem; line-height: 1.8; color: #1B2A4A; }
+  .t-small { font-family: Arial, sans-serif; font-size: .875rem; color: #64748b; line-height: 1.6; }
+  .t-caption { font-family: Arial, sans-serif; font-size: .75rem; color: #94a3b8; letter-spacing: .04em; }
+
+  /* Buttons */
+  .btn-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+  .btn { display: inline-block; font-family: Arial, sans-serif; font-weight: 700; padding: .75rem 1.75rem; border-radius: 6px; font-size: .9rem; cursor: pointer; border: none; text-decoration: none; }
+  .btn-primary { background: #2ABFBF; color: #fff; }
+  .btn-primary:hover { background: #22a3a3; }
+  .btn-secondary { background: #1B2A4A; color: #fff; }
+  .btn-outline { background: transparent; color: #1B2A4A; border: 2px solid #1B2A4A; }
+  .btn-outline-teal { background: transparent; color: #2ABFBF; border: 2px solid #2ABFBF; }
+  .btn-warm { background: #D4B896; color: #1B2A4A; }
+  .btn-sm { padding: .45rem 1rem; font-size: .8rem; }
+  .btn-lg { padding: 1rem 2.5rem; font-size: 1rem; }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
+  .card { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; }
+  .card-accent { border-top: 4px solid #2ABFBF; }
+  .card-navy { background: #1B2A4A; color: #fff; border-color: #1B2A4A; }
+  .card-navy .card-title { color: #fff; }
+  .card-navy .card-body { color: #94a3b8; }
+  .card-warm { border-top: 4px solid #D4B896; }
+  .card-title { font-family: Georgia, serif; font-size: 1.1rem; font-weight: 700; color: #1B2A4A; margin-bottom: .5rem; }
+  .card-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #2ABFBF; margin-bottom: .5rem; }
+  .card-body { font-size: .88rem; color: #64748b; line-height: 1.6; }
+
+  /* Tags & Badges */
+  .tag-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+  .tag { display: inline-block; font-family: Arial, sans-serif; font-size: .75rem; font-weight: 600; padding: .3rem .75rem; border-radius: 20px; }
+  .tag-teal { background: #e0fafa; color: #0d7d7d; border: 1px solid #a7f3f3; }
+  .tag-navy { background: #e8edf5; color: #1B2A4A; border: 1px solid #c3cedf; }
+  .tag-green { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .tag-warm { background: #fdf6ee; color: #92400e; border: 1px solid #f0d9bb; }
+  .tag-grey { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* Forms */
+  .form-group { margin-bottom: 1.25rem; }
+  .form-label { display: block; font-family: Arial, sans-serif; font-size: .8rem; font-weight: 700; color: #1B2A4A; margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .05em; }
+  .form-input { display: block; width: 100%; max-width: 400px; font-family: Arial, sans-serif; font-size: .9rem; color: #1B2A4A; background: #fff; border: 1.5px solid #e2e8f0; border-radius: 6px; padding: .65rem 1rem; outline: none; }
+  .form-input:focus { border-color: #2ABFBF; box-shadow: 0 0 0 3px rgba(42,191,191,.15); }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid #e2e8f0; margin: 1.5rem 0; }
+
+  /* Spacing scale */
+  .spacing-row { display: flex; align-items: center; gap: 1rem; margin-bottom: .75rem; }
+  .spacing-box { background: #2ABFBF; border-radius: 4px; flex-shrink: 0; }
+  .spacing-label { font-family: monospace; font-size: .82rem; color: #1B2A4A; }
+  .spacing-desc { font-size: .78rem; color: #94a3b8; }
+
+  /* Logo zone */
+  .logo-zone { background: #1B2A4A; border-radius: 10px; padding: 2rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .logo-mark { width: 48px; height: 48px; background: #2ABFBF; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-size: 1.4rem; font-weight: 700; color: #fff; }
+  .logo-text { font-family: Georgia, serif; font-size: 1.5rem; font-weight: 700; color: #fff; }
+  .logo-text span { color: #2ABFBF; }
+  .logo-zone-light { background: #f8fafc; border: 1.5px solid #e2e8f0; }
+  .logo-zone-light .logo-text { color: #1B2A4A; }
+
+  /* Grid system */
+  .grid-demo { display: grid; gap: .5rem; }
+  .grid-col { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: .5rem; font-size: .75rem; font-family: monospace; color: #1e40af; text-align: center; }
+
+  /* Motion / Image style note */
+  .image-style { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .image-do { background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 8px; padding: 1rem; }
+  .image-dont { background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 1rem; }
+  .image-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem; }
+  .image-do .image-label { color: #166534; }
+  .image-dont .image-label { color: #991b1b; }
+  .image-list { font-size: .82rem; line-height: 1.8; color: #374151; }
+
+  footer { text-align: center; font-size: .75rem; color: #94a3b8; padding: 2rem 0; font-family: Arial, sans-serif; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="ds-header">
+    <h1>PerforMotion</h1>
+    <div class="tagline">Where rehab meets performance.</div>
+    <p>This is the PerforMotion design system — the single source of truth for colours, typography, components, and brand guidelines. Use this document when building landing pages, web pages, ads, or any visual asset for PerforMotion HQ.</p>
+  </div>
+
+  <!-- Brand Positioning -->
+  <div class="section">
+    <div class="section-title">Brand Positioning</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+      <div>
+        <div class="type-label">What PerforMotion Is</div>
+        <ul style="font-size:.9rem;line-height:2;color:#1B2A4A;padding-left:1.2rem;margin-top:.5rem;">
+          <li>A rehab-to-performance ecosystem</li>
+          <li>Clinical expertise + strength coaching in one space</li>
+          <li>Exercise Physiology, gym, Group Classes, recovery</li>
+          <li>The pathway from pain to performance</li>
+        </ul>
+      </div>
+      <div>
+        <div class="type-label">What PerforMotion Is Not</div>
+        <ul style="font-size:.9rem;line-height:2;color:#64748b;padding-left:1.2rem;margin-top:.5rem;">
+          <li>Not a gym (no casual machines, no ego)</li>
+          <li>Not a physio clinic (we go beyond treatment)</li>
+          <li>Not a bootcamp (intentional, not chaotic)</li>
+          <li>Not a corporate wellness centre</li>
+        </ul>
+      </div>
+    </div>
+    <hr class="divider">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:1rem;">
+      <div>
+        <div class="type-label">Voice</div>
+        <p style="font-size:.88rem;color:#1B2A4A;line-height:1.7;margin-top:.4rem;">Warm, clinical, honest. Personal but professional. First-person from Kelly or the team. Never salesy.</p>
+      </div>
+      <div>
+        <div class="type-label">Tone</div>
+        <p style="font-size:.88rem;color:#1B2A4A;line-height:1.7;margin-top:.4rem;">Confident but not arrogant. Direct but empathetic. Reassuring, not dismissive. Plain language always.</p>
+      </div>
+      <div>
+        <div class="type-label">Feel</div>
+        <p style="font-size:.88rem;color:#1B2A4A;line-height:1.7;margin-top:.4rem;">Serious about results. Easy to trust. Inclusive without being generic. Premium without being cold.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colours -->
+  <div class="section">
+    <div class="section-title">Colour Palette</div>
+    <div class="color-grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background:#1B2A4A;"></div>
+        <div class="color-info">
+          <div class="color-name">Navy — Primary</div>
+          <div class="color-hex">#1B2A4A</div>
+          <div class="color-use">Headers, navbars, backgrounds, text</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#2ABFBF;"></div>
+        <div class="color-info">
+          <div class="color-name">Teal — Brand</div>
+          <div class="color-hex">#2ABFBF</div>
+          <div class="color-use">CTAs, accents, links, highlights</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#D4B896;"></div>
+        <div class="color-info">
+          <div class="color-name">Warm — Accent</div>
+          <div class="color-hex">#D4B896</div>
+          <div class="color-use">Warmth, recovery, secondary accents</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#10B981;"></div>
+        <div class="color-info">
+          <div class="color-name">Green — Success</div>
+          <div class="color-hex">#10B981</div>
+          <div class="color-use">Positive states, confirmations, active</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#f8fafc; border:1px solid #e2e8f0;"></div>
+        <div class="color-info">
+          <div class="color-name">Off-White — Background</div>
+          <div class="color-hex">#f8fafc</div>
+          <div class="color-use">Page backgrounds, light sections</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#ffffff; border:1px solid #e2e8f0;"></div>
+        <div class="color-info">
+          <div class="color-name">White — Surface</div>
+          <div class="color-hex">#ffffff</div>
+          <div class="color-use">Cards, modals, input backgrounds</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#64748b;"></div>
+        <div class="color-info">
+          <div class="color-name">Slate — Secondary Text</div>
+          <div class="color-hex">#64748b</div>
+          <div class="color-use">Body text, descriptions, captions</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#e2e8f0;"></div>
+        <div class="color-info">
+          <div class="color-name">Border — Subtle</div>
+          <div class="color-hex">#e2e8f0</div>
+          <div class="color-use">Dividers, card borders, separators</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Typography -->
+  <div class="section">
+    <div class="section-title">Typography</div>
+
+    <div class="type-row">
+      <div class="type-label">H1 — Page Headline</div>
+      <div class="t-h1">Where rehab meets performance.</div>
+      <div class="type-meta">Georgia, serif — 2.5rem / 700 / #1B2A4A / line-height 1.2</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-label">H2 — Section Heading</div>
+      <div class="t-h2">Your pathway forward starts here.</div>
+      <div class="type-meta">Georgia, serif — 1.75rem / 700 / #1B2A4A / line-height 1.3</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-label">H3 — Subsection Heading</div>
+      <div class="t-h3">EP Membership — structured, ongoing support.</div>
+      <div class="type-meta">Georgia, serif — 1.25rem / 700 / #1B2A4A</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-label">H4 / Label — Eyebrow Text</div>
+      <div class="t-h4">Exercise Physiology</div>
+      <div class="type-meta">Arial, sans-serif — 1rem / 700 / uppercase / letter-spacing .08em / #2ABFBF</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-label">Body — Long Form</div>
+      <div class="t-body">We don't believe in one-size-fits-all. Some people need a clinical safety net while they train mostly independently. Others need consistent EP support as they progress through rehab.</div>
+      <div class="type-meta">Georgia, serif — 1rem / line-height 1.8 / #1B2A4A</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-label">Body Small — UI / Supporting Text</div>
+      <div class="t-small">No lock-in contracts. Step up or down as your needs change. Your EP can recommend the right option at your next session.</div>
+      <div class="type-meta">Arial, sans-serif — 0.875rem / line-height 1.6 / #64748b</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-label">Caption / Meta</div>
+      <div class="t-caption">PerforMotion HQ — performotion.com.au — Updated 2026</div>
+      <div class="type-meta">Arial, sans-serif — 0.75rem / #94a3b8 / letter-spacing .04em</div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="section">
+    <div class="section-title">Buttons</div>
+    <div class="btn-row">
+      <a class="btn btn-primary">Book a Consult</a>
+      <a class="btn btn-secondary">Learn More</a>
+      <a class="btn btn-outline">View Classes</a>
+      <a class="btn btn-outline-teal">EP Memberships</a>
+      <a class="btn btn-warm">Recovery Room</a>
+    </div>
+    <div class="btn-row">
+      <a class="btn btn-primary btn-sm">Book Now</a>
+      <a class="btn btn-primary">Book a Consult</a>
+      <a class="btn btn-primary btn-lg">Start Your Journey</a>
+    </div>
+    <div style="font-size:.8rem;color:#64748b;margin-top:.5rem;">
+      Primary (Teal) — main CTA &nbsp;|&nbsp; Secondary (Navy) — secondary action &nbsp;|&nbsp; Outline — tertiary / ghost &nbsp;|&nbsp; Warm — recovery-specific CTAs
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="section">
+    <div class="section-title">Cards</div>
+    <div class="card-grid">
+      <div class="card card-accent">
+        <div class="card-label">EP Membership</div>
+        <div class="card-title">Structured, ongoing EP support</div>
+        <div class="card-body">A clear program that progresses, regular reviews, and an EP who knows your history.</div>
+      </div>
+      <div class="card card-warm">
+        <div class="card-label">Group Classes</div>
+        <div class="card-title">Train with others — safely</div>
+        <div class="card-body">EP-assessed entry. Coached sessions. A group that knows what you've been through.</div>
+      </div>
+      <div class="card card-navy">
+        <div class="card-label" style="color:#2ABFBF;">Base Membership</div>
+        <div class="card-title">Open gym + Lumin programming</div>
+        <div class="card-body">Train independently with direction. Your program in your pocket.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tags & Badges -->
+  <div class="section">
+    <div class="section-title">Tags &amp; Badges</div>
+    <div class="tag-row">
+      <span class="tag tag-teal">Exercise Physiology</span>
+      <span class="tag tag-teal">EP Membership</span>
+      <span class="tag tag-navy">Group Classes</span>
+      <span class="tag tag-navy">Base Membership</span>
+      <span class="tag tag-green">Active Member</span>
+      <span class="tag tag-warm">Recovery Room</span>
+      <span class="tag tag-grey">Base Plus</span>
+    </div>
+  </div>
+
+  <!-- Form Elements -->
+  <div class="section">
+    <div class="section-title">Form Elements</div>
+    <div class="form-group">
+      <label class="form-label">First Name</label>
+      <input class="form-input" type="text" placeholder="Enter your first name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input class="form-input" type="email" placeholder="your@email.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">What are you looking for?</label>
+      <select class="form-input">
+        <option>Exercise Physiology</option>
+        <option>Group Classes</option>
+        <option>Gym Membership</option>
+        <option>Recovery Room</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Spacing -->
+  <div class="section">
+    <div class="section-title">Spacing Scale (8px base grid)</div>
+    <div class="spacing-row"><div class="spacing-box" style="width:4px;height:4px;"></div><span class="spacing-label">4px — 0.25rem</span><span class="spacing-desc">Tight internal spacing</span></div>
+    <div class="spacing-row"><div class="spacing-box" style="width:8px;height:8px;"></div><span class="spacing-label">8px — 0.5rem</span><span class="spacing-desc">Base unit</span></div>
+    <div class="spacing-row"><div class="spacing-box" style="width:16px;height:16px;"></div><span class="spacing-label">16px — 1rem</span><span class="spacing-desc">Component padding</span></div>
+    <div class="spacing-row"><div class="spacing-box" style="width:24px;height:24px;"></div><span class="spacing-label">24px — 1.5rem</span><span class="spacing-desc">Card padding, section gaps</span></div>
+    <div class="spacing-row"><div class="spacing-box" style="width:32px;height:32px;"></div><span class="spacing-label">32px — 2rem</span><span class="spacing-desc">Section padding</span></div>
+    <div class="spacing-row"><div class="spacing-box" style="width:48px;height:12px;"></div><span class="spacing-label">48px — 3rem</span><span class="spacing-desc">Page section gaps</span></div>
+    <div class="spacing-row"><div class="spacing-box" style="width:64px;height:12px;"></div><span class="spacing-label">64px — 4rem</span><span class="spacing-desc">Hero / large section padding</span></div>
+  </div>
+
+  <!-- Border Radius -->
+  <div class="section">
+    <div class="section-title">Border Radius</div>
+    <div style="display:flex;gap:1.5rem;align-items:flex-end;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="width:60px;height:60px;background:#2ABFBF;border-radius:4px;margin:0 auto .5rem;"></div>
+        <div style="font-size:.75rem;color:#64748b;">4px<br>Buttons (sm)</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:60px;height:60px;background:#2ABFBF;border-radius:6px;margin:0 auto .5rem;"></div>
+        <div style="font-size:.75rem;color:#64748b;">6px<br>Buttons, inputs</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:60px;height:60px;background:#2ABFBF;border-radius:8px;margin:0 auto .5rem;"></div>
+        <div style="font-size:.75rem;color:#64748b;">8px<br>Cards (sm)</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:60px;height:60px;background:#2ABFBF;border-radius:10px;margin:0 auto .5rem;"></div>
+        <div style="font-size:.75rem;color:#64748b;">10px<br>Cards (default)</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:60px;height:60px;background:#2ABFBF;border-radius:12px;margin:0 auto .5rem;"></div>
+        <div style="font-size:.75rem;color:#64748b;">12px<br>Large cards</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:60px;height:60px;background:#2ABFBF;border-radius:30px;margin:0 auto .5rem;"></div>
+        <div style="font-size:.75rem;color:#64748b;">Full pill<br>Tags, badges</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image & Photography Style -->
+  <div class="section">
+    <div class="section-title">Photography &amp; Image Style</div>
+    <div class="image-style">
+      <div class="image-do">
+        <div class="image-label">✓ Use</div>
+        <ul class="image-list">
+          <li>Real people, real bodies — not models</li>
+          <li>Clinical settings and gym floor together</li>
+          <li>1:1 EP session moments (genuine)</li>
+          <li>Group Classes — inclusive, not performative</li>
+          <li>Recovery room (sauna, cold plunge)</li>
+          <li>Strength training — barbells, not machines</li>
+          <li>Warm natural light where possible</li>
+          <li>Navy/teal colour grading</li>
+        </ul>
+      </div>
+      <div class="image-dont">
+        <div class="image-label">✗ Avoid</div>
+        <ul class="image-list">
+          <li>Stock photos of perfect gym bodies</li>
+          <li>Overly filtered or stylised imagery</li>
+          <li>Bootcamp energy — people screaming</li>
+          <li>Medical/hospital sterile imagery</li>
+          <li>Before/after body transformation shots</li>
+          <li>Generic commercial gym equipment</li>
+          <li>Bright neon gym colour schemes</li>
+          <li>Overly corporate wellness feel</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Structure -->
+  <div class="section">
+    <div class="section-title">Landing Page Structure (Standard)</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.88rem;font-family:Arial,sans-serif;">
+      <div style="background:#1B2A4A;color:#fff;padding:.75rem 1rem;border-radius:6px;"><strong>1. Hero</strong> — Headline + subheadline + primary CTA + trust signal (e.g. "EP-led • Strength-focused • Results-driven")</div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#1B2A4A;padding:.75rem 1rem;border-radius:6px;"><strong>2. Problem / Positioning</strong> — Acknowledge the pain/struggle. Position vs the alternative (physio, generic gym, doing nothing)</div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;color:#1B2A4A;padding:.75rem 1rem;border-radius:6px;"><strong>3. Solution / Services</strong> — EP, Group Classes, Base, Recovery. Card layout. Each with a clear JTBD hook.</div>
+      <div style="background:#fdf6ee;border:1px solid #f0d9bb;color:#1B2A4A;padding:.75rem 1rem;border-radius:6px;"><strong>4. Social Proof</strong> — Client story or quote. Real, specific, identity-focused ("I stopped thinking of myself as injured")</div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;color:#1B2A4A;padding:.75rem 1rem;border-radius:6px;"><strong>5. The Pathway</strong> — Assess → Stabilise → Build → Maintain → Progress. Visual step flow.</div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#1B2A4A;padding:.75rem 1rem;border-radius:6px;"><strong>6. Trust / Credentials</strong> — EP qualifications, facility, years in business, NDIS registered, etc.</div>
+      <div style="background:#1B2A4A;color:#fff;padding:.75rem 1rem;border-radius:6px;"><strong>7. CTA Section</strong> — Final CTA. Low friction. "Book a free consult" or "Talk to our team". No hard sell.</div>
+      <div style="background:#2ABFBF;color:#fff;padding:.75rem 1rem;border-radius:6px;"><strong>8. Footer</strong> — Nav, contact, location, social links</div>
+    </div>
+  </div>
+
+  <!-- Website -->
+  <div class="section">
+    <div class="section-title">Website Details</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;font-size:.88rem;">
+      <div>
+        <div class="type-label" style="margin-bottom:.75rem;">Key Info</div>
+        <div style="line-height:2;color:#1B2A4A;">
+          <div><strong>Website:</strong> performotion.com.au</div>
+          <div><strong>Location:</strong> HQ (physical facility)</div>
+          <div><strong>Online arm:</strong> Coaching + EP</div>
+          <div><strong>Booking system:</strong> Halaxy (EP) / GymMaster (memberships)</div>
+          <div><strong>Email:</strong> ActiveCampaign</div>
+        </div>
+      </div>
+      <div>
+        <div class="type-label" style="margin-bottom:.75rem;">Services to Feature</div>
+        <div style="line-height:2;color:#1B2A4A;">
+          <div>Exercise Physiology (PAYG + Membership)</div>
+          <div>Group Classes</div>
+          <div>Base / Base Plus Gym Membership</div>
+          <div>Recovery Room (sauna, cold plunge)</div>
+          <div>Online EP + Online Coaching</div>
+          <div>Nutrition Coaching</div>
+          <div>NDIS / DVA (referral pathway)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    PerforMotion Design System — performotion.com.au &nbsp;|&nbsp; Generated by Claude Code &nbsp;|&nbsp; 2026
+  </footer>
+
+</div>
+</body>
+</html>

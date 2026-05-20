@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PerforMotion — Zapier & ActiveCampaign Setup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; color: #1B2A4A; background: #fff; padding: 3rem 2rem; max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 2rem; color: #1B2A4A; margin-bottom: .35rem; }
+  .subtitle { color: #2ABFBF; font-size: 1rem; margin-bottom: 2.5rem; font-family: Arial, sans-serif; }
+  h2 { font-size: 1.25rem; color: #1B2A4A; border-bottom: 2px solid #2ABFBF; padding-bottom: .5rem; margin: 2rem 0 1rem; }
+  h3 { font-size: 1rem; color: #2ABFBF; margin: 1.5rem 0 .5rem; font-family: Arial, sans-serif; text-transform: uppercase; letter-spacing: .05em; }
+  p { line-height: 1.7; margin-bottom: .75rem; font-size: .95rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: .88rem; font-family: Arial, sans-serif; }
+  th { background: #1B2A4A; color: #fff; padding: .6rem 1rem; text-align: left; font-weight: 700; }
+  td { padding: .6rem 1rem; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 4px; font-family: monospace; font-size: .85rem; color: #1B2A4A; }
+  pre { background: #1B2A4A; color: #e2e8f0; padding: 1rem 1.25rem; border-radius: 8px; font-size: .82rem; line-height: 1.7; margin: .75rem 0 1rem; overflow-x: auto; }
+  .zap { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+  .zap-header { display: flex; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+  .zap-num { background: #1B2A4A; color: #fff; font-weight: 800; font-size: .78rem; padding: .3rem .75rem; border-radius: 20px; font-family: Arial, sans-serif; white-space: nowrap; }
+  .zap-title { font-weight: 700; font-size: 1rem; }
+  .step { margin: .6rem 0; padding-left: 1rem; border-left: 3px solid #2ABFBF; font-family: Arial, sans-serif; font-size: .88rem; line-height: 1.6; }
+  .step strong { color: #1B2A4A; }
+  .tag { display: inline-block; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-size: .75rem; padding: .15rem .5rem; border-radius: 12px; font-family: Arial, sans-serif; margin: .1rem; }
+  .list-tag { display: inline-block; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: .75rem; padding: .15rem .5rem; border-radius: 12px; font-family: Arial, sans-serif; margin: .1rem; }
+  .note { background: #fffbeb; border-left: 3px solid #F59E0B; padding: .75rem 1rem; border-radius: 0 6px 6px 0; font-size: .85rem; font-family: Arial, sans-serif; margin: .75rem 0; line-height: 1.6; }
+  .trigger { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .action { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .section-intro { font-family: Arial, sans-serif; font-size: .9rem; color: #555; margin-bottom: 1rem; line-height: 1.6; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: .78rem; color: #aaa; font-family: Arial, sans-serif; }
+  @media print {
+    body { padding: 1.5rem; }
+    .zap { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>PerforMotion</h1>
+<div class="subtitle">Zapier &amp; ActiveCampaign Setup — Phase 1 Email Automations</div>
+
+<!-- AC LISTS & TAGS -->
+<h2>ActiveCampaign — Lists &amp; Tags Created</h2>
+<p class="section-intro">These have been created in your ActiveCampaign account and are ready to use as automation triggers.</p>
+
+<h3>Lists</h3>
+<table>
+  <thead><tr><th>List Name</th><th>AC ID</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>[HQ] Pay As You Go EP</td><td>51</td><td>Triggers Pay As You Go → EP membership sequence</td></tr>
+    <tr><td>[HQ] Community Members</td><td>52</td><td>Triggers community onboarding sequence</td></tr>
+    <tr><td>[HQ] EP Members</td><td>53</td><td>Triggers EP → gym/community upsell sequence</td></tr>
+    <tr><td>[HQ] Gym Members</td><td>54</td><td>Triggers gym onboarding sequence</td></tr>
+    <tr><td>Perf Core</td><td>existing</td><td>Perf Core members (already live)</td></tr>
+  </tbody>
+</table>
+
+<h3>Tags</h3>
+<table>
+  <thead><tr><th>Tag</th><th>AC ID</th><th>Tag</th><th>AC ID</th></tr></thead>
+  <tbody>
+    <tr><td>Member - EP</td><td>—</td><td>Lead - EP</td><td>99</td></tr>
+    <tr><td></td><td></td><td>Lead - Gym</td><td>95</td></tr>
+    <tr><td></td><td></td><td>Lead - Community</td><td>104</td></tr>
+    <tr><td>Member - Perf Core</td><td>96</td><td>Past Member</td><td>109</td></tr>
+    <tr><td>Member - Perf Plus</td><td>106</td><td>Needs Follow Up</td><td>103</td></tr>
+    <tr><td>Member - Perf Prime</td><td>97</td><td>Booked - Initial</td><td>105</td></tr>
+    <tr><td>Member - Community</td><td>107</td><td>active-member</td><td>86</td></tr>
+    <tr><td>Member - Gym Base</td><td>100</td><td>frozen-member</td><td>87</td></tr>
+    <tr><td>Member - Gym Base Plus</td><td>101</td><td>perf-core</td><td>88</td></tr>
+    <tr><td>Pass - 10 Pack Classes</td><td>—</td><td>Pass - Free Class Week</td><td>—</td></tr>
+    <tr><td>Pass - 2 Week Gym</td><td>—</td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<!-- HOW AC IS STRUCTURED -->
+<h2>How ActiveCampaign Is Structured</h2>
+<div class="note" style="margin-bottom:0">
+  <strong>List = entry point.</strong> Adding a contact to a list triggers their main onboarding sequence automatically.<br><br>
+  <strong>Tag = which sequence runs.</strong> Each tag triggers its own separate automation. A contact can have multiple tags and run multiple automations at the same time — they don't conflict.<br><br>
+  <strong>Example:</strong> A new EP member is added to <em>[HQ] EP Members</em> (fires EP onboarding) and tagged <em>Pass - 2 Week Gym</em> (fires gym pass email) in the same Zap. Both automations run concurrently.
+</div>
+
+<!-- ZAPIER ZAPS -->
+<h2>Zapier — 7 Zaps to Build</h2>
+<p class="section-intro">Build these Zaps in Zapier. Zaps 1–4 handle membership entry. Zaps 5–7 handle passes and trial offers.</p>
+
+<!-- ZAP 1 -->
+<div class="zap">
+  <div class="zap-header">
+    <span class="zap-num">ZAP 1</span>
+    <span class="zap-title">Halaxy: Pay As You Go EP Booking → AC</span>
+  </div>
+  <div class="step trigger"><strong>Step 1 — Trigger:</strong> Halaxy → New Appointment</div>
+  <div class="step"><strong>Step 2 — Filter:</strong> Service type contains <code>Exercise Physiology</code></div>
+  <div class="step action"><strong>Step 3 — Action:</strong> ActiveCampaign → Add/Update Contact (first name, last name, email)</div>
+  <div class="step action"><strong>Step 4 — Action:</strong> ActiveCampaign → Add Tag → <span class="tag">active-member</span></div>
+  <div class="step action"><strong>Step 5 — Action:</strong> ActiveCampaign → Add Contact to List → <span class="list-tag">[HQ] Pay As You Go EP (id: 51)</span></div>
+  <div class="note">Adding to list 51 triggers the <strong>Pay As You Go → EP Membership</strong> email sequence in AC.</div>
+</div>
+
+<!-- ZAP 2 -->
+<div class="zap">
+  <div class="zap-header">
+    <span class="zap-num">ZAP 2</span>
+    <span class="zap-title">GymMaster: New EP Membership → AC</span>
+  </div>
+  <div class="step trigger"><strong>Step 1 — Trigger:</strong> GymMaster → New Membership</div>
+  <div class="step"><strong>Step 2 — Filter:</strong> Membership type contains <code>Exercise Physiology</code></div>
+  <div class="step action"><strong>Step 3 — Action:</strong> ActiveCampaign → Add/Update Contact (first name, last name, email)</div>
+  <div class="step action"><strong>Step 4 — Action:</strong> ActiveCampaign → Add Tag → <span class="tag">Member - EP</span></div>
+  <div class="step action"><strong>Step 5 — Action:</strong> ActiveCampaign → Add Contact to List → <span class="list-tag">[HQ] EP Members (id: 53)</span></div>
+  <div class="note">Adding to list 53 triggers the <strong>EP Membership → Gym + Group Classes Upsell</strong> sequence in AC.</div>
+</div>
+
+<!-- ZAP 3 -->
+<div class="zap">
+  <div class="zap-header">
+    <span class="zap-num">ZAP 3</span>
+    <span class="zap-title">GymMaster: New Community Membership → AC</span>
+  </div>
+  <div class="step trigger"><strong>Step 1 — Trigger:</strong> GymMaster → New Membership</div>
+  <div class="step"><strong>Step 2 — Filter:</strong> Membership type contains <code>Community</code></div>
+  <div class="step action"><strong>Step 3 — Action:</strong> ActiveCampaign → Add/Update Contact</div>
+  <div class="step action"><strong>Step 4 — Action:</strong> ActiveCampaign → Add Tag → <span class="tag">Member - Community</span></div>
+  <div class="step action"><strong>Step 5 — Action:</strong> ActiveCampaign → Add Contact to List → <span class="list-tag">[HQ] Community Members (id: 52)</span></div>
+  <div class="note">Adding to list 52 triggers the <strong>Community Onboarding</strong> sequence in AC.</div>
+</div>
+
+<!-- ZAP 4 -->
+<div class="zap">
+  <div class="zap-header">
+    <span class="zap-num">ZAP 4</span>
+    <span class="zap-title">GymMaster: New Gym Membership → AC</span>
+  </div>
+  <div class="step trigger"><strong>Step 1 — Trigger:</strong> GymMaster → New Membership</div>
+  <div class="step"><strong>Step 2 — Filter:</strong> Membership type contains <code>Perf Base</code></div>
+  <div class="step"><strong>Step 3 — Code by Zapier (JavaScript):</strong></div>
+  <pre>const tag = inputData.membership_type.includes('Plus')
+  ? 'Member - Gym Base Plus'
+  : 'Member - Gym Base';
+return { assignedTag: tag };</pre>
+  <div class="step action"><strong>Step 4 — Action:</strong> ActiveCampaign → Add/Update Contact</div>
+  <div class="step action"><strong>Step 5 — Action:</strong> ActiveCampaign → Add Tag → <code>assignedTag</code> (from code step)</div>
+  <div class="step action"><strong>Step 6 — Action:</strong> ActiveCampaign → Add Contact to List → <span class="list-tag">[HQ] Gym Members (id: 54)</span></div>
+  <div class="note">Adding to list 54 triggers the <strong>Gym Member Onboarding</strong> sequence in AC.</div>
+</div>
+
+<!-- PASS ZAPS -->
+<h2>Zapier — Pass &amp; Trial Offer Zaps</h2>
+<p class="section-intro">These Zaps handle pass purchases. Each adds the contact to AC and applies the relevant tag, which fires a dedicated AC automation.</p>
+
+<!-- ZAP 5 -->
+<div class="zap">
+  <div class="zap-header">
+    <span class="zap-num">ZAP 5</span>
+    <span class="zap-title">10 Pack Class Pass Purchase → AC</span>
+  </div>
+  <div class="step trigger"><strong>Step 1 — Trigger:</strong> GymMaster → New Purchase / New Membership</div>
+  <div class="step"><strong>Step 2 — Filter:</strong> Product/membership type contains <code>10 Pack</code></div>
+  <div class="step action"><strong>Step 3 — Action:</strong> ActiveCampaign → Add/Update Contact (first name, last name, email)</div>
+  <div class="step action"><strong>Step 4 — Action:</strong> ActiveCampaign → Add Tag → <span class="tag">Pass - 10 Pack Classes</span></div>
+  <div class="note">Tag fires a dedicated AC automation — welcome email with class schedule, booking instructions, and pass expiry info.</div>
+</div>
+
+<!-- ZAP 6 -->
+<div class="zap">
+  <div class="zap-header">
+    <span class="zap-num">ZAP 6</span>
+    <span class="zap-title">1 Week Free Group Classes Pass → AC</span>
+  </div>
+  <div class="step trigger"><strong>Step 1 — Trigger:</strong> GymMaster → New Membership / New Purchase</div>
+  <div class="step"><strong>Step 2 — Filter:</strong> Product/membership type contains <code>Free Class Week</code></div>
+  <div class="step action"><strong>Step 3 — Action:</strong> ActiveCampaign → Add/Update Contact (first name, last name, email)</div>
+  <div class="step action"><strong>Step 4 — Action:</strong> ActiveCampaign → Add Tag → <span class="tag">Pass - Free Class Week</span></div>
+  <div class="note">Tag fires a dedicated AC automation — email confirming 1 week free access, class schedule, and what to expect on day one. Fires same day.</div>
+</div>
+
+<!-- ZAP 7 -->
+<div class="zap">
+  <div class="zap-header">
+    <span class="zap-num">ZAP 7</span>
+    <span class="zap-title">2 Week Free Base Gym Pass → AC</span>
+  </div>
+  <div class="step trigger"><strong>Step 1 — Trigger:</strong> GymMaster → New Membership / New Purchase</div>
+  <div class="step"><strong>Step 2 — Filter:</strong> Product/membership type contains <code>2 Week Gym Pass</code></div>
+  <div class="step action"><strong>Step 3 — Action:</strong> ActiveCampaign → Add/Update Contact (first name, last name, email)</div>
+  <div class="step action"><strong>Step 4 — Action:</strong> ActiveCampaign → Add Tag → <span class="tag">Pass - 2 Week Gym</span></div>
+  <div class="note">Tag fires a dedicated AC automation — email confirming 2 weeks free Base access, facility overview, Lumin app setup instructions, and what to expect. Fires same day.</div>
+</div>
+
+<!-- EMAIL SEQUENCES -->
+<h2>ActiveCampaign — Automations to Build</h2>
+<p class="section-intro">Build these automations in AC. Automations 1–4 are triggered by list addition. Automations 5–7 are triggered by tag and run concurrently alongside any list-based sequence.</p>
+
+<table>
+  <thead><tr><th>#</th><th>Automation</th><th>Trigger</th><th>Goal</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Pay As You Go → EP Membership</td><td>Added to [HQ] Pay As You Go EP (51)</td><td>Convert casual EP clients into EP membership</td></tr>
+    <tr><td>2</td><td>EP Member → Gym + Group Classes Upsell</td><td>Added to [HQ] EP Members (53)</td><td>Add Base/Base Plus or Group Classes to EP members</td></tr>
+    <tr><td>3</td><td>Pay As You Go → Group Classes (sub)</td><td>Added to [HQ] Pay As You Go EP (51)</td><td>Route group-ready clients into Group Classes</td></tr>
+    <tr><td>4</td><td>Pay As You Go → Base (sub)</td><td>Added to [HQ] Pay As You Go EP (51)</td><td>Route independent clients into Base or Base Plus</td></tr>
+    <tr><td>5</td><td>10 Pack Class Pass — Welcome</td><td>Tag: Pass - 10 Pack Classes</td><td>Deliver pass details, schedule, booking info</td></tr>
+    <tr><td>6</td><td>1 Week Free Group Classes Pass</td><td>Tag: Pass - Free Class Week</td><td>Deliver free pass, class info, day-one expectations</td></tr>
+    <tr><td>7</td><td>2 Week Free Base Gym Pass</td><td>Tag: Pass - 2 Week Gym</td><td>Deliver free pass, facility info, Lumin app setup</td></tr>
+  </tbody>
+</table>
+
+<div class="note"><strong>Next step:</strong> Confirm pricing and your booking/consult link before building sequences in AC. Pass automations (5–7) can be built immediately — they just need the email copy.</div>
+
+<footer>
+  PerforMotion — performotion.com.au &nbsp;|&nbsp; Generated by Claude Code &nbsp;|&nbsp; 2026-05-19
+</footer>
+
+</body>
+</html>
