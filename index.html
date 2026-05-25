@@ -4396,6 +4396,7 @@ BUILDERS['ad-build'] = function buildAdBuild() {
       <button class="inner-tab-btn active" data-itab="ab-tier1" onclick="switchInnerTab('ab','tier1')">Tier 1 Launch</button>
       <button class="inner-tab-btn" data-itab="ab-new" onclick="switchInnerTab('ab','new')">New Ad Build</button>
       <button class="inner-tab-btn" data-itab="ab-pages" onclick="switchInnerTab('ab','pages')">Landing Pages</button>
+      <button class="inner-tab-btn" data-itab="ab-adcopy" onclick="switchInnerTab('ab','adcopy')">Ad Copy</button>
     </div>
 
     <!-- Tier 1 Launch -->
@@ -4416,6 +4417,49 @@ BUILDERS['ad-build'] = function buildAdBuild() {
           <span>Overall progress</span><span>${pct}%</span>
         </div>
         <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+
+      <div class="chart-card" style="margin-bottom:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+          <h3 style="margin:0">Creative Strategy Brief</h3>
+          <span style="font-size:.8rem;color:#2ABFBF;font-weight:700">Show / Hide</span>
+        </div>
+        <div style="display:none;font-size:.84rem;line-height:1.7;color:#333">
+          <p style="margin:0 0 1rem"><strong>Who we're talking to:</strong><br>
+          <strong>Gary</strong> — business owner, 50s. Sore back, poor sleep, overweight, no time. Away motivator.<br>
+          <strong>Cheryl</strong> — woman in her 50s, perimenopause. Neck pain, broken sleep, puts everyone else first. Towards motivator.</p>
+
+          <p style="margin:0 0 .5rem"><strong>Hook Formula (80% of energy)</strong></p>
+          <ol style="margin:0 0 1rem;padding-left:1.25rem">
+            <li>Call out the avatar — identity label (women going through perimenopause, business owners in their 50s)</li>
+            <li>One motivator + emotional outcome — away or towards, never both. Link to the emotional outcome underneath.</li>
+            <li>Name Exercise Physiology — always explicit</li>
+            <li>Constraint filter — "despite [barrier]" — filters wrong people out, commits right people in</li>
+          </ol>
+
+          <p style="margin:0 0 1rem"><em>"This is how women going through perimenopause are sleeping through the night again with Exercise Physiology — despite taking time off."</em></p>
+
+          <p style="margin:0 0 .5rem"><strong>Body Copy</strong> — social proof + authority + benefits (not features)</p>
+          <p style="margin:0 0 1rem"><em>"Accredited Exercise Physiologists in Teneriffe, Brisbane. Hundreds of women — better sleep, more energy, feeling like themselves again. No gym experience needed. No matter how long you've been away."</em></p>
+
+          <p style="margin:0 0 .5rem"><strong>CTA</strong></p>
+          <p style="margin:0 0 1rem"><em>"Click the link, fill in the form, and we'll be in touch."</em></p>
+
+          <p style="margin:0 0 .5rem"><strong>Creative Formats</strong></p>
+          <ul style="margin:0 0 1rem;padding-left:1.25rem">
+            <li><strong>Video:</strong> Hook to camera (0–3s) → prove it with visuals + plain language → CTA spoken and on screen</li>
+            <li><strong>Still image:</strong> Image carries the message — remove text and the right person should still feel something. One line of text max. Real clients, real gym, no stock.</li>
+            <li><strong>Carousel (retargeting):</strong> Warm audiences only. Skip the intro, go straight to proof. Last card = CTA.</li>
+          </ul>
+
+          <p style="margin:0 0 .5rem"><strong>Key Rules</strong></p>
+          <ul style="margin:0 0 0;padding-left:1.25rem">
+            <li>Don't make ads look like ads — speak their internal monologue</li>
+            <li>Benefit-led not feature-led — "sleeping better" not "building muscle mass"</li>
+            <li>Change one element → change all (cohesion rule)</li>
+            <li>10 ads = 10 different pain points. Test towards vs away. Scale what works.</li>
+          </ul>
+        </div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
@@ -4474,6 +4518,13 @@ BUILDERS['ad-build'] = function buildAdBuild() {
     <div id="ab-pages" class="inner-tab-section">
       <div class="section-banner">Landing Pages</div>
       <div id="ab-pages-list">${landingPageHTML()}</div>
+    </div>
+
+    <!-- Ad Copy -->
+    <div id="ab-adcopy" class="inner-tab-section">
+      <div class="section-banner">Ad Copy — HQ Tier 1 (10 Ads)</div>
+      <p style="font-size:.85rem;color:#888;margin:.5rem 0 1.5rem">Hook → Body → CTA. One avatar, one pain point per ad. Upload creative above or below copy. Saves automatically as you type.</p>
+      <div id="ab-adcopy-cards"></div>
     </div>
   `;
 
@@ -4546,6 +4597,155 @@ BUILDERS['ad-build'] = function buildAdBuild() {
     cont.innerHTML = bl.length ? `<table class="dash-table" style="font-size:.85rem"><thead><tr><th>Build Name</th><th>Status</th></tr></thead><tbody>${bl.map(b=>`<tr><td style="font-weight:700">${b.name}</td><td><span style="color:${b.status==='Active'?'#10B981':'#94A3B8'};font-weight:700">${b.status}</span></td></tr>`).join('')}</tbody></table>` : '<div style="color:#aaa;font-size:.85rem;padding:.5rem 0">No builds yet. Click + New Ad Build to start.</div>';
   }
   renderBuilds();
+
+  // ===== AD COPY =====
+  const LS_ADCOPY        = 'pm_adcopy_v1';
+  const LS_ADCOPY_STATUS = 'pm_adcopy_status_v1';
+
+  const AD_DEFAULTS = [
+    { id:'ad1',  label:'Ad 1',  avatar:'Gary',   motivator:'Away',    pain:'Back Pain',
+      hook:"If you're a business owner in your 50s and your back has been hurting for years — this is what Exercise Physiology does about it.",
+      body:"Not rest. Not manage. Find what's actually driving it and fix it. One assessment. A program built around your life.",
+      cta:"Book Your Assessment." },
+    { id:'ad2',  label:'Ad 2',  avatar:'Gary',   motivator:'Away',    pain:'Nothing Worked',
+      hook:"If you're a busy professional in your 50s who's seen a physio, rested it, and you're still waking up stiff — Exercise Physiology is different.",
+      body:"We find what's actually driving it. Not just the symptom — the cause. And we fix it.",
+      cta:"Book Your Assessment." },
+    { id:'ad3',  label:'Ad 3',  avatar:'Gary',   motivator:'Away',    pain:'Weight',
+      hook:"If you're a business owner in your 50s and the weight has been creeping on for years — this is what Exercise Physiology actually does about it.",
+      body:"A program built around your life. Prescribed by an Accredited Exercise Physiologist. Not another thing to figure out.",
+      cta:"Book Your Assessment." },
+    { id:'ad4',  label:'Ad 4',  avatar:'Gary',   motivator:'Towards', pain:'Sleep',
+      hook:"This is how busy professionals in their 50s are sleeping through the night again — Exercise Physiology and strength training built around a full schedule.",
+      body:"Woke up with energy. Got through the day without the 3pm crash. One clinical assessment and a program built for you.",
+      cta:"Book Your Assessment." },
+    { id:'ad5',  label:'Ad 5',  avatar:'Gary',   motivator:'Towards', pain:'Control',
+      hook:"This is how business owners in their 50s are getting strong, sharp and back in control of how they feel — Exercise Physiology, personalised.",
+      body:"A program from an Accredited Exercise Physiologist, built for men who are ready to take their health back.",
+      cta:"Book Your Assessment." },
+    { id:'ad6',  label:'Ad 6',  avatar:'Cheryl', motivator:'Away',    pain:'Neck Pain',
+      hook:"If you're a 40+ woman and your neck has been sore for months — this is what Exercise Physiology does about it.",
+      body:"Not later. Now. A clinical assessment, a program built around you, prescribed by an Accredited Exercise Physiologist.",
+      cta:"Book Your Assessment." },
+    { id:'ad7',  label:'Ad 7',  avatar:'Cheryl', motivator:'Away',    pain:'Hormones',
+      hook:"If you're a woman in her 50s who's been told exercise will help your hormones but you don't know where to start — we do. Exercise Physiology, clinical and personalised.",
+      body:"No gym experience needed. One assessment. A program built for where you are right now.",
+      cta:"Book Your Assessment." },
+    { id:'ad8',  label:'Ad 8',  avatar:'Cheryl', motivator:'Away',    pain:'Sleep',
+      hook:"If you're a 40+ woman waking up at 3am every night — this is what Exercise Physiology does about it.",
+      body:"This isn't just ageing. It's your body asking for the right support. PerforMotion — Exercise Physiology for women in their 40s and 50s.",
+      cta:"Book Your Assessment." },
+    { id:'ad9',  label:'Ad 9',  avatar:'Cheryl', motivator:'Towards', pain:'Energy',
+      hook:"This is how 40+ women are waking up with actual energy again — Exercise Physiology, prescribed for you.",
+      body:"Not dragging yourself through until 9pm. Just present. Clinically assessed and built around your life.",
+      cta:"Book Your Assessment." },
+    { id:'ad10', label:'Ad 10', avatar:'Cheryl', motivator:'Towards', pain:'Strength',
+      hook:"This is how mums in their 50s are getting stronger and out of pain — Exercise Physiology in Teneriffe, built around you.",
+      body:"You've looked after everyone else for years. A program from an Accredited EP — finally built for you.",
+      cta:"Book Your Assessment." },
+  ];
+
+  function renderAdCopyCards() {
+    const cont = document.getElementById('ab-adcopy-cards');
+    if (!cont) return;
+    const saved    = JSON.parse(localStorage.getItem(LS_ADCOPY)        || '{}');
+    const statuses = JSON.parse(localStorage.getItem(LS_ADCOPY_STATUS) || '{}');
+    const statusColors = { Live:'#10B981', Ready:'#2ABFBF', Paused:'#94A3B8', Draft:'#F59E0B' };
+    cont.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem';
+
+    cont.innerHTML = AD_DEFAULTS.map(ad => {
+      const d        = saved[ad.id] || {};
+      const hook     = d.hook    !== undefined ? d.hook    : ad.hook;
+      const body     = d.body    !== undefined ? d.body    : ad.body;
+      const cta      = d.cta     !== undefined ? d.cta     : ad.cta;
+      const heading  = d.heading || '';
+      const status   = statuses[ad.id] || 'Draft';
+      const statusCol = statusColors[status] || '#F59E0B';
+      const motivCol  = ad.motivator === 'Away' ? '#EF4444' : '#10B981';
+      const fileName  = d.fileName || '';
+
+      return `<div class="chart-card" style="display:flex;flex-direction:column;gap:.9rem">
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:1rem;font-weight:800;color:#1B2A4A">${ad.label}</div>
+            <div style="font-size:.72rem;color:#aaa;margin-top:.1rem">${ad.avatar} &middot; <span style="color:${motivCol};font-weight:700">${ad.motivator}</span> &middot; ${ad.pain}</div>
+          </div>
+          <select onchange="saveAdStatus('${ad.id}',this.value)" style="border:1px solid #e2e8f0;border-radius:4px;font-family:inherit;font-size:.78rem;padding:.25rem .45rem;color:${statusCol};font-weight:700;outline:none;flex-shrink:0">
+            <option ${status==='Draft'  ?'selected':''}>Draft</option>
+            <option ${status==='Ready'  ?'selected':''}>Ready</option>
+            <option ${status==='Live'   ?'selected':''}>Live</option>
+            <option ${status==='Paused' ?'selected':''}>Paused</option>
+          </select>
+        </div>
+
+        <div>
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.3rem">Heading</div>
+          <input type="text" value="${heading.replace(/"/g,'&quot;')}" placeholder="Type your ad heading…" oninput="saveAdField('${ad.id}','heading',this.value)" style="width:100%;border:1.5px solid #e2e8f0;border-radius:6px;padding:.6rem .75rem;font-family:inherit;font-size:.9rem;font-weight:700;color:#1B2A4A;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+
+        <div>
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.3rem">Hook</div>
+          <textarea oninput="saveAdField('${ad.id}','hook',this.value)" style="width:100%;min-height:80px;border:1.5px solid #e2e8f0;border-radius:6px;padding:.65rem;font-family:inherit;font-size:.84rem;resize:vertical;outline:none;box-sizing:border-box;line-height:1.55" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">${hook}</textarea>
+        </div>
+
+        <div>
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.3rem">Body</div>
+          <textarea oninput="saveAdField('${ad.id}','body',this.value)" style="width:100%;min-height:80px;border:1.5px solid #e2e8f0;border-radius:6px;padding:.65rem;font-family:inherit;font-size:.84rem;resize:vertical;outline:none;box-sizing:border-box;line-height:1.55" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">${body}</textarea>
+        </div>
+
+        <div>
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.3rem">CTA</div>
+          <textarea oninput="saveAdField('${ad.id}','cta',this.value)" style="width:100%;min-height:48px;border:1.5px solid #e2e8f0;border-radius:6px;padding:.65rem;font-family:inherit;font-size:.84rem;resize:vertical;outline:none;box-sizing:border-box;line-height:1.55" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'">${cta}</textarea>
+        </div>
+
+        <div style="border:2px dashed #e2e8f0;border-radius:8px;padding:1.25rem;text-align:center;background:#fafafa;margin-top:auto">
+          <div id="${ad.id}-preview" style="margin-bottom:.6rem">${fileName ? `<div style="font-size:.8rem;color:#2ABFBF;font-weight:600">&#128206; ${fileName}</div>` : `<div style="font-size:.78rem;color:#bbb">No creative uploaded</div>`}</div>
+          <label style="cursor:pointer;display:inline-block;padding:.4rem 1rem;background:#1B2A4A;color:#fff;border-radius:4px;font-size:.8rem;font-weight:700">
+            Upload Image or Video
+            <input type="file" accept="image/*,video/*" onchange="handleCreativeUpload('${ad.id}',this)" style="display:none">
+          </label>
+          <div style="font-size:.68rem;color:#ccc;margin-top:.35rem">JPG · PNG · MP4 · MOV</div>
+        </div>
+
+      </div>`;
+    }).join('');
+  }
+
+  window.saveAdField = function(id, field, value) {
+    const saved = JSON.parse(localStorage.getItem(LS_ADCOPY) || '{}');
+    if (!saved[id]) saved[id] = {};
+    saved[id][field] = value;
+    localStorage.setItem(LS_ADCOPY, JSON.stringify(saved));
+  };
+
+  window.saveAdStatus = function(id, status) {
+    const statuses = JSON.parse(localStorage.getItem(LS_ADCOPY_STATUS) || '{}');
+    statuses[id] = status;
+    localStorage.setItem(LS_ADCOPY_STATUS, JSON.stringify(statuses));
+  };
+
+  window.handleCreativeUpload = function(id, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const preview = document.getElementById(id + '-preview');
+    const saved = JSON.parse(localStorage.getItem(LS_ADCOPY) || '{}');
+    if (!saved[id]) saved[id] = {};
+    saved[id].fileName = file.name;
+    localStorage.setItem(LS_ADCOPY, JSON.stringify(saved));
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:180px;border-radius:6px;object-fit:cover;margin-bottom:.35rem"><div style="font-size:.78rem;color:#2ABFBF;font-weight:600">${file.name}</div>`;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = `<video src="${url}" controls style="max-width:100%;max-height:180px;border-radius:6px;margin-bottom:.35rem"></video><div style="font-size:.78rem;color:#2ABFBF;font-weight:600">${file.name}</div>`;
+    }
+  };
+
+  renderAdCopyCards();
 
   window.addNewBuild = function() {
     const name = prompt('New Ad Build name:');
