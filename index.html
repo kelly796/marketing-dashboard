@@ -4835,11 +4835,183 @@ BUILDERS['files-skills'] = function buildFilesSkillsTab() {
 };
 
 // ── SHELL BUILDER ─────────────────────────────────────────────────────────────
+BUILDERS['ad-copy'] = function buildAdCopy() {
+  const el = document.getElementById('tab-ad-copy');
+
+  const ADS = [
+    {
+      id: 'ad-photo',
+      name: 'Ad-Photo',
+      type: 'Static Video · 5s',
+      creative: 'Echo bike — older woman training, EP alongside. PERFMAY-89.',
+      motivator: 'toward',
+      motivatorLabel: 'Toward — Identity / Aspiration',
+      hook: 'Most women are told to slow down in their 40s. You decided to do the opposite.',
+      headlines: [
+        "You're not too old. You're under-supported.",
+        "Built for women who won't slow down",
+        "Stronger than you've been in years"
+      ],
+      description: 'Exercise Physiology, Teneriffe',
+      cta: 'Book Now',
+      copy: [
+        {
+          label: 'Short',
+          text: `Most women in their 40s are told to take it easy. Rest. Be careful.\nThat advice isn't working — and you know it.\nAt PerforMotion, we start with a clinical assessment and build a program around your body. Accredited Exercise Physiologists. Teneriffe, Brisbane.`
+        },
+        {
+          label: 'Medium',
+          text: `You've been pushing through pain for long enough.\nThe soreness that won't go away. The energy that disappears by midday. The feeling that you used to be stronger, and you're not sure how to get back there.\nYou don't need to slow down. You need the right program.\nAt PerforMotion, a clinical assessment comes first. Your EP designs everything around your body — and stays involved as you get stronger.\nBook your assessment. Teneriffe, Brisbane.`
+        },
+        {
+          label: 'Long',
+          text: `If your body has been working against you — you're not imagining it.\nChronic pain. Old injuries. Years of being told to manage it, not fix it.\nThe women who train at PerforMotion came to us with exactly that. They're now the strongest they've ever been.\nIt starts with one session — a clinical assessment with an Accredited Exercise Physiologist who actually listens, followed by a program built for your body. Not a template. Not a guess.\nYou don't have to figure this out alone.\nPerforMotion. Exercise Physiology. Teneriffe, Brisbane.`
+        }
+      ]
+    },
+    {
+      id: 'ad-runner',
+      name: 'Ad-Runner (Liz)',
+      type: 'Testimonial Video · 37s',
+      creative: 'Liz speaking to camera — ruptured hamstring, now the strongest she\'s ever been.',
+      motivator: 'away',
+      motivatorLabel: 'Away — Pain / Injury → Outcome',
+      hook: 'Liz ruptured her hamstring. She\'s now the strongest she\'s ever been.',
+      headlines: [
+        "She was told to slow down. She didn't.",
+        "Ruptured hamstring → strongest ever",
+        "What happened after Liz's injury"
+      ],
+      description: 'Real client. Real result.',
+      cta: 'Learn More',
+      copy: [
+        {
+          label: 'Short',
+          text: `Liz ruptured her hamstring. She's now the strongest she's ever been.\nIf pain has been holding you back, there's a better path.\nAccredited Exercise Physiology. Teneriffe, Brisbane.`
+        },
+        {
+          label: 'Medium',
+          text: `Liz came to us after rupturing her hamstring. She'd been told to rest and take it slow.\nThat wasn't what she needed.\nShe needed a program built around her body by an EP who understood what she was recovering from.\nWatch what happened next.\nPerforMotion. Clinical assessment first. Personalised program from day one. Teneriffe, Brisbane.`
+        },
+        {
+          label: 'Long',
+          text: `Liz ruptured her hamstring. The kind of injury that makes you wonder if things will ever feel normal again.\nShe stopped trying to manage it — and started working with an Accredited Exercise Physiologist who built her a real program. Designed for her body, her history, her goals.\nShe's now the strongest she's ever been.\nWe work with people in their 40s, 50s and 60s who've been told to slow down and want more than that. Chronic pain. Past injuries. Years off exercise. Doesn't matter.\nIt starts with a clinical assessment. Your EP maps where you are and where you're going.\nPerforMotion. Teneriffe, Brisbane.`
+        }
+      ]
+    },
+    {
+      id: 'ad-songa',
+      name: 'Ad-Songa',
+      type: 'Testimonial Video · 50s',
+      creative: 'Songa speaking to camera — client testimonial. Best for retargeting / warm audiences.',
+      motivator: 'away',
+      motivatorLabel: 'Away — Uncertainty / Not knowing where to start',
+      hook: "Songa didn't know where to start. Now she does — and she hasn't looked back.",
+      headlines: [
+        "Not sure where to start? Neither was Songa.",
+        "Her words, not ours",
+        "This is what changed for Songa"
+      ],
+      description: 'Real client. Teneriffe, Brisbane.',
+      cta: 'Watch',
+      copy: [
+        {
+          label: 'Short',
+          text: `Songa didn't know where to start. Now she does — and she hasn't looked back.\nOne clinical assessment. A program built for you. An EP who stays involved.\nPerforMotion. Teneriffe, Brisbane.`
+        },
+        {
+          label: 'Medium',
+          text: `Sometimes the hardest part is just starting.\nNot knowing if you're fit enough. Not knowing if it's safe. Not knowing what you actually need.\nSonga felt the same way.\nWhat she found at PerforMotion was an EP who listened — and a program that worked for her body, not against it.\nWatch her story. Book your assessment.\nTeneriffe, Brisbane.`
+        },
+        {
+          label: 'Long',
+          text: `If you've been putting off doing something about how you feel — you're not alone.\nSore. Tired. Not sure where to start or whether your body will hold up.\nSonga was there too.\nShe came to us and we did what we always do — started with a proper clinical assessment. Found out exactly what was going on. Built a program around her, not a template.\nWe work with people in their 40s and beyond who want to feel stronger, move better, and actually enjoy being in their body again.\nIt starts with one session.\nPerforMotion. Teneriffe, Brisbane.`
+        }
+      ]
+    }
+  ];
+
+  const motivatorBadge = (m) => m === 'toward'
+    ? `<span style="background:#0d9488;color:#fff;font-size:.72rem;font-weight:700;padding:.25rem .65rem;border-radius:20px;letter-spacing:.04em">↑ TOWARD</span>`
+    : `<span style="background:#7c3aed;color:#fff;font-size:.72rem;font-weight:700;padding:.25rem .65rem;border-radius:20px;letter-spacing:.04em">↓ AWAY</span>`;
+
+  const copyVariants = (variants) => variants.map(v => `
+    <div style="margin-bottom:1.25rem">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">${v.label} copy</div>
+      <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:6px;padding:.85rem 1rem;font-size:.86rem;line-height:1.65;color:#1e293b;white-space:pre-line">${v.text}</div>
+      <button onclick="navigator.clipboard.writeText(${JSON.stringify(v.text)})" style="margin-top:.35rem;font-size:.75rem;padding:.2rem .65rem;background:none;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;color:#64748b;font-family:inherit">Copy</button>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    <div style="padding:1.5rem 2rem 2rem">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.5rem;flex-wrap:wrap">
+        <h2 style="margin:0;font-size:1.25rem;color:#1B2A4A">HQ Campaign 1 — Ad Copy</h2>
+        <span style="font-size:.8rem;color:#888">Audience: 40+ Brisbane · Exercise Physiology Tier 1</span>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+        <span style="background:#0d9488;color:#fff;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:20px">↑ TOWARD — identity/aspiration</span>
+        <span style="background:#7c3aed;color:#fff;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:20px">↓ AWAY — pain/fear/uncertainty</span>
+      </div>
+
+      ${ADS.map(ad => `
+        <div class="chart-card" style="margin-bottom:1.75rem">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem">
+            <div>
+              <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+                <h3 style="margin:0;font-size:1.05rem;color:#1B2A4A">${ad.name}</h3>
+                ${motivatorBadge(ad.motivator)}
+              </div>
+              <div style="font-size:.78rem;color:#888;margin-top:.3rem">${ad.type} · ${ad.motivatorLabel}</div>
+              <div style="font-size:.8rem;color:#64748b;margin-top:.2rem;font-style:italic">${ad.creative}</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+            <div>
+              <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">Hook</div>
+              <div style="background:#eff6ff;border-left:3px solid #2ABFBF;padding:.75rem 1rem;font-size:.9rem;font-weight:600;color:#1e293b;border-radius:0 6px 6px 0;line-height:1.5">${ad.hook}</div>
+              <button onclick="navigator.clipboard.writeText(${JSON.stringify(ad.hook)})" style="margin-top:.35rem;font-size:.75rem;padding:.2rem .65rem;background:none;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;color:#64748b;font-family:inherit">Copy</button>
+            </div>
+            <div>
+              <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">Headlines</div>
+              ${ad.headlines.map((h,i) => `
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
+                  <span style="font-size:.72rem;color:#94a3b8;width:16px;flex-shrink:0">${i+1}</span>
+                  <span style="font-size:.84rem;color:#1e293b">${h}</span>
+                  <button onclick="navigator.clipboard.writeText(${JSON.stringify(h)})" style="font-size:.7rem;padding:.15rem .45rem;background:none;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;color:#94a3b8;font-family:inherit;flex-shrink:0">Copy</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+            <div>
+              <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">Description</div>
+              <div style="font-size:.84rem;color:#1e293b">${ad.description}</div>
+            </div>
+            <div>
+              <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">CTA Button</div>
+              <span style="background:#1B2A4A;color:#fff;font-size:.82rem;font-weight:700;padding:.3rem .85rem;border-radius:4px">${ad.cta}</span>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.75rem">Primary Text Variants</div>
+            ${copyVariants(ad.copy)}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+};
+
 const TABS = [
   { id:'overview',       label:'Overview' },
   { id:'content',        label:'Content' },
   { id:'meta-ads',       label:'Meta Ads' },
   { id:'ad-build',       label:'Ad Build' },
+  { id:'ad-copy',        label:'Ad Copy' },
   { id:'activecampaign', label:'ActiveCampaign' },
   { id:'website',        label:'Website' },
   { id:'brand-strategy', label:'Brand Strategy' },
