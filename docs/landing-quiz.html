@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feel Like Yourself Again — PerforMotion</title>
+  <style>
+    :root {
+      --navy: #1B2A4A;
+      --teal: #2ABFBF;
+      --warm: #D4B896;
+      --green: #10B981;
+      --off-white: #f8fafc;
+      --slate: #64748b;
+      --border: #e2e8f0;
+      --dark: #0f172a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--dark);
+      background: var(--off-white);
+    }
+
+    /* ── Hero ────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      /* REPLACE: background-image: url('your-facility.jpg'); background-size: cover; background-position: center; */
+      background: linear-gradient(160deg, #1a3056 0%, #0e1e35 100%);
+    }
+
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 25, 50, 0.72);
+    }
+
+    .hero-bg-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255,255,255,0.12);
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 660px;
+      width: 100%;
+      padding: 64px 24px 48px;
+      text-align: center;
+    }
+
+    .logo {
+      margin-bottom: 36px;
+    }
+
+    .logo span {
+      font-family: Georgia, serif;
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--teal);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-family: Georgia, serif;
+      font-size: clamp(26px, 5vw, 46px);
+      font-weight: bold;
+      color: #ffffff;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 em {
+      color: var(--teal);
+      font-style: normal;
+    }
+
+    .hero-sub {
+      font-size: clamp(15px, 2.5vw, 19px);
+      color: rgba(255,255,255,0.75);
+      line-height: 1.65;
+      margin-bottom: 40px;
+    }
+
+    /* Testimonial placeholder */
+    .testimonial-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-left: 3px solid var(--teal);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 36px;
+      text-align: left;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      backdrop-filter: blur(10px);
+    }
+
+    .testimonial-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--warm);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--navy);
+      text-align: center;
+      font-weight: bold;
+      line-height: 1.4;
+      /* REPLACE with: background-image: url('client-photo.jpg'); background-size: cover; */
+    }
+
+    .testimonial-body blockquote {
+      font-family: Georgia, serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.88);
+      font-style: italic;
+      line-height: 1.65;
+      margin-bottom: 8px;
+    }
+
+    .testimonial-body cite {
+      font-size: 12px;
+      color: var(--teal);
+      font-style: normal;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    .quiz-prompt {
+      font-size: 13px;
+      color: var(--warm);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    /* ── Quiz ─────────────────────────────────────────── */
+    .quiz-section {
+      background: var(--off-white);
+    }
+
+    .quiz-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 52px 24px;
+    }
+
+    /* Progress dots */
+    .progress-wrap {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 44px;
+    }
+
+    .progress-dot {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 4px;
+      transition: background 0.3s ease;
+    }
+
+    .progress-dot.active { background: var(--teal); }
+    .progress-dot.done   { background: var(--navy); }
+
+    /* Question */
+    .question {
+      display: none;
+      animation: fadeUp 0.32s ease;
+    }
+
+    .question.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .q-step {
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--teal);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .q-text {
+      font-family: Georgia, serif;
+      font-size: clamp(19px, 3vw, 25px);
+      color: var(--navy);
+      font-weight: bold;
+      line-height: 1.35;
+      margin-bottom: 28px;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 15px 18px;
+      background: #ffffff;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.16s ease, background 0.16s ease, transform 0.14s ease;
+      font-size: 15px;
+      color: var(--dark);
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .option:hover {
+      border-color: var(--teal);
+      background: rgba(42,191,191,0.04);
+      transform: translateX(3px);
+    }
+
+    .tick {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      transition: all 0.16s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .option:hover .tick {
+      border-color: var(--teal);
+    }
+
+    .option.selected {
+      border-color: var(--teal);
+      background: rgba(42,191,191,0.07);
+    }
+
+    .option.selected .tick {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    .option.selected .tick::after {
+      content: '';
+      display: block;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg) translateY(-1px);
+    }
+
+    /* ── Thank you ──────────────────────────────────── */
+    #thank-you {
+      display: none;
+      text-align: center;
+      padding: 16px 0 48px;
+    }
+
+    #thank-you.active {
+      display: block;
+      animation: fadeUp 0.4s ease;
+    }
+
+    .ty-icon {
+      width: 60px;
+      height: 60px;
+      background: var(--green);
+      border-radius: 50%;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ty-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ty-eyebrow {
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--teal);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    #thank-you h2 {
+      font-family: Georgia, serif;
+      font-size: clamp(22px, 4vw, 34px);
+      color: var(--navy);
+      margin-bottom: 14px;
+    }
+
+    #thank-you p {
+      font-size: 16px;
+      color: var(--slate);
+      line-height: 1.7;
+      max-width: 460px;
+      margin: 0 auto 32px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--teal);
+      color: #fff;
+      font-size: 15px;
+      font-weight: bold;
+      padding: 15px 34px;
+      border-radius: 8px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn:hover {
+      background: #22aaaa;
+      transform: translateY(-1px);
+    }
+
+    /* ── Below fold ──────────────────────────────────── */
+    .below-fold { display: none; }
+    .below-fold.visible { display: block; }
+
+    /* Testimonial full */
+    .section-testimonial {
+      background: var(--navy);
+      padding: 80px 24px;
+      text-align: center;
+    }
+
+    .section-testimonial blockquote {
+      font-family: Georgia, serif;
+      font-size: clamp(17px, 2.8vw, 23px);
+      color: rgba(255,255,255,0.88);
+      font-style: italic;
+      line-height: 1.75;
+      max-width: 680px;
+      margin: 0 auto 24px;
+    }
+
+    .section-testimonial blockquote::before {
+      content: '\201C';
+      font-size: 56px;
+      color: var(--teal);
+      line-height: 0;
+      vertical-align: -22px;
+      margin-right: 6px;
+    }
+
+    .section-testimonial cite {
+      font-size: 13px;
+      color: var(--warm);
+      font-style: normal;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* How it works */
+    .section-how {
+      background: #ffffff;
+      padding: 88px 24px;
+    }
+
+    .section-how .inner { max-width: 880px; margin: 0 auto; }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--teal);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-family: Georgia, serif;
+      font-size: clamp(22px, 3.5vw, 34px);
+      color: var(--navy);
+      text-align: center;
+      margin-bottom: 52px;
+      line-height: 1.3;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 20px;
+    }
+
+    .step {
+      background: var(--off-white);
+      border-top: 3px solid var(--teal);
+      border-radius: 12px;
+      padding: 32px 22px;
+      text-align: center;
+    }
+
+    .step-num {
+      width: 38px;
+      height: 38px;
+      background: var(--navy);
+      color: #fff;
+      font-family: Georgia, serif;
+      font-size: 17px;
+      font-weight: bold;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .step h3 {
+      font-family: Georgia, serif;
+      font-size: 16px;
+      color: var(--navy);
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--slate);
+      line-height: 1.65;
+    }
+
+    /* Bio */
+    .section-bio {
+      background: var(--off-white);
+      padding: 88px 24px;
+    }
+
+    .bio-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      gap: 36px;
+      align-items: flex-start;
+    }
+
+    .bio-photo {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--warm);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--navy);
+      text-align: center;
+      font-weight: bold;
+      line-height: 1.4;
+      /* REPLACE with: background-image: url('bio-photo.jpg'); background-size: cover; */
+    }
+
+    .bio-text h3 {
+      font-family: Georgia, serif;
+      font-size: 22px;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .bio-role {
+      font-size: 12px;
+      color: var(--teal);
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .bio-text p {
+      font-size: 15px;
+      color: var(--slate);
+      line-height: 1.75;
+    }
+
+    /* FAQs */
+    .section-faq {
+      background: #ffffff;
+      padding: 88px 24px;
+    }
+
+    .faq-inner {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .faq-inner .section-title {
+      text-align: left;
+      margin-bottom: 32px;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+    }
+
+    .faq-q {
+      font-family: Georgia, serif;
+      font-size: 16px;
+      color: var(--navy);
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      user-select: none;
+    }
+
+    .faq-q::after {
+      content: '+';
+      font-size: 22px;
+      color: var(--teal);
+      font-weight: 300;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+      font-family: Arial, sans-serif;
+    }
+
+    .faq-item.open .faq-q::after { transform: rotate(45deg); }
+
+    .faq-a {
+      display: none;
+      font-size: 15px;
+      color: var(--slate);
+      line-height: 1.7;
+      padding-top: 14px;
+    }
+
+    .faq-item.open .faq-a { display: block; }
+
+    /* Footer */
+    footer {
+      background: var(--navy);
+      padding: 36px 24px;
+      text-align: center;
+    }
+
+    .footer-logo {
+      font-family: Georgia, serif;
+      font-size: 15px;
+      color: var(--teal);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    footer p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    @media (max-width: 560px) {
+      .bio-inner { flex-direction: column; align-items: center; text-align: center; }
+      .bio-photo { width: 90px; height: 90px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-bg">
+    <span class="hero-bg-label">[ Insert facility photo as background-image on .hero-bg ]</span>
+  </div>
+
+  <div class="hero-content">
+    <div class="logo"><span>PerforMotion</span></div>
+
+    <h1>Feel Like Yourself Again:<br><em>Reclaim Your Strength</em> Without the Aches</h1>
+    <p class="hero-sub">Strength Training Designed for Your Body, Your Schedule, Your Goals</p>
+
+    <!-- Testimonial — replace placeholder content below -->
+    <div class="testimonial-card">
+      <div class="testimonial-avatar">PHOTO<br>HERE</div>
+      <div class="testimonial-body">
+        <blockquote>[ Insert 1–2 sentence client testimonial here. Make it outcome-specific — pain gone, training with confidence, back to sport, etc. ]</blockquote>
+        <cite>[ Client First Name ] — [ Context e.g. "EP Member, 3 months" ]</cite>
+      </div>
+    </div>
+
+    <p class="quiz-prompt">↓ Answer 5 quick questions to get your recommendation</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     QUIZ
+═══════════════════════════════════════════════════════ -->
+<section class="quiz-section" id="quiz">
+  <div class="quiz-wrapper">
+
+    <div class="progress-wrap" id="progress-bar">
+      <div class="progress-dot active" id="dot-1"></div>
+      <div class="progress-dot" id="dot-2"></div>
+      <div class="progress-dot" id="dot-3"></div>
+      <div class="progress-dot" id="dot-4"></div>
+      <div class="progress-dot" id="dot-5"></div>
+    </div>
+
+    <!-- Question 1 -->
+    <div class="question active" id="q1">
+      <div class="q-step">Question 1 of 5</div>
+      <div class="q-text">What's the main reason you're looking at PerforMotion right now?</div>
+      <div class="options">
+        <div class="option" onclick="select(1,1,this)"><div class="tick"></div><span>I want to train properly and get stronger</span></div>
+        <div class="option" onclick="select(1,2,this)"><div class="tick"></div><span>I'm training but feel stuck or unsure what to do next</span></div>
+        <div class="option" onclick="select(1,3,this)"><div class="tick"></div><span>I'm dealing with pain, injury, or something holding me back</span></div>
+        <div class="option" onclick="select(1,4,this)"><div class="tick"></div><span>I don't want to think about my training — I want it managed</span></div>
+        <div class="option" onclick="select(1,5,this)"><div class="tick"></div><span>My situation is complex and I need someone to take full control</span></div>
+      </div>
+    </div>
+
+    <!-- Question 2 -->
+    <div class="question" id="q2">
+      <div class="q-step">Question 2 of 5</div>
+      <div class="q-text">How is this currently affecting your day-to-day life?</div>
+      <div class="options">
+        <div class="option" onclick="select(2,1,this)"><div class="tick"></div><span>It's not urgent — I know it needs attention but it's not affecting me much</span></div>
+        <div class="option" onclick="select(2,2,this)"><div class="tick"></div><span>I feel frustrated or stuck but I'm still getting by</span></div>
+        <div class="option" onclick="select(2,3,this)"><div class="tick"></div><span>I'm training but worried I'll make things worse</span></div>
+        <div class="option" onclick="select(2,4,this)"><div class="tick"></div><span>It's stopping me from training the way I want</span></div>
+        <div class="option" onclick="select(2,5,this)"><div class="tick"></div><span>It's starting to affect my work, lifestyle, or mental load significantly</span></div>
+      </div>
+    </div>
+
+    <!-- Question 3 -->
+    <div class="question" id="q3">
+      <div class="q-step">Question 3 of 5</div>
+      <div class="q-text">What have you already tried?</div>
+      <div class="options">
+        <div class="option" onclick="select(3,1,this)"><div class="tick"></div><span>I've been training on my own and managing it myself</span></div>
+        <div class="option" onclick="select(3,2,this)"><div class="tick"></div><span>I've tried online programs or coaching</span></div>
+        <div class="option" onclick="select(3,3,this)"><div class="tick"></div><span>I've seen a physio or health professional</span></div>
+        <div class="option" onclick="select(3,4,this)"><div class="tick"></div><span>I've tried resting or avoiding the issue</span></div>
+        <div class="option" onclick="select(3,5,this)"><div class="tick"></div><span>Nothing yet — I don't know where to start</span></div>
+      </div>
+    </div>
+
+    <!-- Question 4 -->
+    <div class="question" id="q4">
+      <div class="q-step">Question 4 of 5</div>
+      <div class="q-text">How much support do you want right now?</div>
+      <div class="options">
+        <div class="option" onclick="select(4,1,this)"><div class="tick"></div><span>I mainly want access to a great space and to train independently</span></div>
+        <div class="option" onclick="select(4,2,this)"><div class="tick"></div><span>I want some guidance but still want to be independent</span></div>
+        <div class="option" onclick="select(4,3,this)"><div class="tick"></div><span>I want regular check-ins and a structured program</span></div>
+        <div class="option" onclick="select(4,4,this)"><div class="tick"></div><span>I want someone to manage most of it for me</span></div>
+        <div class="option" onclick="select(4,5,this)"><div class="tick"></div><span>I want someone to take care of everything — I don't want to think about it</span></div>
+      </div>
+    </div>
+
+    <!-- Question 5 -->
+    <div class="question" id="q5">
+      <div class="q-step">Question 5 of 5</div>
+      <div class="q-text">If working with PerforMotion was a success, what would be different?</div>
+      <div class="options">
+        <div class="option" onclick="select(5,1,this)"><div class="tick"></div><span>I feel strong, capable, and progressing in my training</span></div>
+        <div class="option" onclick="select(5,2,this)"><div class="tick"></div><span>I'm performing better in sport, work, or life</span></div>
+        <div class="option" onclick="select(5,3,this)"><div class="tick"></div><span>I'm training confidently without pain or second-guessing</span></div>
+        <div class="option" onclick="select(5,4,this)"><div class="tick"></div><span>My training fits easily into my life without taking mental energy</span></div>
+        <div class="option" onclick="select(5,5,this)"><div class="tick"></div><span>Someone else is handling it and I don't have to think about it at all</span></div>
+      </div>
+    </div>
+
+    <!-- Thank you -->
+    <div id="thank-you">
+      <div class="ty-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <div class="ty-eyebrow">You're all set</div>
+      <h2>We'll be in touch shortly.</h2>
+      <p>Based on your answers, we're putting together the right recommendation for you. Expect a message from the PerforMotion team within 24 hours.</p>
+      <button class="btn" onclick="showBelowFold()">See how it works →</button>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     BELOW FOLD — shown after submission
+═══════════════════════════════════════════════════════ -->
+<div class="below-fold" id="below-fold">
+
+  <!-- Full testimonial -->
+  <section class="section-testimonial">
+    <blockquote>[ Insert full testimonial here — 2 to 3 sentences. Outcome-focused. The more specific the better: what changed, how fast, how they feel now. ]</blockquote>
+    <cite>[ Client Name ] — [ Membership type or background ]</cite>
+  </section>
+
+  <!-- How it works -->
+  <section class="section-how" id="how-it-works">
+    <div class="inner">
+      <div class="eyebrow">The Process</div>
+      <h2 class="section-title">Four steps from where you are now<br>to where you want to be</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Assess</h3>
+          <p>We start with a full picture of your body, your history, and your goals — not just symptoms.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Build Your Plan</h3>
+          <p>You leave your first session with a clear, personalised program. No guessing, no generic templates.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Train With Purpose</h3>
+          <p>Every session moves you forward. We track progress, adapt your program, and keep you accountable.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Progress Beyond</h3>
+          <p>From managing pain to performing at your best — the endpoint isn't just feeling better. It's thriving.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bio -->
+  <section class="section-bio">
+    <div class="bio-inner">
+      <div class="bio-photo">YOUR<br>PHOTO<br>HERE</div>
+      <div class="bio-text">
+        <h3>[ Your Name ]</h3>
+        <div class="bio-role">[ Title — e.g. Accredited Exercise Physiologist ]</div>
+        <p>[ Insert bio here — 3 to 4 sentences. Lead with your mission, not your credentials. Who did you build PerforMotion for, and why? ]</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQs -->
+  <section class="section-faq">
+    <div class="faq-inner">
+      <div class="eyebrow">Common Questions</div>
+      <h2 class="section-title">FAQs</h2>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Do I need to have an injury to join PerforMotion?</div>
+        <div class="faq-a">Not at all. PerforMotion is for anyone who wants to train properly — whether you're managing pain, returning from injury, or just want structured training with people who actually know what they're doing.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What's the difference between your memberships?</div>
+        <div class="faq-a">Your recommendation is based on the 5 answers you just gave. Generally: Base membership gives you access to train independently; Group Classes adds structured group training; EP membership gives you direct access to an Exercise Physiologist with a personalised program and regular check-ins.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What happens after I submit my answers?</div>
+        <div class="faq-a">The PerforMotion team reviews your answers and reaches out within 24 hours with a recommendation tailored to your situation. No pressure, no hard sell — just a clear next step.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Is there a lock-in contract?</div>
+        <div class="faq-a">[ Add your answer here — e.g. "No lock-in. Memberships are month to month. Pause or cancel anytime." ]</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I start if I'm currently injured or in pain?</div>
+        <div class="faq-a">[ Add your answer here. This is where you reassure — your EPs are trained to work with this, not around it. ]</div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo">PerforMotion</div>
+    <p>© 2026 PerforMotion. All rights reserved.</p>
+  </footer>
+
+</div><!-- /below-fold -->
+
+
+<script>
+  // ── State ──────────────────────────────────────────────
+  const answers = {};
+
+  // ── Select option & auto-advance ──────────────────────
+  function select(qNum, value, el) {
+    el.closest('.options').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    answers['q' + qNum] = value;
+    setTimeout(() => advance(qNum), 360);
+  }
+
+  function advance(current) {
+    document.getElementById('q' + current).classList.remove('active');
+    updateProgress(current);
+
+    if (current < 5) {
+      document.getElementById('q' + (current + 1)).classList.add('active');
+      document.getElementById('quiz').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      submit();
+      document.getElementById('progress-bar').style.display = 'none';
+      document.getElementById('thank-you').classList.add('active');
+      document.getElementById('quiz').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function updateProgress(completed) {
+    for (let i = 1; i <= 5; i++) {
+      const dot = document.getElementById('dot-' + i);
+      dot.className = 'progress-dot' + (i <= completed ? ' done' : i === completed + 1 ? ' active' : '');
+    }
+  }
+
+  // ── Tier scoring (Q1–Q4 only; Q5 = personalisation) ──
+  function getTier() {
+    const q4    = answers.q4 || 0;
+    const score = (answers.q1||0) + (answers.q2||0) + (answers.q3||0) + q4;
+    if (q4 >= 4)            return 'EP Membership';
+    if (q4 === 3)           return 'Group Classes';
+    if (score >= 9)         return 'Base Plus';
+    return 'Base';
+  }
+
+  // ── Submit to webhook ─────────────────────────────────
+  function submit() {
+    const payload = {
+      timestamp:  new Date().toISOString(),
+      q1: answers.q1,
+      q2: answers.q2,
+      q3: answers.q3,
+      q4: answers.q4,
+      q5: answers.q5,
+      score: (answers.q1||0) + (answers.q2||0) + (answers.q3||0) + (answers.q4||0),
+      tier: getTier()
+    };
+
+    console.log('PerforMotion quiz submission:', payload);
+
+    // ── REPLACE with your Zapier / Jotform / ActiveCampaign webhook URL ──
+    const WEBHOOK = 'YOUR_WEBHOOK_URL_HERE';
+
+    if (WEBHOOK !== 'YOUR_WEBHOOK_URL_HERE') {
+      fetch(WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.warn('Webhook failed:', err));
+    }
+  }
+
+  // ── Show below-fold content ───────────────────────────
+  function showBelowFold() {
+    const bf = document.getElementById('below-fold');
+    bf.classList.add('visible');
+    setTimeout(() => {
+      document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' });
+    }, 80);
+  }
+
+  // ── FAQ accordion ─────────────────────────────────────
+  function toggleFaq(el) {
+    el.closest('.faq-item').classList.toggle('open');
+  }
+</script>
+
+</body>
+</html>
