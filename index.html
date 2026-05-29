@@ -3401,16 +3401,13 @@ function renderAll() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
-  await loadData();
   buildShell();
-  renderAll();
   const active = localStorage.getItem(LS_TAB) || 'overview';
   switchTab(active);
-
-  // Refresh the "Next update" timestamp every minute
   setInterval(renderHeader, 60 * 1000);
-
-  // Update badges based on what data actually loaded
+  await loadData();
+  renderAll();
+  switchTab(active);
   updateApiStatus();
 }
 
@@ -5407,7 +5404,6 @@ function buildShell() {
   `<div class="tab-actions">
     <button class="btn" onclick="refreshData()" id="refresh-btn" style="font-size:.8rem;padding:.4rem .9rem">↻ Refresh</button>
     <button class="btn btn-secondary" onclick="downloadReport()" style="font-size:.8rem;padding:.4rem .9rem">↓ Report</button>
-    <button class="btn btn-secondary" onclick="doLogout()" style="font-size:.8rem;padding:.4rem .9rem;border-color:rgba(255,255,255,.2);color:#aaa" title="Sign out">⎋ Logout</button>
   </div>`;
   main.appendChild(bar);
 
