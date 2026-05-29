@@ -3349,7 +3349,7 @@ BUILDERS['goals'] = function buildTab9() {
 
 // ── INNER TAB HELPER ──────────────────────────────────────────────────────────
 window.switchInnerTab = function(prefix, name) {
-  const tabId = { em:'activecampaign', bs:'brand-strategy', seo:'website', ct:'content', website:'website', ab:'ad-build' }[prefix] || prefix;
+  const tabId = { em:'activecampaign', bs:'brand-strategy', seo:'website', ct:'content', website:'website', ab:'ad-build', ma:'meta-ads', ld:'leads' }[prefix] || prefix;
   const container = document.getElementById('tab-' + tabId);
   if (!container) return;
   container.querySelectorAll('.inner-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.itab === prefix+'-'+name));
