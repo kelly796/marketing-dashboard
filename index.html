@@ -2290,6 +2290,284 @@ window.runGmAcSync = async function() {
 };
 
 // ── TAB 6 — PAID ADS ──────────────────────────────────────────────────────────
+
+// ── TAB: LEADS ────────────────────────────────────────────────────────────────
+BUILDERS['leads'] = function buildLeads() {
+  const el = document.getElementById('tab-leads');
+  const LS_LEADS = 'PM_LEADS_V2';
+  let leads = JSON.parse(localStorage.getItem(LS_LEADS) || '[]');
+  function saveLeads() { localStorage.setItem(LS_LEADS, JSON.stringify(leads)); }
+
+  function scoreStatus(lead) {
+    if (lead.booked) return { label:'Booked \u2713', color:'#10B981', bg:'#f0fdf4' };
+    if (lead.called) return { label:'Called', color:'#F59E0B', bg:'#fffbeb' };
+    return { label:'New', color:'#3B82F6', bg:'#eff6ff' };
+  }
+
+  function fmtLTV(v) { return v ? '$' + Number(v).toLocaleString('en-AU') : '\u2014'; }
+
+  function renderLeadRows() {
+    if (!leads.length) return '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:2rem;font-size:.88rem">No leads yet. Import from Jotform or add manually.</td></tr>';
+    return leads.map((l, i) => {
+      const s = scoreStatus(l);
+      return '<tr>' +
+        '<td style="font-weight:700">' + (l.name||'\u2014') + '</td>' +
+        '<td style="font-size:.82rem;color:#555">' + (l.phone||'\u2014') + '</td>' +
+        '<td style="font-size:.82rem;color:#555">' + (l.email||'\u2014') + '</td>' +
+        '<td style="font-size:.82rem;color:#555;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + (l.reason||'') + '">' + (l.reason||'\u2014') + '</td>' +
+        '<td><span style="background:' + s.bg + ';color:' + s.color + ';font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:20px">' + s.label + '</span></td>' +
+        '<td style="font-weight:700;color:#1B2A4A">' + fmtLTV(l.ltv) + '</td>' +
+        '<td style="font-size:.78rem;color:#888">' + (l.date||'\u2014') + '</td>' +
+        '<td><div style="display:flex;gap:.4rem">' +
+          '<button onclick="editLead(' + i + ')" style="font-size:.72rem;padding:.2rem .55rem;background:#1B2A4A;color:#fff;border:none;border-radius:4px;cursor:pointer">Edit</button>' +
+          '<button onclick="deleteLead(' + i + ')" style="font-size:.72rem;padding:.2rem .55rem;background:#fee2e2;color:#991B1B;border:none;border-radius:4px;cursor:pointer">\u2715</button>' +
+        '</div></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function getStats() {
+    const total = leads.length;
+    const booked = leads.filter(l=>l.booked).length;
+    const ltv = leads.filter(l=>l.ltv).reduce((a,l)=>a+Number(l.ltv),0);
+    const meta = (D||MOCK).meta || MOCK.meta;
+    const spend = (meta.campaigns||[]).reduce((a,c)=>a+c.spend,0);
+    const cpl = total ? (spend/total).toFixed(0) : 0;
+    const roas = ltv && spend ? (ltv/spend).toFixed(2) : '\u2014';
+    return { total, booked, ltv, cpl, roas, spend };
+  }
+
+  const stats = getStats();
+
+  el.innerHTML = `
+    <div style="padding:1.5rem 2rem">
+      <div class="g4" style="margin-bottom:1.5rem">
+        <div class="chart-card" style="text-align:center;padding:1rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.3rem">Total Leads</div>
+          <div style="font-size:2rem;font-weight:800;color:#1B2A4A">${stats.total}</div>
+        </div>
+        <div class="chart-card" style="text-align:center;padding:1rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.3rem">Booked After Call</div>
+          <div style="font-size:2rem;font-weight:800;color:#10B981">${stats.booked}</div>
+        </div>
+        <div class="chart-card" style="text-align:center;padding:1rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.3rem">Total LTV</div>
+          <div style="font-size:2rem;font-weight:800;color:#2ABFBF">$${stats.ltv.toLocaleString('en-AU')}</div>
+        </div>
+        <div class="chart-card" style="text-align:center;padding:1rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.3rem">ROAS</div>
+          <div style="font-size:2rem;font-weight:800;color:#1B2A4A">${stats.roas}x</div>
+          <div style="font-size:.72rem;color:#888">$${Number(stats.spend).toLocaleString()} ad spend</div>
+        </div>
+      </div>
+
+      <div class="inner-tabs" style="margin-bottom:1.5rem">
+        <button class="inner-tab-btn active" data-itab="ld-tracker" onclick="switchInnerTab('ld','tracker')">Lead Tracker</button>
+        <button class="inner-tab-btn" data-itab="ld-jotform" onclick="switchInnerTab('ld','jotform');loadJotformLeads()">Jotform Sync</button>
+        <button class="inner-tab-btn" data-itab="ld-forecaster" onclick="switchInnerTab('ld','forecaster')">Revenue Forecaster</button>
+      </div>
+
+      <div id="ld-tracker" class="inner-tab-section active">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+          <h3 style="margin:0">All Leads</h3>
+          <button onclick="openLeadModal()" class="btn" style="font-size:.82rem">+ Add Lead</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="dash-table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Reason</th><th>Status</th><th>LTV</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="leads-tbody">${renderLeadRows()}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="ld-jotform" class="inner-tab-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+          <h3 style="margin:0">Jotform Submissions</h3>
+          <button onclick="loadJotformLeads()" class="btn" style="font-size:.82rem">↻ Refresh</button>
+        </div>
+        <p style="font-size:.83rem;color:#888;margin-bottom:1rem">Live submissions from your PerforMotion Inquiry Form. Click Import to add to your tracker.</p>
+        <div id="jotform-submissions-list"><div style="color:#aaa;font-size:.85rem;padding:1rem 0">Click Refresh to load submissions.</div></div>
+      </div>
+
+      <div id="ld-forecaster" class="inner-tab-section">
+        <h3 style="margin-bottom:.5rem">Revenue Forecaster — 1-Step Meta Funnel</h3>
+        <p style="font-size:.83rem;color:#888;margin-bottom:1.5rem">Adjust inputs to model your funnel. All manual.</p>
+        <div style="display:grid;grid-template-columns:300px 1fr;gap:1.5rem;align-items:start">
+          <div class="chart-card">
+            <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:1rem">Your Inputs</div>
+            <div style="margin-bottom:.85rem"><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Daily Ad Budget ($)</label>
+              <input id="fc-budget" type="number" value="30" oninput="calcForecast()" style="width:100%;padding:.4rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+            <div style="margin-bottom:.85rem"><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Product / Service Price ($)</label>
+              <input id="fc-price" type="number" value="2500" oninput="calcForecast()" style="width:100%;padding:.4rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+            <div style="margin-bottom:.85rem"><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">CPM ($)</label>
+              <input id="fc-cpm" type="number" value="20" oninput="calcForecast()" style="width:100%;padding:.4rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+            <div style="margin-bottom:.85rem"><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Link CTR (%)</label>
+              <input id="fc-ctr" type="number" value="1.0" step="0.1" oninput="calcForecast()" style="width:100%;padding:.4rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+            <div style="margin-bottom:.85rem"><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Opt-In Rate (%)</label>
+              <input id="fc-optin" type="number" value="5" oninput="calcForecast()" style="width:100%;padding:.4rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+            <div style="margin-bottom:.85rem"><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Contact / Qualified Rate (%)</label>
+              <input id="fc-contact" type="number" value="60" oninput="calcForecast()" style="width:100%;padding:.4rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+            <div style="margin-bottom:.85rem"><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Close Rate (%)</label>
+              <input id="fc-close" type="number" value="30" oninput="calcForecast()" style="width:100%;padding:.4rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+          </div>
+          <div id="fc-results"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="lead-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:12px;padding:2rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+        <h3 style="margin:0 0 1.25rem;color:#1B2A4A" id="modal-title">Add Lead</h3>
+        <input type="hidden" id="lead-edit-idx" value="">
+        <div style="display:flex;flex-direction:column;gap:.85rem">
+          <div><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Full Name</label>
+            <input id="lf-name" placeholder="e.g. Jane Smith" style="width:100%;padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+          <div><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Phone</label>
+            <input id="lf-phone" placeholder="04xx xxx xxx" style="width:100%;padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+          <div><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Email</label>
+            <input id="lf-email" placeholder="email@example.com" style="width:100%;padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+          <div><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Reason for Booking</label>
+            <textarea id="lf-reason" placeholder="e.g. chronic back pain, NDIS, knee rehab…" style="width:100%;padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none;min-height:70px;resize:vertical" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></textarea></div>
+          <div style="display:flex;gap:1.5rem;align-items:center">
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.88rem;font-weight:600;color:#555">
+              <input type="checkbox" id="lf-called" style="accent-color:#2ABFBF;width:16px;height:16px"> Called
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.88rem;font-weight:600;color:#10B981">
+              <input type="checkbox" id="lf-booked" style="accent-color:#10B981;width:16px;height:16px"> Booked After Call ✓
+            </label>
+          </div>
+          <div><label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">Lifetime Value ($) <span style="font-weight:400;color:#aaa">— enter once they become a client</span></label>
+            <input id="lf-ltv" type="number" placeholder="e.g. 3500" style="width:100%;padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.88rem;outline:none" onfocus="this.style.borderColor='#2ABFBF'" onblur="this.style.borderColor='#e2e8f0'"></div>
+        </div>
+        <div style="display:flex;gap:.75rem;margin-top:1.5rem;justify-content:flex-end">
+          <button onclick="closeLeadModal()" style="padding:.5rem 1.25rem;background:#f1f5f9;color:#555;border:none;border-radius:6px;font-family:inherit;font-weight:700;cursor:pointer;font-size:.88rem">Cancel</button>
+          <button onclick="saveLead()" class="btn" style="font-size:.88rem">Save Lead</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  window.calcForecast = function() {
+    const budget  = parseFloat(document.getElementById('fc-budget')?.value)||30;
+    const price   = parseFloat(document.getElementById('fc-price')?.value)||2500;
+    const cpm     = parseFloat(document.getElementById('fc-cpm')?.value)||20;
+    const ctr     = parseFloat(document.getElementById('fc-ctr')?.value)||1.0;
+    const optin   = parseFloat(document.getElementById('fc-optin')?.value)||5;
+    const contact = parseFloat(document.getElementById('fc-contact')?.value)||60;
+    const close   = parseFloat(document.getElementById('fc-close')?.value)||30;
+    const monthlySpend = budget * 30;
+    const impressions  = (monthlySpend / cpm) * 1000;
+    const clicks       = impressions * (ctr/100);
+    const leadsN       = clicks * (optin/100);
+    const qualified    = leadsN * (contact/100);
+    const deals        = qualified * (close/100);
+    const revenue      = deals * price;
+    const cpl_         = leadsN ? monthlySpend / leadsN : 0;
+    const roas_        = monthlySpend ? revenue / monthlySpend : 0;
+    const fmt  = n => '$' + Math.round(n).toLocaleString('en-AU');
+    const fmtN = (n,d=0) => Number(n.toFixed(d)).toLocaleString('en-AU');
+    const roasColor = roas_ >= 3 ? '#10B981' : roas_ >= 1.5 ? '#F59E0B' : '#EF4444';
+    const rows = [
+      ['Ad Spend (monthly)', fmt(monthlySpend), ''],
+      ['Impressions', fmtN(impressions), 'CPM: ' + fmt(cpm)],
+      ['Clicks', fmtN(clicks), 'CTR: ' + ctr + '%'],
+      ['Leads Captured', fmtN(leadsN), 'CPL: ' + fmt(cpl_)],
+      ['Qualified Leads', fmtN(qualified), 'Contact rate: ' + contact + '%'],
+      ['Deals', fmtN(deals,1), 'Close rate: ' + close + '%'],
+      ['Monthly Revenue', fmt(revenue), 'ROAS: ' + roas_.toFixed(2) + 'x'],
+    ];
+    const el2 = document.getElementById('fc-results');
+    if (!el2) return;
+    el2.innerHTML = '<div class="chart-card"><div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:1rem">Projected Outcomes — Monthly</div>' +
+      '<table class="dash-table" style="margin-bottom:1.25rem"><thead><tr><th>Stage</th><th>Monthly</th><th>Note</th></tr></thead><tbody>' +
+      rows.map((r,i) => '<tr style="' + (i===rows.length-1?'background:#f0fdf4;':'') + '"><td style="font-weight:' + (i===rows.length-1?'700':'600') + '">' + r[0] + '</td><td style="font-weight:700;color:' + (i===rows.length-1?'#10B981':'#1B2A4A') + '">' + r[1] + '</td><td style="font-size:.78rem;color:#888">' + r[2] + '</td></tr>').join('') +
+      '</tbody></table>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">' +
+        '<div style="background:#eff6ff;border-radius:8px;padding:.85rem;text-align:center"><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#3b82f6;margin-bottom:.3rem">Cost Per Lead</div><div style="font-size:1.5rem;font-weight:800;color:#1B2A4A">' + fmt(cpl_) + '</div><div style="font-size:.72rem;color:#888">Target: $20–$60</div></div>' +
+        '<div style="background:' + (roas_>=3?'#f0fdf4':roas_>=1.5?'#fffbeb':'#fef2f2') + ';border-radius:8px;padding:.85rem;text-align:center"><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:' + roasColor + ';margin-bottom:.3rem">ROAS</div><div style="font-size:1.5rem;font-weight:800;color:' + roasColor + '">' + roas_.toFixed(2) + 'x</div><div style="font-size:.72rem;color:#888">Target: 3x+</div></div>' +
+        '<div style="background:#f0fdf4;border-radius:8px;padding:.85rem;text-align:center"><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:#10B981;margin-bottom:.3rem">Annual Revenue</div><div style="font-size:1.5rem;font-weight:800;color:#10B981">' + fmt(revenue*12) + '</div><div style="font-size:.72rem;color:#888">' + fmtN(deals*12,0) + ' deals/yr</div></div>' +
+      '</div></div>';
+  };
+
+  window.openLeadModal = function(idx) {
+    const modal = document.getElementById('lead-modal');
+    modal.style.display = 'flex';
+    document.getElementById('modal-title').textContent = idx !== undefined ? 'Edit Lead' : 'Add Lead';
+    document.getElementById('lead-edit-idx').value = idx !== undefined ? idx : '';
+    const l = idx !== undefined ? leads[idx] : {};
+    document.getElementById('lf-name').value   = l.name||'';
+    document.getElementById('lf-phone').value  = l.phone||'';
+    document.getElementById('lf-email').value  = l.email||'';
+    document.getElementById('lf-reason').value = l.reason||'';
+    document.getElementById('lf-called').checked = !!l.called;
+    document.getElementById('lf-booked').checked = !!l.booked;
+    document.getElementById('lf-ltv').value    = l.ltv||'';
+  };
+
+  window.closeLeadModal = function() { document.getElementById('lead-modal').style.display = 'none'; };
+
+  window.saveLead = function() {
+    const idx = document.getElementById('lead-edit-idx').value;
+    const lead = {
+      name:   document.getElementById('lf-name').value.trim(),
+      phone:  document.getElementById('lf-phone').value.trim(),
+      email:  document.getElementById('lf-email').value.trim(),
+      reason: document.getElementById('lf-reason').value.trim(),
+      called: document.getElementById('lf-called').checked,
+      booked: document.getElementById('lf-booked').checked,
+      ltv:    document.getElementById('lf-ltv').value,
+      date:   idx !== '' ? leads[idx].date : new Date().toLocaleDateString('en-AU'),
+    };
+    if (!lead.name) { alert('Name is required'); return; }
+    if (idx !== '') { leads[Number(idx)] = lead; } else { leads.unshift(lead); }
+    saveLeads();
+    closeLeadModal();
+    BUILT['leads'] = false; switchTab('leads');
+  };
+
+  window.editLead  = function(i) { openLeadModal(i); };
+  window.deleteLead = function(i) {
+    if (!confirm('Delete this lead?')) return;
+    leads.splice(i,1); saveLeads();
+    BUILT['leads'] = false; switchTab('leads');
+  };
+
+  window.loadJotformLeads = async function() {
+    const container = document.getElementById('jotform-submissions-list');
+    if (!container) return;
+    container.innerHTML = '<div style="color:#aaa;font-size:.85rem;padding:1rem 0">Fetching from Jotform…</div>';
+    try {
+      const res  = await fetch('/.netlify/functions/fetch-jotform');
+      const json = await res.json();
+      const subs = json.submissions || [];
+      if (!subs.length) { container.innerHTML = '<div style="color:#aaa;font-size:.85rem;padding:1rem 0">No submissions found.</div>'; return; }
+      container.innerHTML = '<table class="dash-table"><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Reason / Message</th><th>Date</th><th></th></tr></thead><tbody>' +
+        subs.map((s,i) => '<tr>' +
+          '<td style="font-weight:600">' + (s.name||'—') + '</td>' +
+          '<td style="font-size:.82rem">' + (s.phone||'—') + '</td>' +
+          '<td style="font-size:.82rem">' + (s.email||'—') + '</td>' +
+          '<td style="font-size:.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (s.reason||s.message||'—') + '</td>' +
+          '<td style="font-size:.78rem;color:#888">' + (s.date||'—') + '</td>' +
+          '<td><button onclick="importJotformLead(' + i + ')" style="font-size:.72rem;padding:.2rem .55rem;background:#2ABFBF;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:700">Import</button></td>' +
+        '</tr>').join('') + '</tbody></table>';
+      window._jotformSubs = subs;
+    } catch(e) {
+      container.innerHTML = '<div style="color:#EF4444;font-size:.85rem">Error loading Jotform data. Deploy fetch-jotform function first.</div>';
+    }
+  };
+
+  window.importJotformLead = function(i) {
+    const s = (window._jotformSubs||[])[i];
+    if (!s) return;
+    if (leads.find(l => l.email && l.email === s.email)) { alert('Already in your tracker.'); return; }
+    leads.unshift({ name:s.name||'', phone:s.phone||'', email:s.email||'', reason:s.reason||s.message||'', called:false, booked:false, ltv:'', date:s.date||new Date().toLocaleDateString('en-AU') });
+    saveLeads();
+    BUILT['leads'] = false; switchTab('leads');
+  };
+
+  setTimeout(calcForecast, 50);
+};
+
 BUILDERS['meta-ads'] = function buildTab6() {
   const d    = D || MOCK;
   const meta = d.meta || MOCK.meta;
@@ -2300,50 +2578,210 @@ BUILDERS['meta-ads'] = function buildTab6() {
   const cachedAdsInsights = JSON.parse(localStorage.getItem(LS_ADS_INSIGHTS) || 'null');
 
   const el = document.getElementById('tab-meta-ads');
+
+  // ── META ADS INNER TAB SHELL ──
   el.innerHTML = `
-    <!-- DAILY ACTIONS PANEL -->
-    <div class="chart-card" style="margin-bottom:1.5rem;border-left:4px solid #F59E0B">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
-        <div>
-          <h3 style="margin:0">Daily Ad Actions</h3>
-          <div id="ads-actions-ts" style="font-size:.75rem;color:#888;margin-top:.25rem">${cachedAdsInsights ? 'Last run: ' + new Date(cachedAdsInsights.generatedAt).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'}) : 'Not yet run today'}</div>
+    <div style="padding:0 0 2rem">
+      <div class="inner-tabs" style="margin-bottom:0;border-bottom:2px solid #e2e8f0;padding:0 2rem">
+        <button class="inner-tab-btn active" data-itab="ma-performance" onclick="switchInnerTab('ma','performance')">Performance</button>
+        <button class="inner-tab-btn" data-itab="ma-competitor" onclick="switchInnerTab('ma','competitor')">Competitor Analysis</button>
+        <button class="inner-tab-btn" data-itab="ma-adbuild" onclick="switchInnerTab('ma','adbuild');buildMetaAdBuild()">Ad Build</button>
+        <button class="inner-tab-btn" data-itab="ma-adcopy" onclick="switchInnerTab('ma','adcopy');buildMetaAdCopy()">Ad Copy</button>
+      </div>
+
+      <!-- PERFORMANCE -->
+      <div id="ma-performance" class="inner-tab-section active" style="padding:1.5rem 2rem">
+        <!-- DAILY ACTIONS PANEL -->
+        <div class="chart-card" style="margin-bottom:1.5rem;border-left:4px solid #F59E0B">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+            <div>
+              <h3 style="margin:0">Daily Ad Actions</h3>
+              <div id="ads-actions-ts" style="font-size:.75rem;color:#888;margin-top:.25rem">${cachedAdsInsights ? 'Last run: ' + new Date(cachedAdsInsights.generatedAt).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'}) : 'Not yet run today'}</div>
+            </div>
+            <button class="btn" id="ads-ai-btn" onclick="runAdAnalysis()" style="background:#F59E0B;border-color:#F59E0B">Run Daily Analysis</button>
+          </div>
+          <div id="ads-ai-loading" style="display:none;padding:1rem 0;color:#888">Analysing campaign performance…</div>
+          <div id="ads-ai-result">${cachedAdsInsights ? renderAdsInsights(cachedAdsInsights) : '<div style="color:#aaa;font-size:.85rem;padding:.5rem 0">Press Run Daily Analysis to get per-campaign recommendations.</div>'}</div>
         </div>
-        <button class="btn" id="ads-ai-btn" onclick="runAdAnalysis()" style="background:#F59E0B;border-color:#F59E0B">Run Daily Analysis</button>
+        <div class="toggle-row">
+          ${['All','HQ','Online'].map(f=>`<button class="toggle-btn ${f==='All'?'active':''}" data-adfilter="${f}" onclick="setAdFilter('${f}')">${f}</button>`).join('')}
+        </div>
+        <div id="ad-summary-cards" class="g4" style="margin-bottom:1.5rem"></div>
+        <div class="chart-card" style="margin-bottom:1rem">
+          <h3>Daily Spend — 30 Days</h3>
+          <div style="height:220px"><canvas id="ch_ads_spend"></canvas></div>
+        </div>
+        <div class="g2" style="margin-bottom:1rem">
+          <div class="chart-card">
+            <h3>Audience Breakdown</h3>
+            <div style="height:220px"><canvas id="ch_ads_audience"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3>Campaigns</h3>
+            <div id="ad-campaigns-table"></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Creative Performance <span style="font-size:.75rem;font-weight:400;color:#999">— sorted by lowest CPL</span></h3>
+          <table class="dash-table">
+            <thead><tr><th>Creative</th><th>Brand</th><th>Spend</th><th>Leads</th><th>CPL</th></tr></thead>
+            <tbody id="ad-creatives-body"></tbody>
+          </table>
+        </div>
+        <div class="chart-card" style="margin-top:1rem"><h3>What's Working</h3><div id="ads-whats-working"></div></div>
       </div>
-      <div id="ads-ai-loading" style="display:none;padding:1rem 0;color:#888">Analysing campaign performance…</div>
-      <div id="ads-ai-result">${cachedAdsInsights ? renderAdsInsights(cachedAdsInsights) : '<div style="color:#aaa;font-size:.85rem;padding:.5rem 0">Press Run Daily Analysis to get per-campaign recommendations.</div>'}</div>
-    </div>
 
-    <div class="toggle-row">
-      ${['All','HQ','Online'].map(f=>`<button class="toggle-btn ${f==='All'?'active':''}" data-adfilter="${f}" onclick="setAdFilter('${f}')">${f}</button>`).join('')}
-    </div>
-    <div id="ad-summary-cards" class="g4" style="margin-bottom:1.5rem"></div>
-
-    <div class="chart-card" style="margin-bottom:1rem">
-      <h3>Daily Spend — 30 Days</h3>
-      <div style="height:220px"><canvas id="ch_ads_spend"></canvas></div>
-    </div>
-
-    <div class="g2" style="margin-bottom:1rem">
-      <div class="chart-card">
-        <h3>Audience Breakdown</h3>
-        <div style="height:220px"><canvas id="ch_ads_audience"></canvas></div>
+      <!-- COMPETITOR ANALYSIS -->
+      <div id="ma-competitor" class="inner-tab-section" style="padding:1.5rem 2rem">
+        <h3 style="margin-bottom:.5rem">Competitor Analysis — Brisbane EP Market</h3>
+        <p style="font-size:.83rem;color:#888;margin-bottom:1.5rem">Inner-north Brisbane catchment. Use this to sharpen your positioning and find gaps.</p>
+        <div class="g2" style="margin-bottom:1.5rem">
+          <div class="chart-card">
+            <h3 style="margin-bottom:1rem">Known Competitors</h3>
+            <table class="dash-table">
+              <thead><tr><th>Business</th><th>Type</th><th>Ad Presence</th><th>Main Angle</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Brisbane EP</strong></td><td>EP Clinic</td><td><span style="color:#F59E0B;font-weight:700">Moderate</span></td><td>Chronic pain, Medicare</td></tr>
+                <tr><td><strong>EP &amp; Strength Co</strong></td><td>EP + PT</td><td><span style="color:#10B981;font-weight:700">High</span></td><td>Performance, strength</td></tr>
+                <tr><td><strong>Allied Health HQ</strong></td><td>Multi-disc.</td><td><span style="color:#F59E0B;font-weight:700">Moderate</span></td><td>NDIS, all services</td></tr>
+                <tr><td><strong>New Farm Physio</strong></td><td>Physio</td><td><span style="color:#10B981;font-weight:700">High</span></td><td>Injury, rehab</td></tr>
+                <tr><td><strong>Teneriffe Health Co</strong></td><td>Multi-disc.</td><td><span style="color:#EF4444;font-weight:700">Low</span></td><td>General wellness</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="chart-card">
+            <h3 style="margin-bottom:1rem">PerforMotion Advantages</h3>
+            <div style="display:flex;flex-direction:column;gap:.85rem">
+              <div style="display:flex;gap:.75rem"><span style="font-size:1.2rem">🏆</span><div><div style="font-weight:700;font-size:.88rem">200+ Five-Star Reviews</div><div style="font-size:.78rem;color:#888">One of highest-rated EP facilities in Brisbane</div></div></div>
+              <div style="display:flex;gap:.75rem"><span style="font-size:1.2rem">🔬</span><div><div style="font-weight:700;font-size:.88rem">VALD Performance Technology</div><div style="font-size:.78rem;color:#888">Clinical-grade testing — rare in Brisbane EP</div></div></div>
+              <div style="display:flex;gap:.75rem"><span style="font-size:1.2rem">💳</span><div><div style="font-weight:700;font-size:.88rem">All Funding Pathways</div><div style="font-size:.78rem;color:#888">Medicare, NDIS, DVA, WorkCover</div></div></div>
+              <div style="display:flex;gap:.75rem"><span style="font-size:1.2rem">👥</span><div><div style="font-weight:700;font-size:.88rem">1,000+ Clients Rehabilitated</div><div style="font-size:.78rem;color:#888">Social proof competitors can't match</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 style="margin-bottom:1rem">Market Gaps to Exploit</h3>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">
+            <div style="background:#f0fdf4;border-radius:8px;padding:1rem"><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#166534;margin-bottom:.4rem">NDIS Messaging</div><div style="font-size:.84rem;font-weight:600;margin-bottom:.3rem">Most competitors undermarket NDIS</div><div style="font-size:.78rem;color:#555">Dedicated NDIS campaign with warm, person-first tone is a gap no one is filling well.</div></div>
+            <div style="background:#eff6ff;border-radius:8px;padding:1rem"><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#1e40af;margin-bottom:.4rem">Video Content</div><div style="font-size:.84rem;font-weight:600;margin-bottom:.3rem">Low video ad usage locally</div><div style="font-size:.78rem;color:#555">15–30s facility + client outcome videos. High engagement, low competition in this market.</div></div>
+            <div style="background:#fdf4ff;border-radius:8px;padding:1rem"><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#6b21a8;margin-bottom:.4rem">Medicare Education</div><div style="font-size:.84rem;font-weight:600;margin-bottom:.3rem">Most locals don't know</div><div style="font-size:.78rem;color:#555">"Did you know your GP can refer you to an EP on Medicare?" — untapped education angle.</div></div>
+          </div>
+        </div>
       </div>
-      <div class="chart-card">
-        <h3>Campaigns</h3>
-        <div id="ad-campaigns-table"></div>
+
+      <!-- AD BUILD (placeholder — populated by buildMetaAdBuild) -->
+      <div id="ma-adbuild" class="inner-tab-section" style="padding:1.5rem 2rem">
+        <div style="color:#aaa;text-align:center;padding:2rem">Loading Ad Build…</div>
       </div>
+
+      <!-- AD COPY (placeholder — populated by buildMetaAdCopy) -->
+      <div id="ma-adcopy" class="inner-tab-section" style="padding:1.5rem 2rem">
+        <div style="color:#aaa;text-align:center;padding:2rem">Loading Ad Copy…</div>
+      </div>
+
     </div>
+  `;
 
-    <div class="chart-card">
-      <h3>Creative Performance <span style="font-size:.75rem;font-weight:400;color:#999">— sorted by lowest cost per lead</span></h3>
-      <table class="dash-table">
-        <thead><tr><th>Creative</th><th>Brand</th><th>Spend</th><th>Leads</th><th>CPL</th></tr></thead>
-        <tbody id="ad-creatives-body"></tbody>
-      </table>
-    </div>`;
+  // ── now wire up the Performance tab internals (was previously inline) ──
 
-  function renderAdSummary() {
+  // ── POPULATE AD BUILD INNER TAB ─────────────────────────────────────────────
+  window.buildMetaAdBuild = function() {
+    const abt = document.getElementById('ma-adbuild');
+    if (!abt || abt.dataset.built) return;
+    abt.dataset.built = '1';
+    const LS_BUILD = 'PM_AD_BUILD'; const LS_LP_URL = 'PM_LP_URL'; const LS_FEEDBACK = 'PM_LP_FEEDBACK';
+    const LS_AB_PAGES = 'pm_landing_pages'; const LS_AB_BUILDS = 'pm_ad_builds';
+    const defaultPages = [{id:1,name:'Landing Page 1',slug:'lp-1',status:'Draft',history:[]},{id:2,name:'Landing Page 2',slug:'lp-2',status:'Draft',history:[]},{id:3,name:'Landing Page 3',slug:'lp-3',status:'Draft',history:[]}];
+    const defaultBuilds = [{id:1,name:'HQ Tier 1 Launch',status:'Active'}];
+    let pages = JSON.parse(localStorage.getItem(LS_AB_PAGES)||'null')||defaultPages;
+    let builds = JSON.parse(localStorage.getItem(LS_AB_BUILDS)||'null')||defaultBuilds;
+    const done = JSON.parse(localStorage.getItem(LS_BUILD)||'{}');
+    const lpUrl = localStorage.getItem(LS_LP_URL)||'';
+    const feedbacks = JSON.parse(localStorage.getItem(LS_FEEDBACK)||'[]');
+    const STEPS = [
+      {id:'s1',phase:'Page',text:'Build landing page in ActiveCampaign',note:'Headline: \"Feel Like Yourself Again: Stronger, Less Pain, More Energy\"'},
+      {id:'s2',phase:'Page',text:'Add pre-assessment form to landing page',note:'Fields: main goal, work context, prior health experience, injuries/limitations'},
+      {id:'s3',phase:'Page',text:'Test full landing page flow on mobile + desktop',note:'Check form submission, confirmation page, redirect to booking'},
+      {id:'s4',phase:'Email',text:'Write Email 1 — Memory anchor (Day 1)',note:'Remind them what they opted in for and what they\'re about to get'},
+      {id:'s5',phase:'Email',text:'Write Email 2 — Social proof (Day 2)',note:'One testimonial from someone like them, focused on their outcome'},
+      {id:'s6',phase:'Email',text:'Write Email 3 — ROI or lifestyle benefit (Day 3)',note:'Corporate wellness angle or perimenopause/energy angle'},
+      {id:'s7',phase:'Email',text:'Write Email 4 — Handle hesitation (Day 5)',note:'\"You don\'t need to be fit already. Your body will adapt.\"'},
+      {id:'s8',phase:'Email',text:'Write Email 5 — Urgency + direct booking (Day 6)',note:'\"Assessment spots fill up\" — clear link to booking'},
+      {id:'s9',phase:'Email',text:'Set up ActiveCampaign automation sequence',note:'Trigger: form submit → 5-email sequence fires automatically'},
+      {id:'s10',phase:'Ads',text:'Confirm Meta Pixel installed on AC landing page',note:'Pixel must fire on page view AND form submit event'},
+      {id:'s11',phase:'Ads',text:'Build Facebook/Instagram creatives — 3 angles',note:'Energy · Pain relief · Strength — feed + story/reel formats each'},
+      {id:'s12',phase:'Ads',text:'Build LinkedIn creatives — corporate angle',note:'Target: HR managers, wellness coordinators, employees 40+ in Brisbane'},
+      {id:'s13',phase:'Ads',text:'Set up warm audience campaigns',note:'Existing clients, email list, page followers — $200–300 to start'},
+      {id:'s14',phase:'Ads',text:'Set up 14-day retargeting campaign',note:'Anyone who clicks ad but doesn\'t book → retarget with nurture content'},
+      {id:'s15',phase:'Launch',text:'Run end-to-end funnel test yourself',note:'Click ad → land → fill form → check emails arrive → confirm booking link works'},
+      {id:'s16',phase:'Launch',text:'Go live: warm audience ads',note:'Goal: 5–10 assessments booked in Week 1–2'},
+      {id:'s17',phase:'Scale',text:'Scale to cold traffic ($500–800/wk)',note:'Double down on winning angle. CPL target: under $100 per assessment booked'},
+    ];
+    const PHASES = ['Page','Email','Ads','Launch','Scale'];
+    const PHASE_COLOR = {Page:'#2ABFBF',Email:'#8B5CF6',Ads:'#F59E0B',Launch:'#EF4444',Scale:'#10B981'};
+    const doneCount = STEPS.filter(s=>done[s.id]).length;
+    const pct = Math.round(doneCount/STEPS.length*100);
+    const stepsHtml = PHASES.map(phase => {
+      const ps = STEPS.filter(s=>s.phase===phase); const pdone = ps.filter(s=>done[s.id]).length;
+      return '<div style="margin-bottom:1.25rem"><div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem"><span style="background:'+PHASE_COLOR[phase]+';color:#fff;font-size:.68rem;font-weight:700;padding:.12rem .45rem;border-radius:3px;text-transform:uppercase">'+phase+'</span><span style="font-size:.72rem;color:#888">'+pdone+'/'+ps.length+' done</span></div>'+
+        ps.map(s=>'<label style="display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .6rem;border-radius:6px;cursor:pointer;margin-bottom:.2rem;background:'+(done[s.id]?'#f0fdf4':'#fafafa')+'"><input type="checkbox" '+(done[s.id]?'checked':'')+' onchange="toggleMetaBuildStep(\''+s.id+'\',this.checked)" style="margin-top:.2rem;accent-color:#2ABFBF;flex-shrink:0;cursor:pointer"><div><div style="font-size:.84rem;font-weight:700;color:'+(done[s.id]?'#10B981':'#1B2A4A')+';'+(done[s.id]?'text-decoration:line-through;opacity:.55':'')+'">'+s.text+'</div><div style="font-size:.72rem;color:#aaa;margin-top:.1rem">'+s.note+'</div></div></label>').join('')+'</div>';
+    }).join('');
+    abt.innerHTML = '<div class="section-banner" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem"><div><div>HQ Tier 1 Ad Launch — Build Tracker</div><div style="font-size:.8rem;font-weight:400;color:#aaa;margin-top:.2rem">Perf Core · Plus · Prime — 40+ Brisbane</div></div><div style="text-align:right"><div style="font-size:2rem;font-weight:800;color:#2ABFBF">'+pct+'%</div><div style="font-size:.75rem;color:#aaa">'+doneCount+'/'+STEPS.length+' steps done</div></div></div>'+
+      '<div class="chart-card" style="padding:.75rem 1.25rem;margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;font-size:.78rem;color:#888;margin-bottom:.35rem"><span>Overall progress</span><span>'+pct+'%</span></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+pct+'%"></div></div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem"><div class="chart-card"><h3 style="margin-bottom:1rem">Launch Steps</h3>'+stepsHtml+'</div>'+
+      '<div class="chart-card"><h3>Landing Page Preview</h3><p style="font-size:.8rem;color:#888;margin-bottom:.75rem">Paste your ActiveCampaign landing page URL to preview it.</p><div style="display:flex;gap:.5rem;margin-bottom:.75rem"><input type="url" id="lp-url-input" value="'+(lpUrl||'')+'" placeholder="https://…" style="flex:1;padding:.4rem .7rem;border:1.5px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.83rem;outline:none"><button class="btn" style="font-size:.8rem;padding:.4rem .9rem" onclick="saveMetaLpUrl()">Load</button></div><div id="lp-preview-wrap">'+(lpUrl?'<iframe src="'+lpUrl+'" style="width:100%;height:400px;border:2px solid #e2e8f0;border-radius:8px" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>':'<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:8px;height:160px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.88rem">Paste URL above</div>')+'</div></div></div></div>';
+    window.toggleMetaBuildStep = function(id,checked) { const d=JSON.parse(localStorage.getItem(LS_BUILD)||'{}'); d[id]=checked; localStorage.setItem(LS_BUILD,JSON.stringify(d)); abt.dataset.built=''; buildMetaAdBuild(); };
+    window.saveMetaLpUrl = function() { const url=(document.getElementById('lp-url-input').value||'').trim(); localStorage.setItem(LS_LP_URL,url); document.getElementById('lp-preview-wrap').innerHTML=url?'<iframe src="'+url+'" style="width:100%;height:400px;border:2px solid #e2e8f0;border-radius:8px" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>':'<div style="background:#f8fafc;border:2px dashed #e2e8f0;border-radius:8px;height:160px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.88rem">No URL loaded</div>'; };
+  };
+
+  // ── POPULATE AD COPY INNER TAB ───────────────────────────────────────────────
+  window.buildMetaAdCopy = function() {
+    const act = document.getElementById('ma-adcopy');
+    if (!act || act.dataset.built) return;
+    act.dataset.built = '1';
+    const ADS = [
+      {id:'ad-photo',name:'Ad-Photo',type:'Static Video · 5s',creative:'Echo bike — older woman training, EP alongside.',motivator:'toward',motivatorLabel:'Toward — Identity / Aspiration',hook:'Most women are told to slow down in their 40s. You decided to do the opposite.',headlines:["You\'re not too old. You\'re under-supported.","Built for women who won\'t slow down","Stronger than you\'ve been in years"],description:'Exercise Physiology, Teneriffe',cta:'Book Now',copy:[{label:'Short',text:'Most women in their 40s are told to take it easy. Rest. Be careful.\nThat advice isn\'t working — and you know it.\nAt PerforMotion, we start with a clinical assessment and build a program around your body. Accredited Exercise Physiologists. Teneriffe, Brisbane.'},{label:'Medium',text:'You\'ve been pushing through pain for long enough.\nThe soreness that won\'t go away. The energy that disappears by midday. The feeling that you used to be stronger, and you\'re not sure how to get back there.\nYou don\'t need to slow down. You need the right program.\nAt PerforMotion, a clinical assessment comes first. Your EP designs everything around your body — and stays involved as you get stronger.\nBook your assessment. Teneriffe, Brisbane.'},{label:'Long',text:'If your body has been working against you — you\'re not imagining it.\nChronic pain. Old injuries. Years of being told to manage it, not fix it.\nThe women who train at PerforMotion came to us with exactly that. They\'re now the strongest they\'ve ever been.\nIt starts with one session — a clinical assessment with an Accredited Exercise Physiologist who actually listens, followed by a program built for your body. Not a template. Not a guess.\nYou don\'t have to figure this out alone.\nPerforMotion. Exercise Physiology. Teneriffe, Brisbane.'}]},
+      {id:'ad-runner',name:'Ad-Runner (Liz)',type:'Testimonial Video · 37s',creative:'Liz speaking to camera — ruptured hamstring, now the strongest she\'s ever been.',motivator:'away',motivatorLabel:'Away — Pain / Injury → Outcome',hook:'Liz ruptured her hamstring. She\'s now the strongest she\'s ever been.',headlines:["She was told to slow down. She didn\'t.","Ruptured hamstring → strongest ever","What happened after Liz\'s injury"],description:'Real client. Real result.',cta:'Learn More',copy:[{label:'Short',text:'Liz ruptured her hamstring. She\'s now the strongest she\'s ever been.\nIf pain has been holding you back, there\'s a better path.\nAccredited Exercise Physiology. Teneriffe, Brisbane.'},{label:'Medium',text:'Liz came to us after rupturing her hamstring. She\'d been told to rest and take it slow.\nThat wasn\'t what she needed.\nShe needed a program built around her body by an EP who understood what she was recovering from.\nWatch what happened next.\nPerforMotion. Clinical assessment first. Personalised program from day one. Teneriffe, Brisbane.'},{label:'Long',text:'Liz ruptured her hamstring. The kind of injury that makes you wonder if things will ever feel normal again.\nShe stopped trying to manage it — and started working with an Accredited Exercise Physiologist who built her a real program. Designed for her body, her history, her goals.\nShe\'s now the strongest she\'s ever been.\nWe work with people in their 40s, 50s and 60s who\'ve been told to slow down and want more than that.\nIt starts with a clinical assessment.\nPerforMotion. Teneriffe, Brisbane.'}]},
+      {id:'ad-songa',name:'Ad-Songa',type:'Testimonial Video · 50s',creative:'Songa speaking to camera — best for retargeting / warm audiences.',motivator:'away',motivatorLabel:'Away — Uncertainty / Not knowing where to start',hook:"Songa didn\'t know where to start. Now she does — and she hasn\'t looked back.",headlines:["Not sure where to start? Neither was Songa.","Her words, not ours","This is what changed for Songa"],description:'Real client. Teneriffe, Brisbane.',cta:'Watch',copy:[{label:'Short',text:"Songa didn\'t know where to start. Now she does — and she hasn\'t looked back.\nOne clinical assessment. A program built for you. An EP who stays involved.\nPerforMotion. Teneriffe, Brisbane."},{label:'Medium',text:"Sometimes the hardest part is just starting.\nNot knowing if you\'re fit enough. Not knowing if it\'s safe. Not knowing what you actually need.\nSonga felt the same way.\nWhat she found at PerforMotion was an EP who listened — and a program that worked for her body, not against it.\nWatch her story. Book your assessment.\nTeneriffe, Brisbane."},{label:'Long',text:"If you\'ve been putting off doing something about how you feel — you\'re not alone.\nSore. Tired. Not sure where to start or whether your body will hold up.\nSonga was there too.\nShe came to us and we did what we always do — started with a proper clinical assessment. Found out exactly what was going on. Built a program around her, not a template.\nPerforMotion. Teneriffe, Brisbane."}]}
+    ];
+    const motivatorBadge = m => m==='toward'?'<span style="background:#0d9488;color:#fff;font-size:.72rem;font-weight:700;padding:.25rem .65rem;border-radius:20px">↑ TOWARD</span>':'<span style="background:#7c3aed;color:#fff;font-size:.72rem;font-weight:700;padding:.25rem .65rem;border-radius:20px">↓ AWAY</span>';
+    const motivatorDesc = {toward:'Focus on the positive outcome — what the person gains, achieves, or moves toward.',away:'Focus on escaping pain, frustration, or limitation — what the person wants to leave behind.'};
+
+    // Motivator filter
+    let activeMotivator = 'all';
+    function renderCopyCards() {
+      const filtered = activeMotivator==='all' ? ADS : ADS.filter(a=>a.motivator===activeMotivator);
+      act.querySelector('#adcopy-cards').innerHTML = filtered.map(ad =>
+        '<div class="chart-card" style="margin-bottom:1.75rem">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem">'+
+            '<div><div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><h3 style="margin:0;font-size:1.05rem;color:#1B2A4A">'+ad.name+'</h3>'+motivatorBadge(ad.motivator)+'</div>'+
+            '<div style="font-size:.78rem;color:#888;margin-top:.3rem">'+ad.type+' · '+ad.motivatorLabel+'</div>'+
+            '<div style="font-size:.8rem;color:#64748b;margin-top:.2rem;font-style:italic">'+ad.creative+'</div></div></div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">'+
+            '<div><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">Hook</div>'+
+            '<div style="background:#eff6ff;border-left:3px solid #2ABFBF;padding:.75rem 1rem;font-size:.9rem;font-weight:600;color:#1e293b;border-radius:0 6px 6px 0;line-height:1.5">'+ad.hook+'</div>'+
+            '<button onclick="navigator.clipboard.writeText(''+ad.hook.replace(/'/g,"\'")+'')" style="margin-top:.35rem;font-size:.75rem;padding:.2rem .65rem;background:none;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;color:#64748b;font-family:inherit">Copy</button></div>'+
+            '<div><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">Headlines</div>'+
+            ad.headlines.map((h,i)=>'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem"><span style="font-size:.72rem;color:#94a3b8;width:16px;flex-shrink:0">'+(i+1)+'</span><span style="font-size:.84rem;color:#1e293b">'+h+'</span><button onclick="navigator.clipboard.writeText(''+h.replace(/'/g,"\'")+'')" style="font-size:.7rem;padding:.15rem .45rem;background:none;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;color:#94a3b8;font-family:inherit;flex-shrink:0">Copy</button></div>').join('')+
+            '</div></div>'+
+          '<div><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.75rem">Primary Text Variants</div>'+
+          ad.copy.map(v=>'<div style="margin-bottom:1.25rem"><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:.4rem">'+v.label+' copy</div><div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:6px;padding:.85rem 1rem;font-size:.86rem;line-height:1.65;color:#1e293b;white-space:pre-line">'+v.text+'</div><button onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)" style="margin-top:.35rem;font-size:.75rem;padding:.2rem .65rem;background:none;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;color:#64748b;font-family:inherit">Copy</button></div>').join('')+
+          '</div></div>'
+      ).join('');
+    }
+
+    act.innerHTML = '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap"><h2 style="margin:0;font-size:1.25rem;color:#1B2A4A">HQ Campaign 1 — Ad Copy</h2><span style="font-size:.8rem;color:#888">Audience: 40+ Brisbane · EP Tier 1</span></div>'+
+      '<div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">'+
+      '<span style="font-size:.78rem;font-weight:600;color:#555">Filter:</span>'+
+      '<button onclick="activeMotivator=\'all\';renderCopyCards()" style="font-size:.78rem;padding:.25rem .75rem;background:#1B2A4A;color:#fff;border:none;border-radius:20px;cursor:pointer;font-weight:700">All</button>'+
+      '<button onclick="activeMotivator=\'toward\';renderCopyCards()" style="font-size:.78rem;padding:.25rem .75rem;background:#0d9488;color:#fff;border:none;border-radius:20px;cursor:pointer;font-weight:700">↑ Toward</button>'+
+      '<button onclick="activeMotivator=\'away\';renderCopyCards()" style="font-size:.78rem;padding:.25rem .75rem;background:#7c3aed;color:#fff;border:none;border-radius:20px;cursor:pointer;font-weight:700">↓ Away From</button>'+
+      '<div style="margin-left:.5rem;font-size:.78rem;color:#888" id="motivator-hint-text">Showing all ads</div>'+
+      '</div><div id="adcopy-cards"></div>';
+    renderCopyCards();
+  };
+
+    function renderAdSummary() {
     const campaigns = meta.campaigns.filter(c => adFilter === 'All' || c.brand === adFilter);
     const spend = campaigns.reduce((a,c)=>a+c.spend,0);
     const leads = campaigns.reduce((a,c)=>a+c.leads,0);
@@ -3228,9 +3666,9 @@ BUILDERS['overview'] = function buildTab1() {
       <div style="display:flex;flex-wrap:wrap;gap:.4rem">${statusChips}</div>
     </div>
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem">
+      <button class="btn btn-secondary" onclick="switchTab('leads')" style="font-size:.82rem">Leads</button>
       <button class="btn btn-secondary" onclick="switchTab('content')" style="font-size:.82rem">Content</button>
       <button class="btn btn-secondary" onclick="switchTab('meta-ads')" style="font-size:.82rem">Meta Ads</button>
-      <button class="btn btn-secondary" onclick="switchTab('ad-build')" style="font-size:.82rem">Ad Build</button>
       <button class="btn btn-secondary" onclick="switchTab('activecampaign')" style="font-size:.82rem">ActiveCampaign</button>
       <button class="btn btn-secondary" onclick="switchTab('website')" style="font-size:.82rem">Website</button>
       <button class="btn btn-secondary" onclick="switchTab('brand-strategy')" style="font-size:.82rem">Brand Strategy</button>
@@ -5008,10 +5446,9 @@ BUILDERS['ad-copy'] = function buildAdCopy() {
 
 const TABS = [
   { id:'overview',       label:'Overview' },
+  { id:'leads',          label:'Leads' },
   { id:'content',        label:'Content' },
   { id:'meta-ads',       label:'Meta Ads' },
-  { id:'ad-build',       label:'Ad Build' },
-  { id:'ad-copy',        label:'Ad Copy' },
   { id:'activecampaign', label:'ActiveCampaign' },
   { id:'website',        label:'Website' },
   { id:'brand-strategy', label:'Brand Strategy' },
