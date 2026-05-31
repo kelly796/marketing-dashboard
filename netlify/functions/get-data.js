@@ -9,9 +9,9 @@
  *  ✅ ActiveCampaign         — AC_BASE_URL + AC_API_KEY
  *  ✅ Meta / Instagram       — META_ACCESS_TOKEN + META_AD_ACCOUNT_ID + META_HQ_PAGE_ID + META_ONLINE_PAGE_ID
  *  ✅ YouTube                — YOUTUBE_API_KEY + YOUTUBE_CHANNEL_ID
- *  ✅ Google Analytics 4     — GA4_PROPERTY_ID + GOOGLE_SERVICE_ACCOUNT_KEY (preferred)
+ *  ✅ Google Analytics 4     — GA4_PROPERTY_ID + GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY (preferred)
  *  ✅ WordPress / Ind. Analytics — WP_SITE_URL + WP_USERNAME + WP_APP_PASSWORD (fallback if GA4 fails)
- *  ✅ Google Search Console  — GSC_SITE_URL + GOOGLE_SERVICE_ACCOUNT_KEY
+ *  ✅ Google Search Console  — GSC_SITE_URL + GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY
  */
 
 const { handler: fetchAC }           = require('./fetch-activecampaign');

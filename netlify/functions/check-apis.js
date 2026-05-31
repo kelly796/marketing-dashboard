@@ -94,15 +94,15 @@ async function checkYouTube(out) {
 
 // ── GOOGLE ANALYTICS 4 ────────────────────────────────────────────────────────
 async function checkGA4(out) {
-  const propertyId = process.env.GA4_PROPERTY_ID;
-  const saKey      = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const propertyId  = process.env.GA4_PROPERTY_ID;
+  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+  const privateKey  = process.env.GOOGLE_PRIVATE_KEY;
 
-  if (!propertyId) { out.ga4 = { ok: false, error: 'GA4_PROPERTY_ID not set' }; return; }
-  if (!saKey)      { out.ga4 = { ok: false, error: 'GOOGLE_SERVICE_ACCOUNT_KEY not set' }; return; }
+  if (!propertyId)  { out.ga4 = { ok: false, error: 'GA4_PROPERTY_ID not set' }; return; }
+  if (!clientEmail) { out.ga4 = { ok: false, error: 'GOOGLE_CLIENT_EMAIL not set' }; return; }
 
   try {
-    const sa    = JSON.parse(saKey);
-    const token = await getGoogleToken(saKey, ['https://www.googleapis.com/auth/analytics.readonly']);
+    const token = await getGoogleToken(clientEmail, privateKey, ['https://www.googleapis.com/auth/analytics.readonly']);
     const res   = await fetch(
       `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`,
       {
@@ -122,7 +122,7 @@ async function checkGA4(out) {
     out.ga4 = {
       ok:             true,
       propertyId,
-      serviceAccount: sa.client_email,
+      serviceAccount: clientEmail,
       sessions7d:     data.rows?.[0]?.metricValues?.[0]?.value || '0',
     };
   } catch (e) {
@@ -136,15 +136,16 @@ async function checkGSC(out) {
   const clientId     = process.env.GSC_CLIENT_ID;
   const clientSecret = process.env.GSC_CLIENT_SECRET;
   const refreshToken = process.env.GSC_REFRESH_TOKEN;
-  const saKey        = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const gscClientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+  const gscPrivateKey  = process.env.GOOGLE_PRIVATE_KEY;
 
   if (!siteUrl) { out.gsc = { ok: false, error: 'GSC_SITE_URL not set' }; return; }
-  if (!clientId && !saKey) { out.gsc = { ok: false, error: 'GSC_CLIENT_ID or GOOGLE_SERVICE_ACCOUNT_KEY not set' }; return; }
+  if (!clientId && !gscClientEmail) { out.gsc = { ok: false, error: 'GSC_CLIENT_ID or GOOGLE_CLIENT_EMAIL not set' }; return; }
 
   try {
     const token = (clientId && clientSecret && refreshToken)
       ? await getOAuthToken(clientId, clientSecret, refreshToken)
-      : await getGoogleToken(saKey, ['https://www.googleapis.com/auth/webmasters.readonly']);
+      : await getGoogleToken(gscClientEmail, gscPrivateKey, ['https://www.googleapis.com/auth/webmasters.readonly']);
     const encodedUrl = encodeURIComponent(siteUrl);
     const res        = await fetch(
       `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodedUrl}/searchAnalytics/query`,

@@ -7,12 +7,13 @@
  * ─── REQUIRED ENV VARS ───────────────────────────────────────────────────────
  *  GSC_SITE_URL               — verified site URL exactly as it appears in GSC,
  *                               e.g. "https://performotion.net/" (trailing slash matters)
- *  GOOGLE_SERVICE_ACCOUNT_KEY — same service account JSON used for GA4
+ *  GOOGLE_CLIENT_EMAIL        — service account email (same account used for GA4)
+ *  GOOGLE_PRIVATE_KEY         — private key (same account used for GA4)
  *
  * ─── SETUP ───────────────────────────────────────────────────────────────────
  *  1. In Google Search Console → Settings → Users and permissions →
  *     Add user → paste the service account email → Owner or Full
- *  2. The same GOOGLE_SERVICE_ACCOUNT_KEY used for GA4 works here
+ *  2. The same GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY used for GA4 works here
  *
  * ─── KEYWORD BRAND TAGGING ───────────────────────────────────────────────────
  *  GSC does not know your brand structure. Keywords are tagged HQ/Online/Both
@@ -40,19 +41,20 @@ exports.handler = async () => {
   const clientId      = process.env.GSC_CLIENT_ID;
   const clientSecret  = process.env.GSC_CLIENT_SECRET;
   const refreshToken  = process.env.GSC_REFRESH_TOKEN;
-  const saKey         = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const clientEmail   = process.env.GOOGLE_CLIENT_EMAIL;
+  const privateKey    = process.env.GOOGLE_PRIVATE_KEY;
 
   if (!siteUrl) {
     return { statusCode: 503, body: JSON.stringify({ error: 'GSC_SITE_URL must be set' }) };
   }
-  if (!clientId && !saKey) {
-    return { statusCode: 503, body: JSON.stringify({ error: 'GSC_CLIENT_ID or GOOGLE_SERVICE_ACCOUNT_KEY must be set' }) };
+  if (!clientId && !clientEmail) {
+    return { statusCode: 503, body: JSON.stringify({ error: 'GSC_CLIENT_ID or GOOGLE_CLIENT_EMAIL must be set' }) };
   }
 
   try {
     const token = (clientId && clientSecret && refreshToken)
       ? await getOAuthToken(clientId, clientSecret, refreshToken)
-      : await getGoogleToken(saKey, SCOPES);
+      : await getGoogleToken(clientEmail, privateKey, SCOPES);
     const encodedUrl = encodeURIComponent(siteUrl);
     const apiBase   = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodedUrl}/searchAnalytics/query`;
 

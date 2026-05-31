@@ -7,34 +7,34 @@
  * ─── REQUIRED ENV VARS ───────────────────────────────────────────────────────
  *  GA4_PROPERTY_ID            — numeric property ID, e.g. "123456789"
  *                               GA4 Admin → Property → Property details
- *  GOOGLE_SERVICE_ACCOUNT_KEY — full contents of the service account JSON key file
- *                               (Google Cloud Console → IAM → Service Accounts → Keys)
+ *  GOOGLE_CLIENT_EMAIL        — service account email from the JSON key file
+ *  GOOGLE_PRIVATE_KEY         — private_key value from the JSON key file
  *
  * ─── SETUP ───────────────────────────────────────────────────────────────────
  *  1. Create a service account in Google Cloud Console
  *  2. Enable "Google Analytics Data API" for the project
- *  3. GA4 Admin → Property access management → add the service account email
- *     as a Viewer
- *  4. Download the JSON key; paste the entire file contents as
- *     GOOGLE_SERVICE_ACCOUNT_KEY in Netlify environment variables
+ *  3. GA4 Admin → Property access management → add the service account email as Viewer
+ *  4. Download the JSON key; copy client_email → GOOGLE_CLIENT_EMAIL,
+ *     private_key → GOOGLE_PRIVATE_KEY in Netlify environment variables
  */
 
 const { getGoogleToken } = require('./google-auth');
 const SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
 exports.handler = async () => {
-  const propertyId = process.env.GA4_PROPERTY_ID;
-  const saKey      = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const propertyId  = process.env.GA4_PROPERTY_ID;
+  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+  const privateKey  = process.env.GOOGLE_PRIVATE_KEY;
 
-  if (!propertyId || !saKey) {
+  if (!propertyId || !clientEmail || !privateKey) {
     return {
       statusCode: 503,
-      body: JSON.stringify({ error: 'GA4_PROPERTY_ID and GOOGLE_SERVICE_ACCOUNT_KEY must be set' }),
+      body: JSON.stringify({ error: 'GA4_PROPERTY_ID, GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY must be set' }),
     };
   }
 
   try {
-    const token = await getGoogleToken(saKey, SCOPES);
+    const token = await getGoogleToken(clientEmail, privateKey, SCOPES);
     const base  = `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}`;
 
     const [countryReport, summaryReport, sourceReport, pagesReport] = await Promise.all([

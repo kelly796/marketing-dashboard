@@ -1,28 +1,26 @@
 /**
  * Google Service Account JWT Auth Helper
  *
- * Exchanges a service account JSON key for a short-lived OAuth2 access token.
+ * Exchanges a service account key for a short-lived OAuth2 access token.
  * Works with Node.js 18+ built-in crypto — no external packages needed.
  *
  * Usage:
  *   const { getGoogleToken } = require('./google-auth');
- *   const token = await getGoogleToken(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, [
- *     'https://www.googleapis.com/auth/analytics.readonly',
- *   ]);
+ *   const token = await getGoogleToken(
+ *     process.env.GOOGLE_CLIENT_EMAIL,
+ *     process.env.GOOGLE_PRIVATE_KEY,
+ *     ['https://www.googleapis.com/auth/analytics.readonly'],
+ *   );
  */
 
 const crypto = require('crypto');
 
-async function getGoogleToken(serviceAccountJson, scopes) {
-  const sa = typeof serviceAccountJson === 'string'
-    ? JSON.parse(serviceAccountJson)
-    : serviceAccountJson;
-
+async function getGoogleToken(clientEmail, privateKey, scopes) {
   const now = Math.floor(Date.now() / 1000);
 
   const header  = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
   const payload = b64url(JSON.stringify({
-    iss:   sa.client_email,
+    iss:   clientEmail,
     scope: scopes.join(' '),
     aud:   'https://oauth2.googleapis.com/token',
     iat:   now,
@@ -32,7 +30,7 @@ async function getGoogleToken(serviceAccountJson, scopes) {
   const signingInput = `${header}.${payload}`;
   const sign = crypto.createSign('RSA-SHA256');
   sign.update(signingInput);
-  const signature = sign.sign(sa.private_key, 'base64url');
+  const signature = sign.sign(privateKey, 'base64url');
 
   const jwt = `${signingInput}.${signature}`;
 
