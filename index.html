@@ -2679,7 +2679,24 @@ BUILDERS['meta-ads'] = function buildTab6() {
         setTimeout(() => { this.textContent = 'Copy'; }, 1500);
       });
       card.querySelector('.ma-ac-del-btn').addEventListener('click', function() {
-        if (confirm('Delete this block?')) { card.remove(); maAcSave(); maCheckEmpty(); }
+        if (this.dataset.confirming) {
+          card.remove(); maAcSave(); maCheckEmpty();
+        } else {
+          this.dataset.confirming = '1';
+          this.textContent = 'Sure?';
+          this.style.background = '#ef4444';
+          this.style.color = '#fff';
+          this.style.borderColor = '#ef4444';
+          setTimeout(() => {
+            if (this.dataset.confirming) {
+              delete this.dataset.confirming;
+              this.textContent = 'Delete';
+              this.style.background = 'none';
+              this.style.color = '#ef4444';
+              this.style.borderColor = '#fca5a5';
+            }
+          }, 3000);
+        }
       });
       list.appendChild(card);
     }
@@ -2695,7 +2712,20 @@ BUILDERS['meta-ads'] = function buildTab6() {
       </div>
     `;
 
-    maAcLoad().forEach(b => maAcAddBlock(b));
+    const DEFAULT_ADS = [
+      {
+        id: 'mac-prevention-ageing',
+        title: 'Ad 1 — Prevention & Ageing (Towards)',
+        body: 'HOOK\nPeople in the 4005 are still training hard in their 50s — with Exercise Physiology — despite the risks starting in their 30s.\n\nHEADLINE (test one)\nA: The people still training at 50 started early.\nB: Your health risks start in your 30s. So should your plan.\nC: Still running, lifting, and feeling strong at 50. Here is how.\n\nPRIMARY TEXT\nStill running, lifting, and feeling strong at 50. Not managing decline — actually getting better.\n\nFrom your mid-30s, your risk of heart disease, type 2 diabetes, and bone loss increases every single year. Exercise Physiology is clinically designed to directly reduce those risks. A full assessment of your body, your training history, and your health. A program built specifically around you. The same EP every session who knows your body and your goals.\n\nPerforMotion is the only Exercise Physiology clinic in New Farm and Teneriffe.\n\nCTA\nBook your assessment below. One hour tells you exactly where your risks sit and what to do about them.\nButton: Book Now'
+      },
+      {
+        id: 'mac-richards',
+        title: "Ad 2 — Richard's Tasty Corner (Away)",
+        body: "HOOK\nLocals in the 4005 are breaking their injury cycle — with Exercise Physiology — despite years of physio.\n\nHEADLINE (test one)\nA: The injury keeps coming back because the cause was never fixed.\nB: Exercise Physiology breaks the injury cycle.\nC: You have walked past a hundred times. Now you know what is inside.\n\nPRIMARY TEXT\nRunning without your knee flaring up. Cycling without your hip giving out. Training consistently without the same injury stopping you every few months.\n\nMost rehab treats the injury. Exercise Physiology finds what is driving it. A full clinical assessment of how your whole body moves, where the gaps are, and what needs to change. Then a program built specifically for you, reviewed and updated as you progress.\n\nPerforMotion is the only Exercise Physiology clinic in New Farm and Teneriffe. Same EP every session.\n\nCTA\nBook your initial assessment. Find out what has actually been driving the problem.\nButton: Book Now"
+      }
+    ];
+    const saved = maAcLoad();
+    (saved.length ? saved : DEFAULT_ADS).forEach(b => maAcAddBlock(b));
     maCheckEmpty();
 
     act.querySelector('.ma-ac-add').addEventListener('click', function() {
@@ -4982,7 +5012,24 @@ BUILDERS['ad-build'] = function buildAdBuild() {
         abAcSave();
       });
       card.querySelector('.ab-ac-delete').addEventListener('click', function() {
-        if (confirm('Delete this ad?')) { card.remove(); abAcSave(); checkEmpty(); }
+        if (this.dataset.confirming) {
+          card.remove(); abAcSave(); checkEmpty();
+        } else {
+          this.dataset.confirming = '1';
+          this.textContent = 'Sure?';
+          this.style.background = '#ef4444';
+          this.style.color = '#fff';
+          this.style.borderColor = '#ef4444';
+          setTimeout(() => {
+            if (this.dataset.confirming) {
+              delete this.dataset.confirming;
+              this.textContent = 'Delete';
+              this.style.background = 'none';
+              this.style.color = '#ef4444';
+              this.style.borderColor = '#fca5a5';
+            }
+          }, 3000);
+        }
       });
       cont.appendChild(card);
     }
@@ -5170,9 +5217,24 @@ BUILDERS['ad-copy'] = function buildAdCopy() {
     });
 
     card.querySelector('.ac-delete-btn').addEventListener('click', function() {
-      if (confirm('Delete this block?')) {
+      if (this.dataset.confirming) {
         card.remove();
         autosave();
+      } else {
+        this.dataset.confirming = '1';
+        this.textContent = 'Sure?';
+        this.style.background = '#ef4444';
+        this.style.color = '#fff';
+        this.style.borderColor = '#ef4444';
+        setTimeout(() => {
+          if (this.dataset.confirming) {
+            delete this.dataset.confirming;
+            this.textContent = 'Delete';
+            this.style.background = 'none';
+            this.style.color = '#ef4444';
+            this.style.borderColor = '#fca5a5';
+          }
+        }, 3000);
       }
     });
 
