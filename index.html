@@ -3425,18 +3425,8 @@ async function refreshData() {
       const fresh = payload.data || payload;
       if (fresh && (fresh.email || fresh.meta || fresh.instagramHQ ||
           fresh.youtube || fresh.ga4 || fresh.seo)) {
-        D = fresh;
+        D = prepareDashboardData(fresh, await fetchStaticDashboardData());
         DATA_SOURCE = 'Live';
-        try {
-          const rs = await fetch('./data/dashboard-data.json');
-          if (rs.ok) {
-            const sd = await rs.json();
-            if (!D.instagramHQ     && sd.instagramHQ)     D.instagramHQ     = sd.instagramHQ;
-            if (!D.instagramOnline && sd.instagramOnline) D.instagramOnline = sd.instagramOnline;
-            if (!D.facebook        && sd.facebook)        D.facebook        = sd.facebook;
-            if (!D.meta            && sd.meta)            D.meta            = sd.meta;
-          }
-        } catch(e) {}
         localStorage.setItem(LS_KEY, JSON.stringify(D));
       }
     }
@@ -3460,7 +3450,6 @@ function renderAll() {
 async function init() {
   buildShell();
   const active = localStorage.getItem(LS_TAB) || 'overview';
-  switchTab(active);
   setInterval(renderHeader, 60 * 1000);
   await loadData();
   renderAll();
@@ -4102,7 +4091,7 @@ BUILDERS['content'] = function buildContentTab() {
 'use strict';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
-const LS_KEY   = 'pm_dash_data';
+const LS_KEY   = 'pm_dash_data_v2';
 const LS_TAB   = 'pm_dash_tab';
 const LS_PRI   = 'pm_dash_priorities';
 const LS_VOICE_HQ  = 'pm_voice_hq';
@@ -4508,21 +4497,124 @@ const MOCK = {
 // ── DATA LOADING ──────────────────────────────────────────────────────────────
 const CACHE_MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours — force fresh fetch after this
 
-async function loadData() {
-  // Always fetch static data first — used as supplement/fallback throughout
-  let staticData = null;
+async function fetchStaticDashboardData() {
   try {
     const rs = await fetch('./data/dashboard-data.json');
-    if (rs.ok) staticData = await rs.json();
+    if (rs.ok) return await rs.json();
   } catch(e) {}
+  return null;
+}
 
-  function supplementFromStatic(obj) {
-    if (!staticData) return;
-    if (!obj.instagramHQ     && staticData.instagramHQ)     obj.instagramHQ     = staticData.instagramHQ;
-    if (!obj.instagramOnline && staticData.instagramOnline) obj.instagramOnline = staticData.instagramOnline;
-    if (!obj.facebook        && staticData.facebook)        obj.facebook        = staticData.facebook;
-    if (!obj.meta            && staticData.meta)            obj.meta            = staticData.meta;
-  }
+function cloneData(obj) {
+  return obj ? JSON.parse(JSON.stringify(obj)) : null;
+}
+
+function isObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeDashboardData(primary, fallback) {
+  if (Array.isArray(primary)) return primary.length ? primary : cloneData(fallback || []);
+  if (!isObject(primary)) return primary ?? cloneData(fallback);
+
+  const out = isObject(fallback) ? cloneData(fallback) : {};
+  Object.entries(primary).forEach(([key, value]) => {
+    const fallbackValue = out[key];
+    if (Array.isArray(value)) {
+      out[key] = value.length ? value : cloneData(fallbackValue || []);
+    } else if (isObject(value)) {
+      out[key] = mergeDashboardData(value, fallbackValue || {});
+    } else if (value !== undefined && value !== null && value !== '') {
+      out[key] = value;
+    }
+  });
+  return out;
+}
+
+function padSeries(values, len = 30) {
+  const arr = Array.isArray(values) ? values.map(v => Number(v) || 0) : [];
+  if (arr.length >= len) return arr.slice(arr.length - len);
+  return Array(len - arr.length).fill(0).concat(arr);
+}
+
+function emptyInstagramData() {
+  return {
+    reach7d: 0, reach7dPrev: 0, engagementRate: 0, engagementRatePrev: 0,
+    impressions7d: 0, impressionsPrev: 0, followers: 0, followersPrev: 0,
+    posts7d: 0, stories7d: 0,
+    reachTrend: padSeries([]), engagementTrend: padSeries([]), impressionsTrend: padSeries([]),
+    pillars: {}, posts: [], pillarPerformance: {},
+    trendData: { contentTypes: [], demographicClickthrough: [], metaAudienceOverlap: '' },
+  };
+}
+
+function normaliseInstagramData(ig) {
+  const out = mergeDashboardData(ig || {}, emptyInstagramData());
+  out.reachTrend = padSeries(out.reachTrend);
+  out.engagementTrend = padSeries(out.engagementTrend);
+  out.impressionsTrend = padSeries(out.impressionsTrend);
+  out.posts = (out.posts || []).map(post => {
+    const type = String(post.type || '').toLowerCase();
+    return {
+      ...post,
+      caption: post.caption || '',
+      type: ['reel', 'carousel', 'post'].includes(type) ? type : 'post',
+      reach: Number(post.reach) || 0,
+      likes: Number(post.likes) || 0,
+      comments: Number(post.comments) || 0,
+      saves: Number(post.saves) || 0,
+      perfScore: Number(post.perfScore) || 0,
+      bookingClicks: Number(post.bookingClicks) || 0,
+      gender: {
+        female: Number(post.gender?.female) || 0,
+        male: Number(post.gender?.male) || 0,
+      },
+      age: Array.isArray(post.age) ? post.age : [],
+    };
+  });
+  out.pillars = out.pillars || {};
+  out.pillarPerformance = out.pillarPerformance || {};
+  out.trendData = out.trendData || {};
+  out.trendData.contentTypes = Array.isArray(out.trendData.contentTypes) ? out.trendData.contentTypes : [];
+  out.trendData.demographicClickthrough = Array.isArray(out.trendData.demographicClickthrough) ? out.trendData.demographicClickthrough : [];
+  out.trendData.metaAudienceOverlap = out.trendData.metaAudienceOverlap || '';
+  return out;
+}
+
+function normaliseDashboardData(data) {
+  const out = data || {};
+  out.instagramHQ = normaliseInstagramData(out.instagramHQ);
+  out.instagramOnline = normaliseInstagramData(out.instagramOnline);
+  out.facebook = mergeDashboardData(out.facebook || {}, {
+    reach7d: 0, reach7dPrev: 0, engagementRate: 0, engagementRatePrev: 0,
+    impressions7d: 0, impressionsPrev: 0, pageLikes: 0, pageLikesPrev: 0, posts7d: 0,
+    reachTrend: padSeries([]), engagementTrend: padSeries([]),
+  });
+  out.facebook.reachTrend = padSeries(out.facebook.reachTrend);
+  out.facebook.engagementTrend = padSeries(out.facebook.engagementTrend);
+  out.meta = mergeDashboardData(out.meta || {}, {
+    spend7d: 0, spendPrev: 0, leads7d: 0, leadsPrev: 0, costPerLead: 0,
+    costPerLeadPrev: 0, roas: 0, roasPrev: 0, impressions7d: 0, impressionsPrev: 0,
+    clicks7d: 0, clicksPrev: 0, ctr: 0, ctrPrev: 0,
+    spendTrend: padSeries([]), leadsTrend: padSeries([]),
+    campaigns: [], creatives: [], audienceBreakdown: [],
+  });
+  out.meta.spendTrend = padSeries(out.meta.spendTrend);
+  out.meta.leadsTrend = padSeries(out.meta.leadsTrend);
+  return out;
+}
+
+function isStaleMockCache(data) {
+  return data?.dataSource === 'Mock' || (data?.instagramHQ?.posts || []).some(p => String(p.id || '').startsWith('hq_p'));
+}
+
+function prepareDashboardData(primary, staticData) {
+  const merged = mergeDashboardData(primary || {}, staticData || {});
+  return normaliseDashboardData(merged);
+}
+
+async function loadData() {
+  const staticData = await fetchStaticDashboardData();
 
   const cached = localStorage.getItem(LS_KEY);
   if (cached) {
@@ -4534,10 +4626,9 @@ async function loadData() {
         ? Date.now() - new Date(parsed.lastUpdated).getTime()
         : Infinity;
       const cacheValid = hasData && cacheAge < CACHE_MAX_AGE_MS;
-      if (cacheValid) {
-        D = parsed;
+      if (cacheValid && !isStaleMockCache(parsed)) {
+        D = prepareDashboardData(parsed, staticData);
         DATA_SOURCE = 'Cached';
-        supplementFromStatic(D);
         return;
       }
     } catch(e) {}
@@ -4546,16 +4637,15 @@ async function loadData() {
   try {
     const r = await fetch('/.netlify/functions/get-data');
     if (r.ok) {
-      D = await r.json();
+      D = prepareDashboardData(await r.json(), staticData);
       DATA_SOURCE = 'Live';
-      supplementFromStatic(D);
       localStorage.setItem(LS_KEY, JSON.stringify(D));
       return;
     }
   } catch(e) {}
 
   if (staticData) {
-    D = staticData;
+    D = prepareDashboardData(staticData, null);
     DATA_SOURCE = staticData.dataSource || 'Live';
     localStorage.setItem(LS_KEY, JSON.stringify(D));
     return;

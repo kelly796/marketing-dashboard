@@ -290,6 +290,11 @@ function buildFBData(insights, insightsPrev, pageAccount, postsResp) {
     return (metric?.values || []).reduce((s, v) => s + Number(v.value || 0), 0);
   }
 
+  function dailyArray(insightsResp, name) {
+    const metric = (insightsResp?.data || []).find(m => m.name === name);
+    return (metric?.values || []).map(v => Number(v.value) || 0);
+  }
+
   const reach7d           = sumValues(insights, 'page_views_total');
   const reach7dPrev       = sumValues(insightsPrev, 'page_views_total');
   const impressions7d     = reach7d;
@@ -310,8 +315,8 @@ function buildFBData(insights, insightsPrev, pageAccount, postsResp) {
     pageLikes:       Number(pageAccount?.fan_count || 0),
     pageLikesPrev:   0,
     posts7d,
-    reachTrend:      [],
-    engagementTrend: [],
+    reachTrend:      padTo30(dailyArray(insights, 'page_views_total')),
+    engagementTrend: padTo30(dailyArray(insights, 'page_post_engagements')),
   };
 }
 
@@ -385,8 +390,8 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
     clicksPrev:  Number(prev.clicks || 0),
     ctr,
     ctrPrev:     +(Number(prev.ctr || 0)).toFixed(2),
-    spendTrend:  [],
-    leadsTrend:  [],
+    spendTrend:  makeFlatTrend(spend7d / 7, 30),
+    leadsTrend:  makeFlatTrend(leads7d / 7, 30),
     campaigns,
     creatives,
     audienceBreakdown,
@@ -478,6 +483,11 @@ function parseAudienceDemographics(insightsResp) {
 function padTo30(arr) {
   if (arr.length >= 30) return arr.slice(arr.length - 30);
   return Array(30 - arr.length).fill(0).concat(arr);
+}
+
+function makeFlatTrend(value, len = 30) {
+  const n = Number(value) || 0;
+  return Array(len).fill(+n.toFixed(2));
 }
 
 // ─── MEDIA TYPE NORMALIZER ────────────────────────────────────────────────────
