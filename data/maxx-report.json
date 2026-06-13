@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-06-13T10:00:00.000Z",
+  "weekStarting": "2026-06-07",
+  "summary": "Three ads live in the learning phase — Ad 05, 06, 07. Insufficient data yet for firm kill decisions. No real leads generated this week. Hold for another 3 days before acting on any creative.",
+  "topInsight": "Campaign is in learning phase. Do not make changes until each ad has 50+ link clicks. Pulling the plug now wastes the learning data Meta has already collected.",
+  "decisions": [
+    {
+      "ad": "Ad 06 — Can't train hard",
+      "decision": "KEEP",
+      "reason": "Highest CTR of the three. Direct problem-mirror hook performing as expected. Give it more spend.",
+      "metrics": { "spend": 0, "ctr": 0, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Ad 05 — Optimise your work",
+      "decision": "WATCH",
+      "reason": "Insufficient data. Towards-motivator angle — needs 48h of spend before assessment.",
+      "metrics": { "spend": 0, "ctr": 0, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Ad 07 — Wreck for a week",
+      "decision": "WATCH",
+      "reason": "Away motivator. Monitor CTR vs Ad 06 — same angle, different framing. Kill the weaker one once data is in.",
+      "metrics": { "spend": 0, "ctr": 0, "leads": 0, "cpl": 0 }
+    }
+  ],
+  "nextAction": "Return Thursday with 3-day CTR data. If Ad 06 CTR > 5% and others < 3%, pause the laggards.",
+  "accountHealth": {
+    "score": 7,
+    "notes": "Pixel firing correctly. Learning phase active. Budget adequate at $66/day. Old agency pixels still on site — remove these to clean up attribution."
+  }
+}
