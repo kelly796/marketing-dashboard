@@ -6,38 +6,42 @@
  * The browser falls back to MOCK for any key that is null/undefined.
  *
  * Data sources:
- *  ✅ ActiveCampaign         — AC_BASE_URL + AC_API_KEY
  *  ✅ Meta / Instagram       — META_ACCESS_TOKEN + META_AD_ACCOUNT_ID + META_HQ_PAGE_ID + META_ONLINE_PAGE_ID
  *  ✅ YouTube                — YOUTUBE_API_KEY + YOUTUBE_CHANNEL_ID
  *  ✅ Google Analytics 4     — GA4_PROPERTY_ID + GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY (preferred)
  *  ✅ WordPress / Ind. Analytics — WP_SITE_URL + WP_USERNAME + WP_APP_PASSWORD (fallback if GA4 fails)
  *  ✅ Google Search Console  — GSC_SITE_URL + GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY
+ *  ✅ Microsoft Clarity      — CLARITY_API_KEY + CLARITY_PROJECT_ID
+ *  ⏳ ActiveCampaign         — being replaced by Go High Level
  */
 
-const { handler: fetchAC }           = require('./fetch-activecampaign');
-const { handler: fetchMeta }         = require('./fetch-meta');
-const { handler: fetchYouTube }      = require('./fetch-youtube');
-const { handler: fetchGA4 }          = require('./fetch-ga4');
-const { handler: fetchWPAnalytics }  = require('./fetch-wordpress-analytics');
-const { handler: fetchGSC }          = require('./fetch-gsc');
+const { handler: fetchAC }          = require('./fetch-activecampaign');
+const { handler: fetchMeta }        = require('./fetch-meta');
+const { handler: fetchYouTube }     = require('./fetch-youtube');
+const { handler: fetchGA4 }         = require('./fetch-ga4');
+const { handler: fetchWPAnalytics } = require('./fetch-wordpress-analytics');
+const { handler: fetchGSC }         = require('./fetch-gsc');
+const { handler: fetchClarity }     = require('./fetch-clarity');
 
 exports.handler = async (event) => {
   try {
-    const [acRes, metaRes, ytRes, ga4Res, wpRes, gscRes] = await Promise.allSettled([
+    const [acRes, metaRes, ytRes, ga4Res, wpRes, gscRes, clarityRes] = await Promise.allSettled([
       fetchAC(event),
       fetchMeta(event),
       fetchYouTube(event),
       fetchGA4(event),
       fetchWPAnalytics(event),
       fetchGSC(event),
+      fetchClarity(event),
     ]);
 
-    const email    = parse(acRes,   'ActiveCampaign');
-    const metaData = parse(metaRes, 'Meta');
-    const ytData   = parse(ytRes,   'YouTube');
-    const ga4Data  = parse(ga4Res,  'GA4');
-    const wpData   = parse(wpRes,   'WPAnalytics');
-    const gscData  = parse(gscRes,  'GSC');
+    const email       = parse(acRes,      'ActiveCampaign');
+    const metaData    = parse(metaRes,    'Meta');
+    const ytData      = parse(ytRes,      'YouTube');
+    const ga4Data     = parse(ga4Res,     'GA4');
+    const wpData      = parse(wpRes,      'WPAnalytics');
+    const gscData     = parse(gscRes,     'GSC');
+    const clarityData = parse(clarityRes, 'Clarity');
 
     // Meta returns multiple keys
     const metaKeys = metaData ? {
@@ -64,10 +68,11 @@ exports.handler = async (event) => {
       ...metaKeys,
       ...(ytData && ytData.subscribers ? { youtube: ytData } : {}),
       ...analyticsKeys,
-      ...(gscData ? { seo: gscData.seo } : {}),
+      ...(gscData                      ? { seo:     gscData.seo }     : {}),
+      ...(clarityData                  ? { clarity: clarityData }     : {}),
     };
 
-    const hasAnyData = email || metaData || ytData || ga4Data || wpData || gscData;
+    const hasAnyData = email || metaData || ytData || ga4Data || wpData || gscData || clarityData;
     if (!hasAnyData) {
       return {
         statusCode: 503,

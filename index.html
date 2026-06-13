@@ -1117,7 +1117,7 @@ function renderAll() {
 
   renderOverview(meta, ga4);
   renderMeta(meta);
-  renderWebsite(ga4, seo);
+  renderWebsite(ga4, seo, dashData?.clarity || null);
   renderMaxxReport();
   renderGHL();
 
@@ -1458,7 +1458,7 @@ function showGhlModal(action, id) {
 
 // ─── WEBSITE RENDER ───────────────────────────────────────────────
 let ga4Chart;
-function renderWebsite(ga4, seo) {
+function renderWebsite(ga4, seo, clarity) {
   // GA4 stats
   const sessions = ga4?.sessions ?? 0;
   document.getElementById('ga4-sessions').textContent = fmtNum(sessions);
@@ -1502,11 +1502,19 @@ function renderWebsite(ga4, seo) {
       : '<tr><td colspan="2" style="text-align:center;color:var(--muted);padding:16px">No page data</td></tr>';
   }
 
-  // Clarity (placeholder — static until fetch-clarity.js is wired)
-  document.getElementById('clarity-rage').textContent     = '—';
-  document.getElementById('clarity-dead').textContent     = '—';
-  document.getElementById('clarity-scroll').textContent   = '—';
-  document.getElementById('clarity-sessions').textContent = '—';
+  // Clarity
+  const cm = clarity?.metrics || null;
+  document.getElementById('clarity-rage').textContent     = cm?.rageClicks      != null ? fmtNum(cm.rageClicks)      : '—';
+  document.getElementById('clarity-dead').textContent     = cm?.deadClicks      != null ? fmtNum(cm.deadClicks)      : '—';
+  document.getElementById('clarity-scroll').textContent   = cm?.scrollDepth     != null ? Math.round(cm.scrollDepth) + '%' : '—';
+  document.getElementById('clarity-sessions').textContent = cm?.sessions        != null ? fmtNum(cm.sessions)        : '—';
+  const clarityPages = document.getElementById('clarity-pages');
+  if (clarityPages) {
+    const cp = clarity?.topPages || [];
+    clarityPages.innerHTML = cp.length
+      ? `<table style="width:100%;border-collapse:collapse;font-size:0.88rem"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600">Page</th><th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600">Sessions</th><th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600">Rage Clicks</th></tr></thead><tbody>${cp.map(p=>`<tr style="border-top:1px solid #1E3050"><td style="padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.url||'—'}</td><td style="text-align:right;padding:6px 8px">${fmtNum(p.sessions||0)}</td><td style="text-align:right;padding:6px 8px">${fmtNum(p.rageClicks||0)}</td></tr>`).join('')}</tbody></table>`
+      : '';
+  }
 
   // GSC keywords
   const keywords = (seo?.keywords || seo?.topKeywords || []).slice(0, 10);
