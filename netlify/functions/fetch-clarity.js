@@ -15,7 +15,7 @@
  *  4. Deploy — this function switches from placeholder to live data
  */
 
-const BASE = 'https://www.clarity.ms/api/v1';
+const BASE = 'https://clarity.microsoft.com/api/v1';
 
 exports.handler = async () => {
   const apiKey    = process.env.CLARITY_API_KEY;
@@ -103,7 +103,8 @@ exports.handler = async () => {
   } catch (err) {
     console.error('fetch-clarity error:', err);
     return {
-      statusCode: 500,
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: err.message, placeholder: true, metrics: null }),
     };
   }
