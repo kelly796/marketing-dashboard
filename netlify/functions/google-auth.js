@@ -16,6 +16,12 @@
 const crypto = require('crypto');
 
 async function getGoogleToken(clientEmail, privateKey, scopes) {
+  // Support both raw base64 (no headers) and full PEM — reconstruct PEM if needed
+  if (privateKey && !privateKey.includes('-----BEGIN')) {
+    const body = privateKey.match(/.{1,64}/g).join('\n');
+    privateKey = `-----BEGIN PRIVATE KEY-----\n${body}\n-----END PRIVATE KEY-----\n`;
+  }
+
   const now = Math.floor(Date.now() / 1000);
 
   const header  = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
