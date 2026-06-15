@@ -8,12 +8,11 @@
  * The browser calls: POST /.netlify/functions/update-dashboard
  */
 
-const { handler: fetchAC }           = require('./fetch-activecampaign');
 const { handler: fetchMeta }         = require('./fetch-meta');
-const { handler: fetchYouTube }      = require('./fetch-youtube');
 const { handler: fetchGA4 }          = require('./fetch-ga4');
 const { handler: fetchWPAnalytics }  = require('./fetch-wordpress-analytics');
 const { handler: fetchGSC }          = require('./fetch-gsc');
+const { handler: fetchGHL }          = require('./fetch-ghl');
 
 exports.handler = async (event) => {
   // Allow scheduled invocations (no httpMethod) and direct POST calls
@@ -24,13 +23,12 @@ exports.handler = async (event) => {
   const results = {};
   const errors  = [];
 
-  const [acRes, metaRes, ytRes, ga4Res, wpRes, gscRes] = await Promise.allSettled([
-    fetchAC(event),
+  const [metaRes, ga4Res, wpRes, gscRes, ghlRes] = await Promise.allSettled([
     fetchMeta(event),
-    fetchYouTube(event),
     fetchGA4(event),
     fetchWPAnalytics(event),
     fetchGSC(event),
+    fetchGHL(event),
   ]);
 
   function absorb(result, label, apply) {
@@ -43,14 +41,12 @@ exports.handler = async (event) => {
     }
   }
 
-  absorb(acRes,   'ActiveCampaign', d => { results.email = d; });
-  absorb(metaRes, 'Meta',           d => {
+  absorb(metaRes, 'Meta', d => {
     if (d.instagramHQ)     results.instagramHQ     = d.instagramHQ;
     if (d.instagramOnline) results.instagramOnline = d.instagramOnline;
     if (d.facebook)        results.facebook        = d.facebook;
     if (d.meta)            results.meta            = d.meta;
   });
-  absorb(ytRes, 'YouTube', d => { if (d.subscribers) results.youtube = d; });
   // GA4 preferred; WP analytics fills in if GA4 failed
   absorb(ga4Res, 'GA4', d => {
     if (d.ga4)          results.ga4          = d.ga4;
@@ -64,6 +60,7 @@ exports.handler = async (event) => {
     }
   });
   absorb(gscRes, 'GSC', d => { if (d.seo) results.seo = d.seo; });
+  absorb(ghlRes, 'GHL', d => { results.ghl = d; });
 
   const data = {
     lastUpdated: new Date().toISOString(),
