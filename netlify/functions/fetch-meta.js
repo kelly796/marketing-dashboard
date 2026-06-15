@@ -73,7 +73,7 @@ exports.handler = async () => {
       igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqAudience,
       igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnAudience,
       fbInsights, fbInsightsPrev, fbPosts,
-      adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives,
+      adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives, adInsights30d,
     ] = await Promise.all([
 
       // ── IG HQ ──────────────────────────────────────────────────────────────
@@ -146,6 +146,13 @@ exports.handler = async () => {
         limit: 10,
         access_token: token,
       }).catch(() => null) : null,
+      // Daily breakdown for spend + leads trend (30 days)
+      adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
+        fields: 'spend,actions',
+        date_preset: 'last_30d',
+        time_increment: '1',
+        access_token: token,
+      }).catch(() => null) : null,
     ]);
 
     // Fetch per-post insights for IG HQ and Online (reach + saved per post)
@@ -167,7 +174,7 @@ exports.handler = async () => {
         instagramHQ:     mergeWindsor(buildIGData(igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqPostInsights, igHqAudience), windsorHQ),
         instagramOnline: mergeWindsor(buildIGData(igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnPostInsights, igOnAudience), windsorOnline),
         facebook:        buildFBData(fbInsights, fbInsightsPrev, hqPageMeta, fbPosts),
-        meta:            buildMetaAdsData(adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives),
+        meta:            buildMetaAdsData(adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives, adInsights30d),
       }),
     };
   } catch (err) {
@@ -321,7 +328,7 @@ function buildFBData(insights, insightsPrev, pageAccount, postsResp) {
 }
 
 // ─── META ADS DATA BUILDER ────────────────────────────────────────────────────
-function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceData, adsData) {
+function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceData, adsData, insights30d) {
   if (!insights7d) return null;
 
   function getAction(actions, ...types) {
@@ -390,8 +397,8 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
     clicksPrev:  Number(prev.clicks || 0),
     ctr,
     ctrPrev:     +(Number(prev.ctr || 0)).toFixed(2),
-    spendTrend:  makeFlatTrend(spend7d / 7, 30),
-    leadsTrend:  makeFlatTrend(leads7d / 7, 30),
+    spendTrend:  buildDailyTrend(insights30d, r => +(Number(r.spend || 0)).toFixed(2)),
+    leadsTrend:  buildDailyTrend(insights30d, r => getAction(r.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead')),
     campaigns,
     creatives,
     audienceBreakdown,
@@ -485,9 +492,9 @@ function padTo30(arr) {
   return Array(30 - arr.length).fill(0).concat(arr);
 }
 
-function makeFlatTrend(value, len = 30) {
-  const n = Number(value) || 0;
-  return Array(len).fill(+n.toFixed(2));
+function buildDailyTrend(dailyData, valueFn) {
+  const rows = (dailyData?.data || []).slice().sort((a, b) => (a.date_start > b.date_start ? 1 : -1));
+  return padTo30(rows.map(valueFn));
 }
 
 // ─── MEDIA TYPE NORMALIZER ────────────────────────────────────────────────────
