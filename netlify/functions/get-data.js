@@ -49,9 +49,15 @@ exports.handler = async (event) => {
 
     // GA4 preferred; WP analytics is the fallback when GA4 credentials fail
     const analyticsKeys = ga4Data ? {
-      ...(ga4Data.ga4          ? { ga4:          ga4Data.ga4 }          : {}),
-      ...(ga4Data.ga4Countries ? { ga4Countries: ga4Data.ga4Countries } : {}),
-      ...(ga4Data.ga4TopPages  ? { ga4TopPages:  ga4Data.ga4TopPages }  : {}),
+      ...(ga4Data.ga4              ? { ga4:              ga4Data.ga4 }              : {}),
+      ...(ga4Data.ga4Countries     ? { ga4Countries:     ga4Data.ga4Countries }     : {}),
+      ...(ga4Data.ga4TopPages      ? { ga4TopPages:      ga4Data.ga4TopPages }      : {}),
+      ...(ga4Data.ga4Demographics  ? { ga4Demographics:  ga4Data.ga4Demographics }  : {}),
+      ...(ga4Data.ga4Devices       ? { ga4Devices:       ga4Data.ga4Devices }       : {}),
+      ...(ga4Data.ga4Channels      ? { ga4Channels:      ga4Data.ga4Channels }      : {}),
+      ...(ga4Data.ga4Sources       ? { ga4Sources:       ga4Data.ga4Sources }       : {}),
+      ...(ga4Data.ga4LandingPages  ? { ga4LandingPages:  ga4Data.ga4LandingPages }  : {}),
+      ...(ga4Data.ga4DailyTrend    ? { ga4DailyTrend:    ga4Data.ga4DailyTrend }    : {}),
     } : (wpData && wpData.wpAnalytics ? {
       ga4: normaliseWPAnalytics(wpData.wpAnalytics),
       ...(wpData.wpAnalytics.topPages?.length ? { ga4TopPages: wpData.wpAnalytics.topPages } : {}),
