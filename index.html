@@ -1045,9 +1045,11 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────
-const CACHE_KEY = 'pm_hub_v2';
-const CACHE_TTL = 4 * 60 * 60 * 1000;
-const MAXX_URL  = './data/maxx-report.json';
+const CACHE_KEY      = 'pm_hub_v2';
+const CACHE_TTL      = 4 * 60 * 60 * 1000;
+const MAXX_URL       = '/.netlify/functions/maxx-report';
+const MAXX_CACHE_KEY = 'pm_maxx_v2';
+const MAXX_CACHE_TTL = 24 * 60 * 60 * 1000;
 const PAGE_TITLES = { overview:'Overview', meta:'Meta Ads', campaigns:'Campaigns', ghl:'Go High Level', website:'Website', skills:'Skill Launcher', ai:'AI Insights' };
 
 // ─── STATE ────────────────────────────────────────────────────────
@@ -1284,10 +1286,7 @@ async function loadData(force=false) {
     } catch(e) { console.error('Load error', e); data={}; }
   }
   dashData = data;
-  try {
-    const mr = await fetch(MAXX_URL+'?t='+Date.now());
-    if (mr.ok) maxxData = await mr.json();
-  } catch { maxxData=null; }
+  maxxData = await loadMaxxReport(false);
   renderAll();
 }
 function refreshData() { loadData(true); }
@@ -1550,36 +1549,85 @@ function renderCampaignsPage(meta) {
 }
 
 // ─── MAXX REPORT ──────────────────────────────────────────────────
+async function loadMaxxReport(forceRefresh) {
+  // Check 24h cache
+  if (!forceRefresh) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(MAXX_CACHE_KEY) || 'null');
+      if (cached && cached.data && (Date.now() - cached.ts) < MAXX_CACHE_TTL) {
+        return cached.data;
+      }
+    } catch {}
+  }
+  // Fetch fresh from function
+  try {
+    const res = await fetch(MAXX_URL + '?t=' + Date.now());
+    if (!res.ok) return maxxData || null;
+    const data = await res.json();
+    if (data && !data.error) {
+      localStorage.setItem(MAXX_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+      return data;
+    }
+  } catch {}
+  return maxxData || null;
+}
+
+async function refreshMaxxReport() {
+  const overviewEl  = document.getElementById('maxx-report-overview');
+  const fullEl      = document.getElementById('maxx-decisions-full');
+  const loadingHTML = `<div class="loading-state"><div class="spinner"></div>Maxx is analysing today's data…</div>`;
+  if (overviewEl) overviewEl.innerHTML = loadingHTML;
+  if (fullEl)     fullEl.innerHTML     = loadingHTML;
+  maxxData = await loadMaxxReport(true);
+  renderMaxxReport();
+}
+
+function maxxTimestamp() {
+  if (!maxxData?.generatedAt) return '';
+  return new Date(maxxData.generatedAt).toLocaleString('en-AU', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
 function renderMaxxReport() { renderMaxxOverview(); renderMaxxFull(); }
 
 function renderMaxxOverview() {
   const el = document.getElementById('maxx-report-overview');
   if (!el) return;
   if (!maxxData) {
-    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.83rem">No Maxx report yet.<br><span style="font-size:.75rem">Maxx writes to <code>data/maxx-report.json</code> after each weekly run.</span></div>`;
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.83rem">No Maxx report yet.<br><span style="font-size:.75rem;display:block;margin-top:4px"><button class="btn btn-secondary btn-sm" onclick="refreshMaxxReport()">Generate now</button></span></div>`;
     return;
   }
   el.innerHTML = `
     <div class="maxx-header">
       <div class="maxx-avatar">M</div>
-      <div><div class="maxx-name">Maxx — Media Buyer</div><div class="maxx-time">${maxxData.weekStarting?'Week of '+maxxData.weekStarting:''} · ${maxxData.generatedAt?new Date(maxxData.generatedAt).toLocaleDateString('en-AU'):''}</div></div>
+      <div>
+        <div class="maxx-name">Maxx — Daily Report</div>
+        <div class="maxx-time">Generated ${maxxTimestamp()}</div>
+      </div>
     </div>
     <div class="maxx-summary">${maxxData.summary||'—'}</div>
-    ${maxxData.nextAction?`<div style="font-size:.78rem;color:var(--teal);font-weight:600">Next: ${maxxData.nextAction}</div>`:''}`;
+    ${maxxData.nextAction?`<div style="font-size:.78rem;color:var(--teal);font-weight:600;margin-top:8px">Next: ${maxxData.nextAction}</div>`:''}`;
 }
 
 function renderMaxxFull() {
   const el = document.getElementById('maxx-decisions-full');
   if (!el) return;
   if (!maxxData) {
-    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:.83rem">No Maxx report yet.</div>`;
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:.83rem">No Maxx report yet.<br><span style="display:block;margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="refreshMaxxReport()">Generate now</button></span></div>`;
     return;
   }
   const decisions = maxxData.decisions||[];
   el.innerHTML = `
-    <div class="maxx-header">
-      <div class="maxx-avatar">M</div>
-      <div><div class="maxx-name">Maxx — Weekly Report</div><div class="maxx-time">Week of ${maxxData.weekStarting||'—'}</div></div>
+    <div class="maxx-header" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="maxx-avatar">M</div>
+        <div>
+          <div class="maxx-name">Maxx — Daily Report</div>
+          <div class="maxx-time">Generated ${maxxTimestamp()}</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="refreshMaxxReport()" title="Force regenerate">↺ Refresh</button>
     </div>
     <div class="maxx-summary">${maxxData.topInsight||maxxData.summary||'—'}</div>
     <div class="maxx-decisions">
@@ -1598,7 +1646,8 @@ function renderMaxxFull() {
           </div>
         </div>`).join('')}
     </div>
-    ${maxxData.nextAction?`<div style="margin-top:14px;font-size:.82rem;color:var(--teal);font-weight:600;padding:10px 14px;background:var(--teal-dim);border-radius:var(--radius-sm)">Next: ${maxxData.nextAction}</div>`:''}`;
+    ${maxxData.nextAction?`<div style="margin-top:14px;font-size:.82rem;color:var(--teal);font-weight:600;padding:10px 14px;background:var(--teal-dim);border-radius:var(--radius-sm)">Next: ${maxxData.nextAction}</div>`:''}
+    ${maxxData.accountHealth?`<div style="margin-top:12px;font-size:.78rem;color:var(--text-muted);padding:8px 0">Account health: <strong style="color:var(--text)">${maxxData.accountHealth.score}/10</strong> — ${maxxData.accountHealth.notes}</div>`:''}`;
 }
 
 // ─── GHL RENDER ───────────────────────────────────────────────────
