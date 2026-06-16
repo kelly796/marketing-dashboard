@@ -442,6 +442,33 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .clarity-metric-value{font-family:var(--fmono);font-size:1.7rem;font-weight:600;color:var(--text);}
 .clarity-metric-label{font-size:.72rem;color:var(--text-muted);font-weight:600;margin-top:5px;text-transform:uppercase;letter-spacing:.4px;}
 
+/* Channel / device bar rows */
+.channel-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.channel-label{font-size:.78rem;color:var(--text-dim);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.channel-bar-track{flex:1;height:7px;background:rgba(103,167,172,.12);border-radius:4px;overflow:hidden;}
+.channel-bar-fill{height:100%;border-radius:4px;background:var(--teal);transition:width .4s;}
+.channel-bar-fill.paid{background:#4f8ef7;}
+.channel-bar-fill.direct{background:#a78bfa;}
+.channel-bar-fill.social{background:#f472b6;}
+.channel-bar-fill.referral{background:#fb923c;}
+.channel-meta{font-size:.72rem;font-family:var(--fmono);color:var(--text-muted);width:80px;text-align:right;flex-shrink:0;}
+
+/* GA4 report snapshot cards */
+.ga4-report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.ga4-report-card{
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:12px 14px;
+  text-decoration:none;color:var(--text);
+  transition:all .18s;cursor:pointer;
+}
+.ga4-report-card:hover{border-color:var(--teal);background:var(--surface3);}
+.ga4-report-icon{width:32px;height:32px;border-radius:8px;background:var(--teal-dim);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--teal);}
+.ga4-report-name{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:2px;}
+.ga4-report-desc{font-size:.7rem;color:var(--text-muted);}
+.ga4-report-arrow{margin-left:auto;color:var(--text-muted);flex-shrink:0;}
+
 /* ─── ACTION ITEMS ────────────────────────────────────────────── */
 .action-list{display:flex;flex-direction:column;gap:8px;}
 .action-item{
@@ -894,20 +921,27 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   <div class="section-header">
     <div>
       <div class="section-title">Website</div>
-      <div class="section-subtitle">GA4 · Microsoft Clarity · Search Console</div>
+      <div class="section-subtitle">GA4 · Search Console · Microsoft Clarity — last 30 days</div>
     </div>
+    <a href="https://analytics.google.com/analytics/web/#/p358310850/reports/reportinghub" target="_blank" class="btn btn-secondary btn-sm">Open GA4 ↗</a>
   </div>
 
-  <div class="stat-grid-4">
+  <!-- Summary stats -->
+  <div class="stat-grid-4" style="grid-template-columns:repeat(6,1fr);margin-bottom:24px">
     <div class="stat-card">
-      <div class="stat-label">Sessions (7d)</div>
+      <div class="stat-label">Sessions</div>
       <div class="stat-value sm" id="ga4-sessions">—</div>
       <div class="stat-footer"><span class="stat-trend neutral" id="ga4-sessions-trend">—</span></div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Users (7d)</div>
+      <div class="stat-label">Users</div>
       <div class="stat-value sm" id="ga4-users">—</div>
-      <div class="stat-footer"><span class="stat-trend neutral" id="ga4-users-trend">—</span></div>
+      <div class="stat-footer"><span style="font-size:.72rem;color:var(--text-muted)" id="ga4-new-users">—</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Bounce Rate</div>
+      <div class="stat-value sm" id="ga4-bounce">—</div>
+      <div class="stat-footer"><span class="stat-trend neutral" id="ga4-bounce-badge">—</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Avg Session</div>
@@ -915,63 +949,149 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       <div class="stat-footer"><span class="stat-trend neutral">Engagement</span></div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Bounce Rate</div>
-      <div class="stat-value sm" id="ga4-bounce">—</div>
-      <div class="stat-footer"><span class="stat-trend neutral" id="ga4-bounce-badge">—</span></div>
+      <div class="stat-label">Pages / Session</div>
+      <div class="stat-value sm" id="ga4-pages-per-session">—</div>
+      <div class="stat-footer"><span class="stat-trend neutral">Depth</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Conversions</div>
+      <div class="stat-value sm" id="ga4-conversions">—</div>
+      <div class="stat-footer"><span class="stat-trend neutral" id="ga4-conv-rate">—</span></div>
     </div>
   </div>
 
-  <div class="card-grid-2">
+  <!-- Sessions trend + Traffic channels -->
+  <div class="card-grid-2" style="margin-bottom:20px">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="card-title" style="margin-bottom:0">Traffic — Sessions + Projection</div>
-        <span class="proj-badge">7d ahead</span>
-      </div>
-      <div class="chart-legend" style="margin-top:8px">
-        <div class="chart-legend-item"><div class="chart-legend-line" style="background:var(--teal)"></div>Actual</div>
-        <div class="chart-legend-item"><div class="chart-legend-dash" style="border-color:rgba(103,167,172,.5)"></div>Projected</div>
+        <div class="card-title" style="margin-bottom:0">Sessions — 30-day trend</div>
       </div>
       <div class="chart-wrap chart-h200"><canvas id="chart-ga4-sessions"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">Top Pages</div>
+      <div class="card-title">Traffic Channels — Organic vs Paid</div>
+      <div id="ga4-channels-wrap">
+        <div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Source / medium + Devices -->
+  <div class="card-grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">Where Traffic Comes From — Source / Medium</div>
       <div class="table-wrap">
         <table class="data-table">
-          <thead><tr><th>Page</th><th>Sessions</th></tr></thead>
-          <tbody id="ga4-top-pages">
-            <tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr>
+          <thead><tr><th>Source</th><th>Medium</th><th>Sessions</th><th>Bounce</th></tr></thead>
+          <tbody id="ga4-sources-body">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Devices</div>
+      <div id="ga4-devices-wrap">
+        <div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demographics + Countries -->
+  <div class="card-grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">Demographics — Age Breakdown</div>
+      <div id="ga4-demographics-wrap">
+        <div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">Loading…</div>
+      </div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:10px">Requires Google Signals to be enabled in GA4 for demographic data.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Countries</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Country</th><th>Sessions</th><th>Top Channel</th><th>Conv %</th></tr></thead>
+          <tbody id="ga4-countries-body">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:20px">
-    <div class="card-title">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      Microsoft Clarity — Behaviour Insights
+  <!-- Top pages + Landing pages -->
+  <div class="card-grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">Top Pages — by Sessions</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Page</th><th>Sessions</th><th>Views</th><th>Bounce</th></tr></thead>
+          <tbody id="ga4-top-pages">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="clarity-grid" id="clarity-metrics">
-      <div class="clarity-metric"><div class="clarity-metric-value" id="clarity-rage">—</div><div class="clarity-metric-label">Rage Clicks</div></div>
-      <div class="clarity-metric"><div class="clarity-metric-value" id="clarity-dead">—</div><div class="clarity-metric-label">Dead Clicks</div></div>
-      <div class="clarity-metric"><div class="clarity-metric-value" id="clarity-scroll">—</div><div class="clarity-metric-label">Avg Scroll Depth</div></div>
-      <div class="clarity-metric"><div class="clarity-metric-value" id="clarity-sessions">—</div><div class="clarity-metric-label">Sessions Recorded</div></div>
-    </div>
-    <div id="clarity-pages" style="margin-top:10px"></div>
-    <div style="margin-top:12px">
-      <a href="https://clarity.microsoft.com" target="_blank" class="btn btn-secondary btn-sm">Open Clarity Dashboard</a>
+    <div class="card">
+      <div class="card-title">Landing Pages — Entry Points</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Page</th><th>Sessions</th><th>Bounce</th><th>Conv</th></tr></thead>
+          <tbody id="ga4-landing-pages">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-title">Search Console — Top Keywords</div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr><th>Keyword</th><th>Clicks</th><th>Impressions</th><th>Position</th></tr></thead>
-        <tbody id="gsc-keywords-body">
-          <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr>
-        </tbody>
-      </table>
+  <!-- Team member searches + GSC keywords -->
+  <div class="card-grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">Team Member Searches — from Search Console</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Query</th><th>Clicks</th><th>Impressions</th><th>Position</th></tr></thead>
+          <tbody id="gsc-team-body">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Search Console — All Keywords</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Keyword</th><th>Clicks</th><th>Impressions</th><th>Pos</th></tr></thead>
+          <tbody id="gsc-keywords-body">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clarity + GA4 report snapshots -->
+  <div class="card-grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Microsoft Clarity — Behaviour
+      </div>
+      <div class="clarity-grid" id="clarity-metrics">
+        <div class="clarity-metric"><div class="clarity-metric-value" id="clarity-rage">—</div><div class="clarity-metric-label">Rage Clicks</div></div>
+        <div class="clarity-metric"><div class="clarity-metric-value" id="clarity-dead">—</div><div class="clarity-metric-label">Dead Clicks</div></div>
+        <div class="clarity-metric"><div class="clarity-metric-value" id="clarity-scroll">—</div><div class="clarity-metric-label">Avg Scroll Depth</div></div>
+        <div class="clarity-metric"><div class="clarity-metric-value" id="clarity-sessions">—</div><div class="clarity-metric-label">Sessions Recorded</div></div>
+      </div>
+      <div id="clarity-pages" style="margin-top:10px"></div>
+      <div style="margin-top:12px">
+        <a href="https://clarity.microsoft.com" target="_blank" class="btn btn-secondary btn-sm">Open Clarity ↗</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">GA4 Report Snapshots</div>
+      <div class="ga4-report-grid" id="ga4-report-snapshots"></div>
     </div>
   </div>
 </div>
@@ -1718,58 +1838,266 @@ function showGhlModal(action, id) {
 }
 
 // ─── WEBSITE RENDER ───────────────────────────────────────────────
+// Team member / staff name terms to highlight in GSC
+const STAFF_TERMS = ['kelly', 'kelly mann', 'performotion', 'perfor motion'];
+
 function renderWebsite(ga4, seo, clarity) {
+  // ── Summary stats ──────────────────────────────────────────────────────────
   const sessions = ga4?.sessions ?? 0;
-  document.getElementById('ga4-sessions').textContent = fmtNum(sessions);
-  document.getElementById('ga4-users').textContent    = fmtNum(ga4?.users ?? 0);
-  document.getElementById('ga4-duration').textContent = ga4?.avgSessionDuration ? Math.round(ga4.avgSessionDuration)+'s' : '—';
+  document.getElementById('ga4-sessions').textContent       = fmtNum(sessions);
+  document.getElementById('ga4-users').textContent          = fmtNum(ga4?.users ?? 0);
+  document.getElementById('ga4-new-users').textContent      = ga4?.newUsers != null ? fmtNum(ga4.newUsers) + ' new' : '';
+  document.getElementById('ga4-bounce').textContent         = ga4?.bounceRate != null ? fmtPct(ga4.bounceRate) : '—';
+  document.getElementById('ga4-duration').textContent       = ga4?.avgSessionDuration ? formatDuration(ga4.avgSessionDuration) : '—';
+  document.getElementById('ga4-pages-per-session').textContent = ga4?.pagesPerSession ?? '—';
+  document.getElementById('ga4-conversions').textContent    = fmtNum(ga4?.conversions ?? 0);
+  document.getElementById('ga4-conv-rate').textContent      = ga4?.conversionRate != null ? ga4.conversionRate + '% conv rate' : '';
+
   const bounce = ga4?.bounceRate;
-  document.getElementById('ga4-bounce').textContent = bounce!=null ? fmtPct(bounce) : '—';
-  const sessT = trendArrow(sessions, ga4?.sessionsPrev??0);
-  document.getElementById('ga4-sessions-trend').className = 'stat-trend '+sessT.cls;
-  document.getElementById('ga4-sessions-trend').textContent = sessT.arrow+' '+sessT.pct;
+  const bounceEl = document.getElementById('ga4-bounce-badge');
+  if (bounceEl) bounceEl.textContent = bounce != null ? (bounce < 40 ? 'Good' : bounce < 60 ? 'Average' : 'High') : '';
 
-  // Sessions chart with projection
-  const labels     = getLast7DayLabels();
-  const sessData   = ga4?.sessionsTrend?.length ? ga4.sessionsTrend : distributeMock(sessions, 7);
-  buildProjectionChart('chart-ga4-sessions', labels, sessData, 'line', 7);
+  const sessT = trendArrow(sessions, ga4?.sessionsPrev ?? 0);
+  const sessTrendEl = document.getElementById('ga4-sessions-trend');
+  if (sessTrendEl) { sessTrendEl.className = 'stat-trend ' + sessT.cls; sessTrendEl.textContent = sessT.arrow + ' ' + sessT.pct; }
 
-  // Top pages
-  const pages = (dashData?.ga4TopPages||[]).slice(0,8);
+  // ── Sessions trend chart (30 days) ────────────────────────────────────────
+  const dailyTrend = dashData?.ga4DailyTrend || [];
+  destroyChart('chart-ga4-sessions');
+  const trendCtx = document.getElementById('chart-ga4-sessions');
+  if (trendCtx && dailyTrend.length) {
+    const tLabels = dailyTrend.map(d => {
+      const s = String(d.date);
+      return s.slice(4,6)+'/'+s.slice(6,8);
+    });
+    charts['chart-ga4-sessions'] = new Chart(trendCtx, {
+      type: 'line',
+      data: {
+        labels: tLabels,
+        datasets: [{
+          label: 'Sessions',
+          data:  dailyTrend.map(d => d.sessions),
+          borderColor: 'var(--teal)', backgroundColor: 'rgba(103,167,172,.08)',
+          borderWidth: 2, pointRadius: 0, fill: true, tension: 0.35,
+        }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { x: { ticks: { color:'var(--text-muted)', font:{size:10}, maxTicksLimit:10 }, grid:{color:'rgba(255,255,255,.04)'} },
+                  y: { ticks: { color:'var(--text-muted)', font:{size:10} }, grid:{color:'rgba(255,255,255,.04)'} } } },
+    });
+  } else if (trendCtx) {
+    const fallbackData = ga4?.sessionsTrend?.length ? ga4.sessionsTrend : distributeMock(sessions, 30);
+    buildProjectionChart('chart-ga4-sessions', getLast7DayLabels(), fallbackData.slice(-7), 'line', 7);
+  }
+
+  // ── Traffic channels ──────────────────────────────────────────────────────
+  const channels = dashData?.ga4Channels || [];
+  const channelsWrap = document.getElementById('ga4-channels-wrap');
+  if (channelsWrap) {
+    if (!channels.length) {
+      channelsWrap.innerHTML = '<div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">No channel data — connect GA4</div>';
+    } else {
+      const maxCh = Math.max(...channels.map(c => c.sessions));
+      const CHANNEL_COLORS = {
+        'Organic Search': 'teal', 'Paid Search': 'paid', 'Paid Social': 'paid',
+        'Organic Social': 'social', 'Direct': 'direct', 'Referral': 'referral',
+        'Email': 'referral',
+      };
+      channelsWrap.innerHTML = channels.map(c => `
+        <div class="channel-row">
+          <div class="channel-label">${c.channel}</div>
+          <div class="channel-bar-track">
+            <div class="channel-bar-fill ${CHANNEL_COLORS[c.channel]||''}" style="width:${maxCh>0?Math.round((c.sessions/maxCh)*100):0}%"></div>
+          </div>
+          <div class="channel-meta">${fmtNum(c.sessions)} · ${c.pct}%</div>
+        </div>`).join('') +
+        `<div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:.72rem;color:var(--text-muted)">
+          ${channels.map(c=>`<span><strong style="color:var(--text)">${c.bounceRate}%</strong> bounce · ${c.channel}</span>`).join('')}
+        </div>`;
+    }
+  }
+
+  // ── Source / medium ───────────────────────────────────────────────────────
+  const sources = (dashData?.ga4Sources || []).slice(0, 12);
+  const srcBody = document.getElementById('ga4-sources-body');
+  if (srcBody) {
+    srcBody.innerHTML = sources.length
+      ? sources.map(s => `<tr>
+          <td style="font-weight:500">${s.source}</td>
+          <td style="color:var(--text-muted)">${s.medium}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(s.sessions)}</td>
+          <td style="font-family:var(--fmono);color:${s.bounceRate<40?'var(--success)':s.bounceRate>65?'var(--danger)':'var(--text-dim)'}">${s.bounceRate}%</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No source data</td></tr>';
+  }
+
+  // ── Devices ───────────────────────────────────────────────────────────────
+  const devices = dashData?.ga4Devices || [];
+  const devicesWrap = document.getElementById('ga4-devices-wrap');
+  if (devicesWrap) {
+    if (!devices.length) {
+      devicesWrap.innerHTML = '<div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">No device data</div>';
+    } else {
+      const maxDev = Math.max(...devices.map(d => d.sessions));
+      const DEV_ICONS = { mobile:'📱', desktop:'🖥', tablet:'⬛' };
+      devicesWrap.innerHTML = devices.map(d => `
+        <div class="channel-row">
+          <div class="channel-label">${DEV_ICONS[d.device.toLowerCase()]||''} ${d.device.charAt(0).toUpperCase()+d.device.slice(1)}</div>
+          <div class="channel-bar-track">
+            <div class="channel-bar-fill" style="width:${maxDev>0?Math.round((d.sessions/maxDev)*100):0}%"></div>
+          </div>
+          <div class="channel-meta">${d.pct}% · ${d.bounceRate}% bnc</div>
+        </div>`).join('');
+    }
+  }
+
+  // ── Demographics ──────────────────────────────────────────────────────────
+  const demo = dashData?.ga4Demographics || [];
+  const demoWrap = document.getElementById('ga4-demographics-wrap');
+  if (demoWrap) {
+    if (!demo.length) {
+      demoWrap.innerHTML = '<div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">No demographic data — enable Google Signals in GA4 Admin</div>';
+    } else {
+      const maxDemo = Math.max(...demo.map(d => d.users));
+      demoWrap.innerHTML = demo.map(d => `
+        <div class="channel-row">
+          <div class="channel-label">${d.age}</div>
+          <div class="channel-bar-track">
+            <div class="channel-bar-fill" style="width:${maxDemo>0?Math.round((d.users/maxDemo)*100):0}%"></div>
+          </div>
+          <div class="channel-meta">${fmtNum(d.users)} · ${d.pct}%</div>
+        </div>`).join('');
+    }
+  }
+
+  // ── Countries ─────────────────────────────────────────────────────────────
+  const countries = dashData?.ga4Countries || [];
+  const countriesBody = document.getElementById('ga4-countries-body');
+  if (countriesBody) {
+    countriesBody.innerHTML = countries.length
+      ? countries.map(c => `<tr>
+          <td style="font-weight:500">${c.country}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(c.sessions)}</td>
+          <td style="font-size:.75rem;color:var(--text-muted)">${c.source||'—'}</td>
+          <td style="font-family:var(--fmono)">${c.convRate}%</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No country data</td></tr>';
+  }
+
+  // ── Top pages ─────────────────────────────────────────────────────────────
+  const pages = (dashData?.ga4TopPages || []).slice(0, 12);
   const pagesBody = document.getElementById('ga4-top-pages');
   if (pagesBody) {
     pagesBody.innerHTML = pages.length
-      ? pages.map(p=>`<tr><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.page||p.pagePath||'—'}</td><td style="font-family:var(--fmono)">${fmtNum(p.sessions||p.screenPageViews||0)}</td></tr>`).join('')
-      : '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:16px">No page data</td></tr>';
+      ? pages.map(p => `<tr>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.78rem" title="${p.page}">${p.page}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(p.sessions)}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(p.views)}</td>
+          <td style="font-family:var(--fmono);color:${p.bounceRate<40?'var(--success)':p.bounceRate>65?'var(--danger)':'var(--text-dim)'}">${p.bounceRate != null ? p.bounceRate+'%' : '—'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No page data</td></tr>';
   }
 
-  // Clarity
-  const cm = clarity?.metrics||null;
-  document.getElementById('clarity-rage').textContent     = cm?.rageClicks!=null   ? fmtNum(cm.rageClicks)      : '—';
-  document.getElementById('clarity-dead').textContent     = cm?.deadClicks!=null   ? fmtNum(cm.deadClicks)      : '—';
-  document.getElementById('clarity-scroll').textContent   = cm?.scrollDepth!=null  ? Math.round(cm.scrollDepth)+'%' : '—';
-  document.getElementById('clarity-sessions').textContent = cm?.sessions!=null     ? fmtNum(cm.sessions)        : '—';
-  const clarityPages = document.getElementById('clarity-pages');
-  if (clarityPages) {
-    const cp = clarity?.topPages||[];
-    clarityPages.innerHTML = cp.length
-      ? `<table style="width:100%;border-collapse:collapse;font-size:.85rem"><thead><tr><th style="text-align:left;padding:6px 8px;color:var(--text-muted);font-weight:600">Page</th><th style="text-align:right;padding:6px 8px;color:var(--text-muted);font-weight:600">Sessions</th><th style="text-align:right;padding:6px 8px;color:var(--text-muted);font-weight:600">Rage Clicks</th></tr></thead><tbody>${cp.map(p=>`<tr style="border-top:1px solid var(--border)"><td style="padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.url||'—'}</td><td style="text-align:right;padding:6px 8px;font-family:var(--fmono)">${fmtNum(p.sessions||0)}</td><td style="text-align:right;padding:6px 8px;font-family:var(--fmono)">${fmtNum(p.rageClicks||0)}</td></tr>`).join('')}</tbody></table>`
-      : '';
+  // ── Landing pages ─────────────────────────────────────────────────────────
+  const landingPages = (dashData?.ga4LandingPages || []).slice(0, 10);
+  const landingBody = document.getElementById('ga4-landing-pages');
+  if (landingBody) {
+    landingBody.innerHTML = landingPages.length
+      ? landingPages.map(p => `<tr>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.78rem" title="${p.page}">${p.page}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(p.sessions)}</td>
+          <td style="font-family:var(--fmono);color:${p.bounceRate<40?'var(--success)':p.bounceRate>65?'var(--danger)':'var(--text-dim)'}">${p.bounceRate}%</td>
+          <td style="font-family:var(--fmono)">${p.conversions||'—'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No landing page data</td></tr>';
   }
 
-  // GSC keywords
-  const keywords = (seo?.keywords||seo?.topKeywords||[]).slice(0,10);
+  // ── Team member searches (filter GSC keywords for staff names) ─────────────
+  const allKeywords = seo?.keywords || [];
+  const teamKws = allKeywords.filter(k =>
+    STAFF_TERMS.some(t => (k.keyword || k.query || '').toLowerCase().includes(t))
+  );
+  const teamBody = document.getElementById('gsc-team-body');
+  if (teamBody) {
+    teamBody.innerHTML = teamKws.length
+      ? teamKws.slice(0, 15).map(k => `<tr>
+          <td style="font-weight:500">${k.keyword || k.query}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(k.clicks ?? 0)}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(k.impressions ?? k.volume ?? 0)}</td>
+          <td style="font-family:var(--fmono)">${k.current ? Number(k.current).toFixed(1) : '—'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No team member searches found in GSC data</td></tr>';
+  }
+
+  // ── GSC all keywords ──────────────────────────────────────────────────────
   const gscBody = document.getElementById('gsc-keywords-body');
   if (gscBody) {
-    gscBody.innerHTML = keywords.length
-      ? keywords.map(k=>`<tr>
-          <td style="font-weight:500">${k.query||k.keyword||'—'}</td>
-          <td style="font-family:var(--fmono)">${fmtNum(k.clicks??0)}</td>
-          <td style="font-family:var(--fmono)">${fmtNum(k.impressions??0)}</td>
-          <td style="font-family:var(--fmono)">${k.position?Number(k.position).toFixed(1):'—'}</td>
+    gscBody.innerHTML = allKeywords.length
+      ? allKeywords.slice(0, 20).map(k => `<tr>
+          <td style="font-weight:500">${k.keyword || k.query || '—'}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(k.clicks ?? 0)}</td>
+          <td style="font-family:var(--fmono)">${fmtNum(k.impressions ?? k.volume ?? 0)}</td>
+          <td style="font-family:var(--fmono)">${k.current ? Number(k.current).toFixed(1) : '—'}</td>
         </tr>`).join('')
       : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No GSC data</td></tr>';
   }
+
+  // ── Clarity ───────────────────────────────────────────────────────────────
+  const cm = clarity?.metrics || null;
+  document.getElementById('clarity-rage').textContent     = cm?.rageClicks  != null ? fmtNum(cm.rageClicks)         : '—';
+  document.getElementById('clarity-dead').textContent     = cm?.deadClicks  != null ? fmtNum(cm.deadClicks)         : '—';
+  document.getElementById('clarity-scroll').textContent   = cm?.scrollDepth != null ? Math.round(cm.scrollDepth)+'%': '—';
+  document.getElementById('clarity-sessions').textContent = cm?.sessions    != null ? fmtNum(cm.sessions)           : '—';
+  const clarityPages = document.getElementById('clarity-pages');
+  if (clarityPages) {
+    const cp = clarity?.topPages || [];
+    clarityPages.innerHTML = cp.length
+      ? `<table style="width:100%;border-collapse:collapse;font-size:.8rem">
+          <thead><tr>
+            <th style="text-align:left;padding:5px 8px;color:var(--text-muted);font-weight:600">Page</th>
+            <th style="text-align:right;padding:5px 8px;color:var(--text-muted);font-weight:600">Sessions</th>
+            <th style="text-align:right;padding:5px 8px;color:var(--text-muted);font-weight:600">Rage Clicks</th>
+          </tr></thead>
+          <tbody>${cp.map(p => `<tr style="border-top:1px solid var(--border)">
+            <td style="padding:5px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.url||'—'}</td>
+            <td style="text-align:right;padding:5px 8px;font-family:var(--fmono)">${fmtNum(p.sessions||0)}</td>
+            <td style="text-align:right;padding:5px 8px;font-family:var(--fmono)">${fmtNum(p.rageClicks||0)}</td>
+          </tr>`).join('')}</tbody>
+        </table>` : '';
+  }
+
+  // ── GA4 Report Snapshots ──────────────────────────────────────────────────
+  const pid = '358310850';
+  const GA4_BASE = `https://analytics.google.com/analytics/web/#/p${pid}`;
+  const snapshots = [
+    { name:'Realtime',       desc:'Who is on your site right now', url:`${GA4_BASE}/realtime/overview`, icon:'M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z' },
+    { name:'Traffic Acquisition', desc:'Organic vs paid vs direct', url:`${GA4_BASE}/acquisition/overview`, icon:'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5' },
+    { name:'Demographics',   desc:'Age, gender, interests', url:`${GA4_BASE}/user/user-demographics-overview`, icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 4 4A4 4 0 0 0 9 7m8 7a4 4 0 0 0-1-7.75' },
+    { name:'Pages & Screens', desc:'Which pages get the most visits', url:`${GA4_BASE}/engagement/pages-and-screens`, icon:'M3 3h18v18H3zM3 9h18M9 21V9' },
+    { name:'Conversions',    desc:'Goals completed on site', url:`${GA4_BASE}/monetization/conversions`, icon:'M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3' },
+    { name:'User Explorer',  desc:'Individual user journeys', url:`${GA4_BASE}/user/user-details`, icon:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4' },
+  ];
+  const snapEl = document.getElementById('ga4-report-snapshots');
+  if (snapEl) {
+    snapEl.innerHTML = snapshots.map(r => `
+      <a href="${r.url}" target="_blank" class="ga4-report-card">
+        <div class="ga4-report-icon">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="${r.icon}"/></svg>
+        </div>
+        <div>
+          <div class="ga4-report-name">${r.name}</div>
+          <div class="ga4-report-desc">${r.desc}</div>
+        </div>
+        <svg class="ga4-report-arrow" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>`).join('');
+  }
+}
+
+function formatDuration(seconds) {
+  if (!seconds) return '—';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
 // ─── AI INSIGHTS ──────────────────────────────────────────────────
