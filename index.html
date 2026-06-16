@@ -1057,7 +1057,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────
-const CACHE_KEY      = 'pm_hub_v2';
+const CACHE_KEY      = 'pm_hub_v3';
 const CACHE_TTL      = 4 * 60 * 60 * 1000;
 const MAXX_URL       = '/.netlify/functions/maxx-report';
 const MAXX_CACHE_KEY = 'pm_maxx_v2';
@@ -1521,17 +1521,17 @@ function renderAdCards(meta) {
         <div><div class="ad-card-metric-label">Leads</div><div class="ad-card-metric-val">${c.leads}</div></div>
         <div><div class="ad-card-metric-label">CPL</div><div class="ad-card-metric-val">${c.cpl>0?fmtCurrency(c.cpl):'—'}</div></div>
       </div>
-      ${ageRows ? `
       <div class="ad-card-age-section">
         <div class="ad-card-age-heading">
           Age breakdown
           ${genderChips.length ? `<span class="ad-card-age-gender">${genderChips.map(ch=>`<span class="ad-card-aud-chip">${ch}</span>`).join('')}</span>` : ''}
         </div>
+        ${ageRows ? `
         <table class="ad-card-age-table">
           <thead><tr><th>Age</th><th>Spend</th><th>CTR</th><th>CPL</th></tr></thead>
           <tbody>${ageRows}</tbody>
-        </table>
-      </div>` : ''}
+        </table>` : `<div style="font-size:.72rem;color:var(--text-muted);padding:4px 0">Not enough data yet — breakdown appears once Meta has sufficient impressions per age group.</div>`}
+      </div>
       <div class="ad-card-btn">
         <span class="ad-card-btn-text">View full detail →</span>
         ${c.id ? `<a href="https://www.facebook.com/adsmanager/manage/ads?act=${meta?.adAccountId||''}&selected_ad_ids=${c.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:.7rem;color:var(--text-muted);text-decoration:none;border:1px solid var(--border);padding:3px 8px;border-radius:4px;">Open in Meta ↗</a>` : ''}

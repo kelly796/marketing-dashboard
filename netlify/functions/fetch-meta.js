@@ -141,7 +141,7 @@ exports.handler = async () => {
       }).catch(() => null) : null,
       // Creative performance — top ads with spend + leads
       adAccountId ? metaGet(`/act_${adAccountId}/ads`, {
-        fields: 'name,status,creative{name,thumbnail_url},insights.date_preset(last_7d){spend,impressions,actions}',
+        fields: 'name,status,creative{name,thumbnail_url},insights.date_preset(last_7d){spend,impressions,clicks,ctr,actions}',
         effective_status: JSON.stringify(['ACTIVE', 'PAUSED']),
         limit: 10,
         access_token: token,
