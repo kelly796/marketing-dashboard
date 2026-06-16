@@ -73,7 +73,7 @@ exports.handler = async () => {
       igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqAudience,
       igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnAudience,
       fbInsights, fbInsightsPrev, fbPosts,
-      adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives, adInsights30d,
+      adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives, adInsights30d, adPerAdBreakdown,
     ] = await Promise.all([
 
       // ── IG HQ ──────────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ exports.handler = async () => {
       }) : null,
       // Audience breakdown by age and gender
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
-        fields: 'spend,impressions,reach,actions',
+        fields: 'spend,impressions,clicks,reach,actions',
         date_preset: 'last_7d',
         breakdowns: 'age,gender',
         access_token: token,
@@ -151,6 +151,14 @@ exports.handler = async () => {
         fields: 'spend,actions',
         date_preset: 'last_30d',
         time_increment: '1',
+        access_token: token,
+      }).catch(() => null) : null,
+      // Per-ad age + gender breakdown
+      adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
+        level: 'ad',
+        fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,actions',
+        breakdowns: 'age,gender',
+        date_preset: 'last_7d',
         access_token: token,
       }).catch(() => null) : null,
     ]);
@@ -174,7 +182,7 @@ exports.handler = async () => {
         instagramHQ:     mergeWindsor(buildIGData(igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqPostInsights, igHqAudience), windsorHQ),
         instagramOnline: mergeWindsor(buildIGData(igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnPostInsights, igOnAudience), windsorOnline),
         facebook:        buildFBData(fbInsights, fbInsightsPrev, hqPageMeta, fbPosts),
-        meta:            buildMetaAdsData(adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives, adInsights30d),
+        meta:            buildMetaAdsData(adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives, adInsights30d, adPerAdBreakdown),
       }),
     };
   } catch (err) {
@@ -328,7 +336,7 @@ function buildFBData(insights, insightsPrev, pageAccount, postsResp) {
 }
 
 // ─── META ADS DATA BUILDER ────────────────────────────────────────────────────
-function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceData, adsData, insights30d) {
+function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceData, adsData, insights30d, perAdBreakdown) {
   if (!insights7d) return null;
 
   function getAction(actions, ...types) {
@@ -379,8 +387,8 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
   // Audience breakdown — aggregate by age+gender bucket, express as percentages
   const audienceBreakdown = buildAudienceBreakdown(audienceData);
 
-  // Creative performance — top ads by spend
-  const creatives = buildCreatives(adsData);
+  // Creative performance — top ads by spend, enriched with per-ad audience
+  const creatives = buildCreatives(adsData, perAdBreakdown);
 
   return {
     spend7d,
@@ -410,52 +418,137 @@ function buildAudienceBreakdown(audienceData) {
   const rows = audienceData?.data || [];
   if (!rows.length) return [];
 
-  // Sum spend per age+gender bucket
-  const buckets = {};
-  let total = 0;
+  // Aggregate by age bucket (summing across genders)
+  const ageBuckets = {};
   for (const row of rows) {
-    const label = `${row.age} ${row.gender === 'male' ? 'M' : row.gender === 'female' ? 'F' : row.gender}`;
-    const spend = Number(row.spend || 0);
-    buckets[label] = (buckets[label] || 0) + spend;
-    total += spend;
+    const age = row.age || 'unknown';
+    if (!ageBuckets[age]) ageBuckets[age] = { spend: 0, impressions: 0, clicks: 0, leads: 0 };
+    ageBuckets[age].spend      += Number(row.spend       || 0);
+    ageBuckets[age].impressions += Number(row.impressions || 0);
+    ageBuckets[age].clicks     += Number(row.clicks      || 0);
+    const rowLeads = ['lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead'].reduce((s, t) => {
+      const f = (row.actions || []).find(a => a.action_type === t);
+      return s + Number(f?.value || 0);
+    }, 0);
+    ageBuckets[age].leads += rowLeads;
   }
 
-  if (total === 0) return [];
+  const totalSpend = Object.values(ageBuckets).reduce((s, b) => s + b.spend, 0);
+  if (totalSpend === 0) return [];
 
-  return Object.entries(buckets)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
-    .map(([label, spend]) => ({
-      label,
-      pct: Math.round((spend / total) * 100),
-    }));
+  const AGE_ORDER = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+  const result = AGE_ORDER
+    .filter(a => ageBuckets[a])
+    .map(age => {
+      const b = ageBuckets[age];
+      return {
+        label:  age,
+        spend:  +b.spend.toFixed(2),
+        pct:    Math.round((b.spend / totalSpend) * 100),
+        ctr:    b.impressions > 0 ? +((b.clicks / b.impressions) * 100).toFixed(2) : 0,
+        leads:  b.leads,
+        cpl:    b.leads > 0 ? +(b.spend / b.leads).toFixed(2) : 0,
+      };
+    });
+
+  // Append unknown bucket if present
+  if (ageBuckets['unknown'] && ageBuckets['unknown'].spend > 0) {
+    const b = ageBuckets['unknown'];
+    result.push({
+      label:  'Other',
+      spend:  +b.spend.toFixed(2),
+      pct:    Math.round((b.spend / totalSpend) * 100),
+      ctr:    b.impressions > 0 ? +((b.clicks / b.impressions) * 100).toFixed(2) : 0,
+      leads:  b.leads,
+      cpl:    b.leads > 0 ? +(b.spend / b.leads).toFixed(2) : 0,
+    });
+  }
+
+  return result;
 }
 
 // ─── CREATIVE PERFORMANCE BUILDER ────────────────────────────────────────────
-function buildCreatives(adsData) {
+function buildCreatives(adsData, perAdBreakdown) {
   const ads = adsData?.data || [];
   if (!ads.length) return [];
 
-  function getAction(actions, ...types) {
+  function getAct(actions, ...types) {
     return types.reduce((s, t) => {
       const found = (actions || []).find(a => a.action_type === t);
       return s + Number(found?.value || 0);
     }, 0);
   }
 
+  // Group per-ad breakdown rows by ad_id → track spend, impressions, clicks, leads per age+gender
+  const audienceByAdId = {};
+  for (const row of (perAdBreakdown?.data || [])) {
+    const id = row.ad_id;
+    if (!id) continue;
+    if (!audienceByAdId[id]) audienceByAdId[id] = { spend: 0, genderSpend: {}, ageData: {} };
+    const s     = Number(row.spend       || 0);
+    const impr  = Number(row.impressions || 0);
+    const clks  = Number(row.clicks      || 0);
+    const leads = getAct(row.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
+
+    audienceByAdId[id].spend += s;
+
+    const g = row.gender || 'unknown';
+    audienceByAdId[id].genderSpend[g] = (audienceByAdId[id].genderSpend[g] || 0) + s;
+
+    const a = row.age || 'unknown';
+    if (!audienceByAdId[id].ageData[a]) audienceByAdId[id].ageData[a] = { spend: 0, impressions: 0, clicks: 0, leads: 0 };
+    audienceByAdId[id].ageData[a].spend       += s;
+    audienceByAdId[id].ageData[a].impressions += impr;
+    audienceByAdId[id].ageData[a].clicks      += clks;
+    audienceByAdId[id].ageData[a].leads       += leads;
+  }
+
+  function toGenderBuckets(spendMap, total, n = 3) {
+    if (!total) return [];
+    return Object.entries(spendMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n)
+      .map(([label, spend]) => ({ label, pct: Math.round((spend / total) * 100) }));
+  }
+
+  function toAgeBuckets(ageData, totalSpend) {
+    if (!totalSpend) return [];
+    const AGE_ORDER = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+    return AGE_ORDER
+      .filter(a => ageData[a])
+      .map(age => {
+        const b = ageData[age];
+        return {
+          label:  age,
+          spend:  +b.spend.toFixed(2),
+          pct:    Math.round((b.spend / totalSpend) * 100),
+          ctr:    b.impressions > 0 ? +((b.clicks / b.impressions) * 100).toFixed(2) : 0,
+          leads:  b.leads,
+          cpl:    b.leads > 0 ? +(b.spend / b.leads).toFixed(2) : 0,
+        };
+      });
+  }
+
   return ads
     .map(ad => {
       const ins   = ad.insights?.data?.[0] || {};
       const spend = +(Number(ins.spend || 0)).toFixed(2);
-      const leads = getAction(ins.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
+      const leads = getAct(ins.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
       const cpl   = leads > 0 ? +(spend / leads).toFixed(2) : 0;
+      const ctr   = +(Number(ins.ctr || 0)).toFixed(2);
+      const impressions = Number(ins.impressions || 0);
       const brand = /online|coaching|rehab|network|classroom/i.test(ad.name) ? 'Online' : 'HQ';
 
-      return { name: ad.name, brand, spend, leads, cpl };
+      const aud      = audienceByAdId[ad.id] || null;
+      const audTotal = aud?.spend || 0;
+      const gender   = aud ? toGenderBuckets(aud.genderSpend, audTotal, 3) : [];
+      const age      = aud ? toAgeBuckets(aud.ageData, audTotal) : [];
+
+      return { id: ad.id, name: ad.name, brand, spend, leads, cpl, ctr, impressions, gender, age };
     })
     .filter(c => c.spend > 0)
     .sort((a, b) => b.spend - a.spend)
-    .slice(0, 5);
+    .slice(0, 8);
 }
 
 // ─── AUDIENCE DEMOGRAPHICS PARSER ────────────────────────────────────────────

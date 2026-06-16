@@ -315,6 +315,40 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .aud-bar-track{flex:1;height:6px;background:rgba(103,167,172,.12);border-radius:3px;overflow:hidden;}
 .aud-bar-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .4s;}
 .aud-bar-pct{font-size:.72rem;font-family:var(--fmono);color:var(--text-muted);width:32px;text-align:right;}
+
+/* Age breakdown table */
+.age-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px;}
+.age-table th{text-align:left;padding:5px 10px;font-size:.68rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--text-muted);border-bottom:1px solid var(--border);}
+.age-table th:not(:first-child){text-align:right;}
+.age-table td{padding:7px 10px;border-bottom:1px solid rgba(29,47,74,.5);}
+.age-table td:not(:first-child){text-align:right;font-family:var(--fmono);}
+.age-table tr:last-child td{border-bottom:none;}
+.age-table .top-row td{color:var(--teal);font-weight:600;}
+
+/* LTV section */
+.ltv-tier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;}
+.ltv-tier-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;}
+.ltv-tier-name{font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:10px;}
+.ltv-field-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:.75rem;}
+.ltv-field-label{color:var(--text-muted);}
+.ltv-field-input{
+  width:70px;background:var(--surface3);border:1px solid var(--border2);border-radius:5px;
+  padding:3px 7px;font-size:.78rem;font-family:var(--fmono);color:var(--text);
+  text-align:right;outline:none;
+}
+.ltv-field-input:focus{border-color:var(--teal);}
+.ltv-computed{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
+  font-size:.82rem;color:var(--teal);font-family:var(--fmono);font-weight:600;}
+.ltv-summary-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px;padding:16px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);}
+.ltv-summary-item-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text-muted);margin-bottom:4px;}
+.ltv-summary-item-val{font-family:var(--fmono);font-size:1.1rem;font-weight:600;color:var(--text);}
+.ltv-summary-item-val.good{color:var(--success);}
+.ltv-summary-item-val.warn{color:var(--warning);}
+.ltv-summary-item-val.bad{color:var(--danger);}
+.ltv-note{font-size:.73rem;color:var(--text-muted);margin-top:12px;}
 .campaign-card-header{
   padding:16px 20px;display:flex;align-items:center;
   justify-content:space-between;border-bottom:1px solid var(--border);
@@ -682,6 +716,20 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
         </tbody>
       </table>
     </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <div class="card-title">Audience by Age Group — 7-day spend breakdown</div>
+    <div id="meta-audience-age">
+      <div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">Loading…</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px" id="ltv-section">
+    <div class="card-title">Member Lifetime Value</div>
+    <div class="ltv-tier-grid" id="ltv-tiers"></div>
+    <div class="ltv-summary-row" id="ltv-summary"></div>
+    <div class="ltv-note">Adjust values to match current pricing — saves automatically.</div>
   </div>
 </div>
 
@@ -1255,6 +1303,7 @@ function renderAll() {
   const seo  = dashData?.seo  || null;
   renderOverview(meta, ga4);
   renderMeta(meta);
+  renderLTV();
   renderCampaignsPage(meta);
   renderWebsite(ga4, seo, dashData?.clarity || null);
   renderMaxxReport();
@@ -1401,6 +1450,9 @@ function renderMeta(meta) {
   // Ad cards
   renderAdCards(meta);
 
+  // Audience by Age
+  renderAudienceByAge(meta?.audienceBreakdown || []);
+
   // Creative table (clickable rows) — keep for reference below the cards
   const creatives = meta?.creatives || [];
   const tbody = document.getElementById('meta-creatives-body');
@@ -1410,7 +1462,8 @@ function renderMeta(meta) {
     tbody.innerHTML = creatives.map(c => {
       const maxxDec = (maxxData?.decisions||[]).find(d=>d.ad&&c.name&&c.name.toLowerCase().includes(d.ad.toLowerCase().split(' ')[0]));
       const dec = maxxDec?.decision || (c.leads>0?'KEEP':'WATCH');
-      return `<tr class="clickable-row" onclick="openAdDetail(${JSON.stringify(c.name)})">
+      const safeName = (c.name||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      return `<tr class="clickable-row" data-adname="${safeName}" onclick="openAdDetail(this.dataset.adname)">
         <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</td>
         <td style="font-family:var(--fmono)">${fmtCurrency(c.spend)}</td>
         <td style="font-family:var(--fmono)">${fmtPct(c.ctr)}</td>
@@ -1441,8 +1494,9 @@ function renderAdCards(meta) {
       female  ? `F ${female.pct}%` : null,
       male    ? `M ${male.pct}%`   : null,
     ].filter(Boolean);
+    const safeName = (c.name||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
     return `
-    <div class="ad-card" onclick="openAdDetail(${JSON.stringify(c.name)})">
+    <div class="ad-card" data-adname="${safeName}" onclick="openAdDetail(this.dataset.adname)">
       <div class="ad-card-name">${c.name}</div>
       <div class="ad-card-metrics">
         <div><div class="ad-card-metric-label">Spend</div><div class="ad-card-metric-val">${fmtCurrency(c.spend)}</div></div>
@@ -1688,11 +1742,28 @@ function openAdDetail(adName) {
   const cpl   = creative.cpl   ?? maxxDec?.metrics?.cpl   ?? 0;
   const dec   = maxxDec?.decision || (leads>0?'KEEP':'WATCH');
 
+  const ageRows = (creative.age||[]).map((b, i) => `
+    <tr class="${i===0?'top-row':''}">
+      <td>${b.label}</td>
+      <td>${fmtCurrency(b.spend)}</td>
+      <td>${b.pct}%</td>
+      <td>${b.ctr != null ? fmtPct(b.ctr) : '—'}</td>
+      <td>${b.leads != null ? b.leads : '—'}</td>
+      <td>${b.cpl > 0 ? fmtCurrency(b.cpl) : '—'}</td>
+    </tr>`).join('');
+
+  const genderRows = (creative.gender||[]).map(g => `
+    <div class="aud-bar-row">
+      <div class="aud-bar-label">${g.label === 'male' ? 'Male' : g.label === 'female' ? 'Female' : g.label}</div>
+      <div class="aud-bar-track"><div class="aud-bar-fill" style="width:${g.pct}%;background:${g.label==='female'?'var(--teal)':'#4f8ef7'}"></div></div>
+      <div class="aud-bar-pct">${g.pct}%</div>
+    </div>`).join('');
+
   document.getElementById('ad-detail-content').innerHTML = `
     <div class="section-header" style="margin-bottom:20px">
       <div>
         <div class="section-title" style="font-size:1.15rem">${creative.name}</div>
-        <div class="section-subtitle">Creative detail view</div>
+        <div class="section-subtitle">Creative detail — last 7 days</div>
       </div>
       ${adBadge(dec)}
     </div>
@@ -1702,36 +1773,31 @@ function openAdDetail(adName) {
       <div class="metric-item"><div class="metric-item-label">Leads</div><div class="metric-item-val">${leads}</div></div>
       <div class="metric-item"><div class="metric-item-label">CPL</div><div class="metric-item-val">${cpl>0?fmtCurrency(cpl):'—'}</div></div>
     </div>
-    ${(creative.age?.length || creative.gender?.length) ? `
+
+    ${ageRows ? `
     <div class="card" style="margin-top:16px">
-      <div class="card-title">Audience Breakdown</div>
-      ${creative.age?.length ? `
-      <div style="margin-bottom:16px">
-        <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Age Groups</div>
-        ${creative.age.map(b => `
-        <div class="aud-bar-row">
-          <div class="aud-bar-label">${b.label}</div>
-          <div class="aud-bar-track"><div class="aud-bar-fill" style="width:${b.pct}%"></div></div>
-          <div class="aud-bar-pct">${b.pct}%</div>
-        </div>`).join('')}
-      </div>` : ''}
-      ${creative.gender?.length ? `
-      <div>
-        <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Gender</div>
-        ${creative.gender.map(g => `
-        <div class="aud-bar-row">
-          <div class="aud-bar-label">${g.label === 'male' ? 'Male' : g.label === 'female' ? 'Female' : g.label}</div>
-          <div class="aud-bar-track"><div class="aud-bar-fill" style="width:${g.pct}%;background:${g.label==='female'?'var(--accent)':'#4f8ef7'}"></div></div>
-          <div class="aud-bar-pct">${g.pct}%</div>
-        </div>`).join('')}
-      </div>` : ''}
+      <div class="card-title">Spend by Age Group</div>
+      <div class="table-wrap">
+        <table class="age-table">
+          <thead><tr><th>Age</th><th>Spend</th><th>% of spend</th><th>CTR</th><th>Leads</th><th>CPL</th></tr></thead>
+          <tbody>${ageRows}</tbody>
+        </table>
+      </div>
     </div>` : ''}
+
+    ${genderRows ? `
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Gender Split</div>
+      ${genderRows}
+    </div>` : ''}
+
     ${maxxDec ? `
-    <div class="card">
+    <div class="card" style="margin-top:16px">
       <div class="card-title">Maxx — Recommendation</div>
       <div style="font-size:.9rem;color:var(--text-dim);line-height:1.75">${maxxDec.reason}</div>
     </div>` : ''}
-    <div class="card">
+
+    <div class="card" style="margin-top:16px">
       <div class="card-title">Performance vs Targets</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:.875rem">
         <div>
@@ -1800,6 +1866,132 @@ function openCampaignDetail(key) {
       </div>
     </div>`;
   openSubPage('campaign-detail', 'EP — Exercise Physiology');
+}
+
+// ─── AUDIENCE BY AGE (account-level) ─────────────────────────────
+function renderAudienceByAge(breakdown) {
+  const wrap = document.getElementById('meta-audience-age');
+  if (!wrap) return;
+  if (!breakdown || !breakdown.length) {
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">No age data — check Meta API connection</div>';
+    return;
+  }
+  const maxSpend = Math.max(...breakdown.map(b => b.spend));
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table class="age-table">
+        <thead>
+          <tr><th>Age Group</th><th>Spend (7d)</th><th>% of spend</th><th>CTR</th><th>Leads</th><th>CPL</th></tr>
+        </thead>
+        <tbody>
+          ${breakdown.map((b, i) => `
+          <tr class="${i===0?'top-row':''}">
+            <td>${b.label}</td>
+            <td>${fmtCurrency(b.spend)}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;max-width:80px;height:5px;background:rgba(103,167,172,.15);border-radius:3px;overflow:hidden">
+                  <div style="height:100%;width:${maxSpend>0?Math.round((b.spend/maxSpend)*100):0}%;background:var(--teal);border-radius:3px"></div>
+                </div>
+                <span style="font-family:var(--fmono);font-size:.78rem">${b.pct}%</span>
+              </div>
+            </td>
+            <td>${b.ctr > 0 ? fmtPct(b.ctr) : '—'}</td>
+            <td>${b.leads > 0 ? b.leads : '—'}</td>
+            <td>${b.cpl > 0 ? fmtCurrency(b.cpl) : '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ─── LIFETIME VALUE ───────────────────────────────────────────────
+const LTV_STORAGE_KEY = 'pm_ltv_v1';
+const LTV_DEFAULTS = [
+  { id:'core',  name:'Perf Core',       monthly:149, months:8  },
+  { id:'plus',  name:'Perf Plus',       monthly:199, months:10 },
+  { id:'prime', name:'Perf Prime II/III', monthly:249, months:14 },
+];
+
+function loadLTVConfig() {
+  try { return JSON.parse(localStorage.getItem(LTV_STORAGE_KEY)) || LTV_DEFAULTS; }
+  catch { return LTV_DEFAULTS; }
+}
+function saveLTVConfig(tiers) {
+  localStorage.setItem(LTV_STORAGE_KEY, JSON.stringify(tiers));
+}
+
+function renderLTV() {
+  const tiersEl   = document.getElementById('ltv-tiers');
+  const summaryEl = document.getElementById('ltv-summary');
+  if (!tiersEl || !summaryEl) return;
+
+  const tiers = loadLTVConfig();
+  const cpl   = dashData?.meta?.costPerLead ?? 0;
+
+  tiersEl.innerHTML = tiers.map(t => {
+    const ltv = t.monthly * t.months;
+    return `
+    <div class="ltv-tier-card">
+      <div class="ltv-tier-name">${t.name}</div>
+      <div class="ltv-field-row">
+        <span class="ltv-field-label">Monthly value ($)</span>
+        <input class="ltv-field-input" type="number" min="0" step="1"
+          value="${t.monthly}" data-tier="${t.id}" data-field="monthly"
+          oninput="onLTVInput(this)">
+      </div>
+      <div class="ltv-field-row">
+        <span class="ltv-field-label">Avg months</span>
+        <input class="ltv-field-input" type="number" min="1" step="1"
+          value="${t.months}" data-tier="${t.id}" data-field="months"
+          oninput="onLTVInput(this)">
+      </div>
+      <div class="ltv-computed">LTV: ${fmtCurrency(ltv)}</div>
+    </div>`;
+  }).join('');
+
+  updateLTVSummary(tiers, cpl);
+}
+
+function onLTVInput(input) {
+  const tiers = loadLTVConfig();
+  const tier  = tiers.find(t => t.id === input.dataset.tier);
+  if (!tier) return;
+  tier[input.dataset.field] = Number(input.value) || 0;
+  saveLTVConfig(tiers);
+  // Update just this card's LTV display
+  const card  = input.closest('.ltv-tier-card');
+  const ltv   = tier.monthly * tier.months;
+  card.querySelector('.ltv-computed').textContent = 'LTV: ' + fmtCurrency(ltv);
+  updateLTVSummary(tiers, dashData?.meta?.costPerLead ?? 0);
+}
+
+function updateLTVSummary(tiers, cpl) {
+  const summaryEl = document.getElementById('ltv-summary');
+  if (!summaryEl) return;
+  const avgLTV      = tiers.reduce((s, t) => s + t.monthly * t.months, 0) / tiers.length;
+  const ltvCplRatio = cpl > 0 ? +(avgLTV / cpl).toFixed(1) : null;
+  const breakEvenCpl = +(avgLTV * 0.3).toFixed(0); // spend up to 30% of LTV on acquisition
+
+  const ratioClass = ltvCplRatio >= 5 ? 'good' : ltvCplRatio >= 3 ? 'warn' : 'bad';
+
+  summaryEl.innerHTML = `
+    <div>
+      <div class="ltv-summary-item-label">Avg Blended LTV</div>
+      <div class="ltv-summary-item-val">${fmtCurrency(avgLTV)}</div>
+    </div>
+    <div>
+      <div class="ltv-summary-item-label">Current CPL</div>
+      <div class="ltv-summary-item-val">${cpl > 0 ? fmtCurrency(cpl) : '—'}</div>
+    </div>
+    <div>
+      <div class="ltv-summary-item-label">LTV : CPL Ratio</div>
+      <div class="ltv-summary-item-val ${ltvCplRatio ? ratioClass : ''}">${ltvCplRatio ? ltvCplRatio + 'x' : '—'}</div>
+    </div>
+    <div>
+      <div class="ltv-summary-item-label">Break-even CPL (30%)</div>
+      <div class="ltv-summary-item-val">${fmtCurrency(breakEvenCpl)}</div>
+    </div>`;
 }
 
 // ─── UTILITIES ────────────────────────────────────────────────────
