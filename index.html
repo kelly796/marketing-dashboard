@@ -308,6 +308,18 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .ad-card-metric-val{font-family:var(--fmono);font-size:1rem;font-weight:600;color:var(--text);}
 .ad-card-audience{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
 .ad-card-aud-chip{font-size:.65rem;padding:2px 7px;border-radius:20px;background:rgba(103,167,172,.12);color:var(--teal);font-weight:600;}
+.ad-card-age-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.ad-card-age-heading{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text-muted);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.ad-card-age-gender{display:flex;gap:4px;}
+.ad-card-age-table{width:100%;border-collapse:collapse;font-size:.72rem;}
+.ad-card-age-table th{color:var(--text-muted);font-weight:600;text-align:right;padding:2px 4px;font-size:.63rem;text-transform:uppercase;letter-spacing:.03em;}
+.ad-card-age-table th:first-child{text-align:left;}
+.ad-card-age-table td{padding:3px 4px;text-align:right;font-family:var(--fmono);color:var(--text-dim);border-bottom:1px solid rgba(29,47,74,.4);}
+.ad-card-age-table td:first-child{text-align:left;font-family:var(--fbody);color:var(--text-muted);}
+.ad-card-age-table tr:last-child td{border-bottom:none;}
+.ad-card-age-table tr.ad-card-age-top td{color:var(--teal);}
+.ad-card-age-table tr.ad-card-age-top td:first-child{color:var(--teal);}
 .ad-card-btn{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
 .ad-card-btn-text{font-size:.73rem;font-weight:600;color:var(--teal);}
 .aud-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
@@ -1483,16 +1495,22 @@ function renderAdCards(meta) {
     return;
   }
   wrap.innerHTML = creatives.map(c => {
-    const topAge    = c.age?.[0];
-    const topAge2   = c.age?.[1];
-    const female    = c.gender?.find(g => g.label==='female');
-    const male      = c.gender?.find(g => g.label==='male');
-    const audChips  = [
-      topAge  ? `${topAge.label} ${topAge.pct}%`  : null,
-      topAge2 ? `${topAge2.label} ${topAge2.pct}%` : null,
-      female  ? `F ${female.pct}%` : null,
-      male    ? `M ${male.pct}%`   : null,
+    const female = c.gender?.find(g => g.label==='female');
+    const male   = c.gender?.find(g => g.label==='male');
+
+    const ageRows = (c.age||[]).slice(0,4).map((b, i) => `
+      <tr class="${i===0?'ad-card-age-top':''}">
+        <td class="ad-card-age-label">${b.label}</td>
+        <td>${fmtCurrency(b.spend)}</td>
+        <td>${b.ctr > 0 ? fmtPct(b.ctr) : '—'}</td>
+        <td>${b.cpl > 0 ? fmtCurrency(b.cpl) : '—'}</td>
+      </tr>`).join('');
+
+    const genderChips = [
+      female ? `F ${female.pct}%` : null,
+      male   ? `M ${male.pct}%`   : null,
     ].filter(Boolean);
+
     const safeName = (c.name||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
     return `
     <div class="ad-card" data-adname="${safeName}" onclick="openAdDetail(this.dataset.adname)">
@@ -1503,7 +1521,17 @@ function renderAdCards(meta) {
         <div><div class="ad-card-metric-label">Leads</div><div class="ad-card-metric-val">${c.leads}</div></div>
         <div><div class="ad-card-metric-label">CPL</div><div class="ad-card-metric-val">${c.cpl>0?fmtCurrency(c.cpl):'—'}</div></div>
       </div>
-      ${audChips.length ? `<div class="ad-card-audience">${audChips.map(ch=>`<span class="ad-card-aud-chip">${ch}</span>`).join('')}</div>` : ''}
+      ${ageRows ? `
+      <div class="ad-card-age-section">
+        <div class="ad-card-age-heading">
+          Age breakdown
+          ${genderChips.length ? `<span class="ad-card-age-gender">${genderChips.map(ch=>`<span class="ad-card-aud-chip">${ch}</span>`).join('')}</span>` : ''}
+        </div>
+        <table class="ad-card-age-table">
+          <thead><tr><th>Age</th><th>Spend</th><th>CTR</th><th>CPL</th></tr></thead>
+          <tbody>${ageRows}</tbody>
+        </table>
+      </div>` : ''}
       <div class="ad-card-btn">
         <span class="ad-card-btn-text">View full detail →</span>
         ${c.id ? `<a href="https://www.facebook.com/adsmanager/manage/ads?act=${meta?.adAccountId||''}&selected_ad_ids=${c.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:.7rem;color:var(--text-muted);text-decoration:none;border:1px solid var(--border);padding:3px 8px;border-radius:4px;">Open in Meta ↗</a>` : ''}
