@@ -16,6 +16,9 @@
 const crypto = require('crypto');
 
 async function getGoogleToken(clientEmail, privateKey, scopes) {
+  // Netlify env vars store \n as literal backslash-n — convert to real newlines
+  if (privateKey) privateKey = privateKey.replace(/\\n/g, '\n');
+
   // Support both raw base64 (no headers) and full PEM — reconstruct PEM if needed
   if (privateKey && !privateKey.includes('-----BEGIN')) {
     const body = privateKey.match(/.{1,64}/g).join('\n');
