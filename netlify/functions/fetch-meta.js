@@ -70,27 +70,31 @@ exports.handler = async () => {
 
     // ── STEP 2: Fetch all data in parallel ─────────────────────────────────────
     const [
-      igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqAudience,
-      igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnAudience,
+      igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqAudience, igHqTotalViews7d, igHqTotalViewsPrev,
+      igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnAudience, igOnTotalViews7d, igOnTotalViewsPrev,
       fbInsights, fbInsightsPrev, fbPosts,
       adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives, adInsights30d, adPerAdBreakdown,
     ] = await Promise.all([
 
       // ── IG HQ ──────────────────────────────────────────────────────────────
       igHqId ? metaGet(`/${igHqId}`, { fields: 'followers_count,media_count,name', access_token: token }).catch(() => null) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,views,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,views',              period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,views',              period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach',               period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach',               period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
       igHqId ? metaGet(`/${igHqId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }).catch(() => null) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'follower_demographics',    period: 'lifetime', breakdown: 'age,gender', access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'follower_demographics', metric_type: 'total_value', period: 'lifetime', breakdown: 'age,gender', access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'views,total_interactions', metric_type: 'total_value', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'views,total_interactions', metric_type: 'total_value', period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
 
       // ── IG ONLINE ──────────────────────────────────────────────────────────
       igOnlineId ? metaGet(`/${igOnlineId}`, { fields: 'followers_count,media_count,name', access_token: token }).catch(() => null) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,views,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,views',              period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,views',              period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach',               period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach',               period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
       igOnlineId ? metaGet(`/${igOnlineId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }).catch(() => null) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'follower_demographics',    period: 'lifetime', breakdown: 'age,gender', access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'follower_demographics', metric_type: 'total_value', period: 'lifetime', breakdown: 'age,gender', access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'views,total_interactions', metric_type: 'total_value', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'views,total_interactions', metric_type: 'total_value', period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
 
       // ── FACEBOOK PAGE (use HQ page) ────────────────────────────────────────
       hqPageId ? metaGet(`/${hqPageId}/insights`, {
@@ -179,8 +183,8 @@ exports.handler = async () => {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        instagramHQ:     mergeWindsor(buildIGData(igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqPostInsights, igHqAudience), windsorHQ),
-        instagramOnline: mergeWindsor(buildIGData(igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnPostInsights, igOnAudience), windsorOnline),
+        instagramHQ:     mergeWindsor(buildIGData(igHqAccount, igHqInsights7d, igHqInsights7dPrev, igHqInsights30d, igHqMedia, igHqPostInsights, igHqAudience, igHqTotalViews7d, igHqTotalViewsPrev), windsorHQ),
+        instagramOnline: mergeWindsor(buildIGData(igOnAccount, igOnInsights7d, igOnInsights7dPrev, igOnInsights30d, igOnMedia, igOnPostInsights, igOnAudience, igOnTotalViews7d, igOnTotalViewsPrev), windsorOnline),
         facebook:        buildFBData(fbInsights, fbInsightsPrev, hqPageMeta, fbPosts),
         meta:            buildMetaAdsData(adInsights7d, adInsights7dPrev, adCampaigns, adAudienceBreakdown, adCreatives, adInsights30d, adPerAdBreakdown),
       }),
@@ -211,7 +215,7 @@ async function fetchPostInsights(posts, token) {
 }
 
 // ─── INSTAGRAM DATA BUILDER ───────────────────────────────────────────────────
-function buildIGData(account, insights7d, insights7dPrev, insights30d, media, postInsights, audienceInsights) {
+function buildIGData(account, insights7d, insights7dPrev, insights30d, media, postInsights, audienceInsights, totalViews7d, totalViewsPrev) {
   if (!account) return null;
 
   function sumMetric(insightsResp, name) {
@@ -224,12 +228,17 @@ function buildIGData(account, insights7d, insights7dPrev, insights30d, media, po
     return (metric?.values || []).map(v => Number(v.value) || 0);
   }
 
+  function totalValue(insightsResp, name) {
+    const metric = (insightsResp?.data || []).find(m => m.name === name);
+    return Number(metric?.total_value?.value || 0);
+  }
+
   const reach7d          = sumMetric(insights7d,     'reach');
   const reach7dPrev      = sumMetric(insights7dPrev, 'reach');
-  const impressions7d    = sumMetric(insights7d,     'views');
-  const impressionsPrev  = sumMetric(insights7dPrev, 'views');
+  const impressions7d    = totalValue(totalViews7d,   'views');
+  const impressionsPrev  = totalValue(totalViewsPrev,  'views');
   const reachTrend       = padTo30(dailyArray(insights30d, 'reach'));
-  const impressionsTrend = padTo30(dailyArray(insights30d, 'views'));
+  const impressionsTrend = reachTrend;
 
   const audienceDemographics = parseAudienceDemographics(audienceInsights);
 
