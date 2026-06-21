@@ -111,38 +111,38 @@ exports.handler = async () => {
 
       // ── META ADS ───────────────────────────────────────────────────────────
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
-        fields: 'spend,impressions,clicks,ctr,reach,actions,action_values',
+        fields: 'spend,impressions,clicks,ctr,reach,actions,action_values,conversions',
         date_preset: 'last_7d',
         access_token: token,
       }) : null,
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
-        fields: 'spend,impressions,clicks,ctr,reach,actions,action_values',
+        fields: 'spend,impressions,clicks,ctr,reach,actions,action_values,conversions',
         time_range: JSON.stringify({ since: fmtDate(since14), until: fmtDate(since7) }),
         access_token: token,
       }) : null,
       adAccountId ? metaGet(`/act_${adAccountId}/campaigns`, {
-        fields: 'name,status,objective,insights.date_preset(last_7d){spend,impressions,clicks,ctr,actions}',
+        fields: 'name,status,objective,insights.date_preset(last_7d){spend,impressions,clicks,ctr,actions,conversions}',
         effective_status: JSON.stringify(['ACTIVE', 'PAUSED']),
         limit: 10,
         access_token: token,
       }) : null,
       // Audience breakdown by age and gender
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
-        fields: 'spend,impressions,clicks,reach,actions',
+        fields: 'spend,impressions,clicks,reach,actions,conversions',
         date_preset: 'last_7d',
         breakdowns: 'age,gender',
         access_token: token,
       }).catch(() => null) : null,
       // Creative performance — top ads with spend + leads
       adAccountId ? metaGet(`/act_${adAccountId}/ads`, {
-        fields: 'name,status,creative{name,thumbnail_url},insights.date_preset(last_7d){spend,impressions,clicks,ctr,actions}',
+        fields: 'name,status,creative{name,thumbnail_url},insights.date_preset(last_7d){spend,impressions,clicks,ctr,actions,conversions}',
         effective_status: JSON.stringify(['ACTIVE', 'PAUSED']),
         limit: 10,
         access_token: token,
       }).catch(() => null) : null,
-      // Daily breakdown for spend + leads trend (30 days)
+      // Daily breakdown for spend + leads + impressions + clicks trend (30 days)
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
-        fields: 'spend,actions',
+        fields: 'spend,impressions,clicks,actions,conversions',
         date_preset: 'last_30d',
         time_increment: '1',
         access_token: token,
@@ -150,7 +150,7 @@ exports.handler = async () => {
       // Per-ad age + gender breakdown
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
         level: 'ad',
-        fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,actions',
+        fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,actions,conversions',
         breakdowns: 'age,gender',
         date_preset: 'last_7d',
         access_token: token,
@@ -326,38 +326,48 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
     }, 0);
   }
 
+  // Meta's `conversions` field is more reliable than `actions` for custom conversions —
+  // it matches what Ads Manager reports, whereas `actions` can undercount when attribution
+  // settings differ across campaigns.
+  function getConversions(convArr) {
+    return (convArr || []).reduce((s, a) => s + Number(a.value || 0), 0);
+  }
+
   const current       = insights7d?.data?.[0] || {};
   const spend7d       = +(Number(current.spend       || 0)).toFixed(2);
   const impressions7d = Number(current.impressions   || 0);
   const clicks7d      = Number(current.clicks        || 0);
   const ctr           = +(Number(current.ctr         || 0)).toFixed(2);
 
-  const leadsFromInsights = getAction(current.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
+  const leadsFromInsights    = getAction(current.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
+  const leadsFromConversions = getConversions(current.conversions);
   const revenue     = getAction(current.action_values, 'purchase', 'offsite_conversion.fb_pixel_purchase');
   const roas        = spend7d > 0 && revenue > 0 ? +(revenue / spend7d).toFixed(2) : 0;
 
   const prev            = insights7dPrev?.data?.[0] || {};
   const spendPrev       = +(Number(prev.spend || 0)).toFixed(2);
-  const leadsPrev       = getAction(prev.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped')
-                        + sumCustomConversions(prev.custom_conversions);
-  const costPerLeadPrev = leadsPrev > 0 ? +(spendPrev / leadsPrev).toFixed(2) : 0;
+  const leadsPrevActions = getAction(prev.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped')
+                         + sumCustomConversions(prev.custom_conversions);
+  const leadsPrevConv    = getConversions(prev.conversions);
+  const leadsPrev        = Math.max(leadsPrevActions, leadsPrevConv);
+  const costPerLeadPrev  = leadsPrev > 0 ? +(spendPrev / leadsPrev).toFixed(2) : 0;
   const revenuePrev     = getAction(prev.action_values, 'purchase', 'offsite_conversion.fb_pixel_purchase');
   const roasPrev        = spendPrev > 0 && revenuePrev > 0 ? +(revenuePrev / spendPrev).toFixed(2) : 0;
 
   // Audience breakdown — build early so we can derive leads7d from it.
-  // Meta custom conversions (form_success etc.) appear in actions only when a
-  // breakdown dimension is used; the aggregate account-level insight returns an
-  // empty actions array for custom events.
-  const audienceBreakdown = buildAudienceBreakdown(audienceData);
+  // Use the highest of all three sources: actions, conversions field, and age breakdown sum.
+  const audienceBreakdown  = buildAudienceBreakdown(audienceData);
   const leadsFromBreakdown = audienceBreakdown.reduce((s, b) => s + (b.leads || 0), 0);
-  const leads7d = leadsFromInsights > 0 ? leadsFromInsights : leadsFromBreakdown;
+  const leads7d     = Math.max(leadsFromInsights, leadsFromConversions, leadsFromBreakdown);
   const costPerLead = leads7d > 0 ? +(spend7d / leads7d).toFixed(2) : 0;
 
   // Campaigns
   const campaigns = (campaignsData?.data || []).map(c => {
     const ci    = c.insights?.data?.[0] || {};
     const cSpend = +(Number(ci.spend || 0)).toFixed(2);
-    const cLeads = getAction(ci.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
+    const cLeadsAct  = getAction(ci.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
+    const cLeadsConv = getConversions(ci.conversions);
+    const cLeads     = Math.max(cLeadsAct, cLeadsConv);
     const cCpl   = cLeads > 0 ? +(cSpend / cLeads).toFixed(2) : 0;
     const brand  = /online|coaching|rehab|network|classroom/i.test(c.name) ? 'Online' : 'HQ';
 
@@ -414,8 +424,10 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
     clicksPrev:  Number(prev.clicks || 0),
     ctr,
     ctrPrev:     +(Number(prev.ctr || 0)).toFixed(2),
-    spendTrend:  buildDailyTrend(insights30d, r => +(Number(r.spend || 0)).toFixed(2)),
-    leadsTrend:  buildDailyTrend(insights30d, r => getAction(r.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped') + sumCustomConversions(r.custom_conversions)),
+    spendTrend:       buildDailyTrend(insights30d, r => +(Number(r.spend || 0)).toFixed(2)),
+    leadsTrend:       buildDailyTrend(insights30d, r => getConversions(r.conversions)),
+    impressionsTrend: buildDailyTrend(insights30d, r => Number(r.impressions || 0)),
+    clicksTrend:      buildDailyTrend(insights30d, r => Number(r.clicks || 0)),
     campaigns,
     creatives,
     audienceBreakdown,
@@ -557,10 +569,11 @@ function buildCreatives(adsData, perAdBreakdown) {
       const gender   = aud ? toGenderBuckets(aud.genderSpend, audTotal, 3) : [];
       const age      = aud ? toAgeBuckets(aud.ageData, audTotal) : [];
 
-      // Custom conversions appear in breakdown-level insights only, so sum from per-ad age data
-      const leadsFromInsights = getAct(ins.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
+      // Use highest of: actions, conversions field, or per-ad age breakdown sum
+      const leadsFromInsights  = getAct(ins.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
+      const leadsFromConvField = (ins.conversions || []).reduce((s, a) => s + Number(a.value || 0), 0);
       const leadsFromBreakdown = aud ? Object.values(aud.ageData).reduce((s, b) => s + (b.leads || 0), 0) : 0;
-      const leads = leadsFromInsights > 0 ? leadsFromInsights : leadsFromBreakdown;
+      const leads = Math.max(leadsFromInsights, leadsFromConvField, leadsFromBreakdown);
       const cpl   = leads > 0 ? +(spend / leads).toFixed(2) : 0;
       const ctr   = +(Number(ins.ctr || 0)).toFixed(2);
       const impressions = Number(ins.impressions || 0);

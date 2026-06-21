@@ -287,6 +287,39 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .maxx-decision-metrics{display:flex;gap:12px;font-size:.78rem;color:var(--text-muted);margin-top:5px;font-family:var(--fmono);}
 .maxx-decision-metrics span strong{color:var(--text);}
 
+/* ─── AD PERFORMANCE 30-DAY ─────────────────────────────────────── */
+.adperf-kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.adperf-kpi{flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;}
+.adperf-kpi-label{font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.adperf-kpi-value{font-family:var(--fmono);font-size:1.35rem;font-weight:600;color:var(--text);}
+.adperf-kpi.adperf-kpi-amber .adperf-kpi-value{color:var(--warning);}
+.adperf-kpi.adperf-kpi-green .adperf-kpi-value{color:var(--success);}
+.adperf-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.adperf-chart-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;}
+.adperf-chart-title{font-size:.72rem;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+/* Demographics */
+.demo-section{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border);}
+.demo-section:last-child{border-bottom:none;margin-bottom:0;}
+.demo-section-label{font-size:.83rem;font-weight:700;color:var(--text);margin-bottom:12px;}
+.demo-row{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;}
+.demo-donut-wrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+.demo-legend{display:flex;flex-direction:column;gap:6px;min-width:110px;}
+.demo-legend-item{display:flex;align-items:center;gap:7px;font-size:.75rem;}
+.demo-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.demo-legend-label{color:var(--text-dim);flex:1;}
+.demo-legend-pct{color:var(--text);font-family:var(--fmono);font-weight:600;}
+/* Gender bars */
+.gender-bar-wrap{flex:1;min-width:200px;padding-top:4px;}
+.gender-bar-heading{font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;}
+.gender-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.gender-bar-label{font-size:.8rem;color:var(--text-dim);width:52px;flex-shrink:0;}
+.gender-bar-track{flex:1;height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;}
+.gender-bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+.gender-bar-fill.female{background:#67A7AC;}
+.gender-bar-fill.male{background:#5B8DEF;}
+.gender-bar-pct{font-family:var(--fmono);font-size:.8rem;font-weight:600;color:var(--text);width:36px;text-align:right;}
+.gender-top-segment{display:inline-block;margin-top:4px;font-size:.73rem;color:var(--teal);padding:3px 9px;background:rgba(103,167,172,0.1);border-radius:4px;}
+
 /* ─── CAMPAIGN CARDS ──────────────────────────────────────────── */
 .campaign-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:24px;}
 .campaign-card{
@@ -681,11 +714,12 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
         <span class="stat-trend neutral" id="stat-sessions-trend">Website traffic</span>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Email Contacts</div>
-      <div class="stat-value sm" id="stat-email-val">—</div>
+    <div class="stat-card clickable" onclick="navigate('meta',document.querySelector('[data-page=meta]'))">
+      <div class="stat-label">Lead ROAS (7d)</div>
+      <div class="stat-value sm" id="stat-roas-val">—</div>
       <div class="stat-footer">
-        <span class="stat-trend neutral" id="stat-email-trend">ActiveCampaign</span>
+        <span class="stat-trend neutral" id="stat-roas-trend">Leads × avg LTV ÷ spend</span>
+        <span id="stat-roas-badge"></span>
       </div>
     </div>
   </div>
@@ -732,6 +766,14 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       <div class="card-title">Campaign Snapshot</div>
       <div class="campaign-grid" id="overview-campaigns" style="margin-bottom:0;grid-template-columns:1fr;gap:10px"></div>
     </div>
+  </div>
+
+  <!-- Member Lifetime Value -->
+  <div class="card" id="ltv-section">
+    <div class="card-title">Member Lifetime Value</div>
+    <div class="ltv-tier-grid" id="ltv-tiers"></div>
+    <div class="ltv-summary-row" id="ltv-summary"></div>
+    <div class="ltv-note">Adjust values to match current pricing — saves automatically.</div>
   </div>
 </div>
 
@@ -808,12 +850,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     </div>
   </div>
 
-  <div class="card" style="margin-top:20px" id="ltv-section">
-    <div class="card-title">Member Lifetime Value</div>
-    <div class="ltv-tier-grid" id="ltv-tiers"></div>
-    <div class="ltv-summary-row" id="ltv-summary"></div>
-    <div class="ltv-note">Adjust values to match current pricing — saves automatically.</div>
-  </div>
+
 </div>
 
 <!-- ════ CAMPAIGNS ════════════════════════════════════════════════ -->
@@ -1389,7 +1426,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────
-const CACHE_KEY      = 'pm_hub_v4';
+const CACHE_KEY      = 'pm_hub_v5';
 const CACHE_TTL      = 1 * 60 * 60 * 1000; // 1h — server-side Blobs cache handles freshness
 const MAXX_URL       = '/.netlify/functions/maxx-report';
 const MAXX_CACHE_KEY = 'pm_maxx_v2';
@@ -1703,11 +1740,16 @@ function renderOverview(meta, ga4) {
   sessTrend.className = 'stat-trend '+sessT.cls;
   sessTrend.textContent = sessT.arrow+' '+sessT.pct+' vs last week';
 
-  // Email contacts
-  const contacts = dashData?.email?.totalContacts ?? dashData?.email?.contacts ?? null;
-  document.getElementById('stat-email-val').textContent = contacts!=null ? fmtNum(contacts) : '—';
-  const emailTrend = document.getElementById('stat-email-trend');
-  emailTrend.textContent = contacts!=null ? 'ActiveCampaign list' : 'ActiveCampaign';
+  // Lead ROAS = (leads × avg member LTV) / spend — uses the LTV calculator values
+  const ltvTiers   = loadLTVConfig();
+  const avgLTV     = ltvTiers.reduce((s, t) => s + t.monthly * t.months, 0) / ltvTiers.length;
+  const leadRoas   = (leads > 0 && spend > 0 && avgLTV > 0) ? +((leads * avgLTV) / spend).toFixed(1) : 0;
+  const roasEl     = document.getElementById('stat-roas-val');
+  const roasTrend  = document.getElementById('stat-roas-trend');
+  roasEl.textContent = leadRoas > 0 ? leadRoas.toFixed(1)+'x' : '—';
+  roasTrend.className = 'stat-trend neutral';
+  roasTrend.textContent = leadRoas > 0 ? 'Leads × LTV ÷ spend' : 'Leads × avg LTV ÷ spend';
+  document.getElementById('stat-roas-badge').innerHTML = leadRoas >= 15 ? '<span class="badge badge-good">Strong</span>' : leadRoas >= 8 ? '<span class="badge badge-watch">Fair</span>' : leadRoas > 0 ? '<span class="badge badge-act">Low</span>' : '';
 
   // Overview spend chart with projection
   const labels  = getLast7DayLabels();
@@ -1982,31 +2024,268 @@ function renderAdPerformanceFull(meta) {
   const el = document.getElementById('maxx-decisions-full');
   if (!el) return;
   if (!meta) { el.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem;padding:12px 0">Loading…</div>`; return; }
-  const ads = (meta.creatives || []).filter(a => a.spend > 0);
-  if (!ads.length) { el.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem;padding:12px 0">No active ads with spend this week.</div>`; return; }
-  el.innerHTML = `<div class="maxx-decisions">
-    ${ads.map(ad => {
-      const status = ad.leads > 0 ? 'KEEP' : ad.ctr >= 2.5 ? 'WATCH' : 'REVIEW';
-      const note   = ad.leads > 0
-        ? `${ad.leads} lead${ad.leads>1?'s':''} at ${fmtCurrency(ad.cpl)} CPL`
-        : ad.ctr >= 2.5
-          ? `Good CTR — no leads yet. Check form completion.`
-          : `Low CTR — review creative or audience targeting.`;
-      return `<div class="maxx-decision-row">
-        <div>${adBadge(status)}</div>
-        <div class="maxx-decision-info">
-          <div class="maxx-decision-ad">${ad.name}</div>
-          <div class="maxx-decision-reason">${note}</div>
-          <div class="maxx-decision-metrics">
-            <span>Spend: <strong>${fmtCurrency(ad.spend)}</strong></span>
-            <span>CTR: <strong>${fmtPct(ad.ctr)}</strong></span>
-            <span>Leads: <strong>${ad.leads}</strong></span>
-            ${ad.cpl>0?`<span>CPL: <strong>${fmtCurrency(ad.cpl)}</strong></span>`:''}
-          </div>
+
+  const AGE_COLORS = ['#67A7AC','#2DD4B8','#5B8DEF','#F59E0B','#F87171','#A78BFA'];
+  const labels30 = getLast30DayLabels();
+
+  // 30-day KPI totals (leads/CPL use 7-day figures — same source as Overview)
+  const spend30 = (meta.spendTrend||[]).reduce((s,v)=>s+v, 0);
+  const leads30 = meta.leads7d ?? 0;
+  const cpl30   = meta.costPerLead ?? 0;
+  const impr30  = (meta.impressionsTrend||[]).reduce((s,v)=>s+v, 0);
+  const clk30   = (meta.clicksTrend||[]).reduce((s,v)=>s+v, 0);
+  const ctr30   = impr30 > 0 ? +(clk30/impr30*100).toFixed(2) : (meta.ctr || 0);
+
+  const ads      = (meta.creatives||[]).filter(a=>a.spend>0);
+  const audience = meta.audienceBreakdown || [];
+
+  // Compute daily CTR from impressions + clicks trends
+  const ctrTrend = (meta.impressionsTrend||[]).map((impr,i) => {
+    const clk = (meta.clicksTrend||[])[i] || 0;
+    return impr > 0 ? +(clk/impr*100).toFixed(2) : 0;
+  });
+
+  const hasImprData = impr30 > 0;
+
+  el.innerHTML = `
+    <div class="adperf-kpi-row">
+      <div class="adperf-kpi"><div class="adperf-kpi-label">Spend (30d)</div><div class="adperf-kpi-value">${fmtCurrency(spend30)}</div></div>
+      <div class="adperf-kpi"><div class="adperf-kpi-label">Impressions</div><div class="adperf-kpi-value">${hasImprData ? fmtNum(impr30) : '—'}</div></div>
+      <div class="adperf-kpi"><div class="adperf-kpi-label">Clicks</div><div class="adperf-kpi-value">${hasImprData ? fmtNum(clk30) : '—'}</div></div>
+      <div class="adperf-kpi adperf-kpi-amber"><div class="adperf-kpi-label">Avg CTR</div><div class="adperf-kpi-value">${fmtPct(ctr30)}</div></div>
+      <div class="adperf-kpi adperf-kpi-green"><div class="adperf-kpi-label">Leads (7d)</div><div class="adperf-kpi-value">${leads30}</div></div>
+      <div class="adperf-kpi"><div class="adperf-kpi-label">CPL (7d)</div><div class="adperf-kpi-value">${cpl30 > 0 ? fmtCurrency(cpl30) : '—'}</div></div>
+    </div>
+
+    <div class="adperf-chart-grid">
+      <div class="adperf-chart-block">
+        <div class="adperf-chart-title">Daily Spend (30d)</div>
+        <div class="chart-wrap chart-h180"><canvas id="adperf-chart-spend"></canvas></div>
+      </div>
+      <div class="adperf-chart-block">
+        <div class="adperf-chart-title">Impressions &amp; Clicks (30d)</div>
+        <div class="chart-wrap chart-h180"><canvas id="adperf-chart-imprclk"></canvas></div>
+      </div>
+      <div class="adperf-chart-block">
+        <div class="adperf-chart-title">CTR % — Daily (30d)</div>
+        <div class="chart-wrap chart-h180"><canvas id="adperf-chart-ctr"></canvas></div>
+      </div>
+      <div class="adperf-chart-block">
+        <div class="adperf-chart-title">Leads by Day (30d)</div>
+        <div class="chart-wrap chart-h180"><canvas id="adperf-chart-leads"></canvas></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:24px">
+      <div class="adperf-chart-title" style="margin-bottom:10px">Active Campaigns — 7-day</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Campaign</th><th>Brand</th><th>Spend</th><th>Leads</th><th>CPL</th><th>CTR</th><th>Status</th></tr></thead>
+          <tbody>
+            ${(meta.campaigns||[]).filter(c=>c.spend>0).map(c=>`
+            <tr>
+              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">${c.name}</td>
+              <td><span class="badge badge-live">${c.brand}</span></td>
+              <td style="font-family:var(--fmono)">${fmtCurrency(c.spend)}</td>
+              <td style="font-family:var(--fmono)">${c.leads}</td>
+              <td style="font-family:var(--fmono)">${c.cpl>0?fmtCurrency(c.cpl):'—'}</td>
+              <td style="font-family:var(--fmono)">${fmtPct(c.ctr)}</td>
+              <td>${c.status==='Active'?'<span class="badge badge-live">Active</span>':'<span class="badge badge-paused">Paused</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="adperf-chart-title" style="margin-bottom:16px">Audience Demographics — by Spend</div>
+
+    <div class="demo-section">
+      <div class="demo-section-label">Overall — All Campaigns</div>
+      <div class="demo-row">
+        <div class="demo-donut-wrap">
+          <canvas id="chart-age-donut-overall" width="160" height="160"></canvas>
+          <div class="demo-legend" id="demo-legend-overall"></div>
         </div>
-      </div>`;
-    }).join('')}
-  </div>`;
+        <div class="gender-bar-wrap" id="demo-gender-overall"></div>
+      </div>
+    </div>
+
+    ${ads.map((ad,i) => `
+    <div class="demo-section">
+      <div class="demo-section-label">${ad.name}</div>
+      <div class="demo-row">
+        <div class="demo-donut-wrap">
+          <canvas id="chart-age-donut-${i}" width="160" height="160"></canvas>
+          <div class="demo-legend" id="demo-legend-${i}"></div>
+        </div>
+        <div class="gender-bar-wrap" id="demo-gender-${i}"></div>
+      </div>
+    </div>`).join('')}
+  `;
+
+  // ── Trend charts ──────────────────────────────────────────────────
+  destroyChart('adperf-chart-spend');
+  const spendCtx = document.getElementById('adperf-chart-spend');
+  if (spendCtx) {
+    charts['adperf-chart-spend'] = new Chart(spendCtx, {
+      type: 'bar',
+      data: { labels: labels30, datasets: [{ label:'Spend', data: meta.spendTrend||[], backgroundColor:'#67A7AC', borderRadius:3, borderSkipped:false }] },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>'$'+c.parsed.y.toFixed(2) } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:9},color:'#6B85A3',maxTicksLimit:8} },
+          y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{size:9},color:'#6B85A3',callback:v=>'$'+v} }
+        }
+      }
+    });
+  }
+
+  destroyChart('adperf-chart-imprclk');
+  const imprCtx = document.getElementById('adperf-chart-imprclk');
+  if (imprCtx) {
+    charts['adperf-chart-imprclk'] = new Chart(imprCtx, {
+      type:'line',
+      data:{
+        labels:labels30,
+        datasets:[
+          { label:'Impressions', data:hasImprData?(meta.impressionsTrend||[]):[], borderColor:'#67A7AC', backgroundColor:'rgba(103,167,172,0.08)', borderWidth:2, fill:true, tension:0.4, pointRadius:2, yAxisID:'y' },
+          { label:'Clicks', data:hasImprData?(meta.clicksTrend||[]):[], borderColor:'#5B8DEF', backgroundColor:'transparent', borderWidth:2, fill:false, tension:0.4, pointRadius:2, yAxisID:'y1' }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:true, labels:{ color:'#A8C0D6', font:{size:10}, boxWidth:10 } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:9},color:'#6B85A3',maxTicksLimit:8} },
+          y:{ position:'left', grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{size:9},color:'#67A7AC'} },
+          y1:{ position:'right', grid:{display:false}, ticks:{font:{size:9},color:'#5B8DEF'} }
+        }
+      }
+    });
+  }
+
+  destroyChart('adperf-chart-ctr');
+  const ctrCtx = document.getElementById('adperf-chart-ctr');
+  if (ctrCtx) {
+    charts['adperf-chart-ctr'] = new Chart(ctrCtx, {
+      type:'line',
+      data:{ labels:labels30, datasets:[{ label:'CTR %', data:ctrTrend, borderColor:'#F59E0B', backgroundColor:'rgba(245,158,11,0.08)', borderWidth:2, fill:true, tension:0.4, pointRadius:2 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>c.parsed.y.toFixed(2)+'%' } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:9},color:'#6B85A3',maxTicksLimit:8} },
+          y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{size:9},color:'#6B85A3',callback:v=>v+'%'} }
+        }
+      }
+    });
+  }
+
+  destroyChart('adperf-chart-leads');
+  const leadsCtx = document.getElementById('adperf-chart-leads');
+  if (leadsCtx) {
+    charts['adperf-chart-leads'] = new Chart(leadsCtx, {
+      type:'bar',
+      data:{ labels:labels30, datasets:[{ label:'Leads', data:meta.leadsTrend||[], backgroundColor:'#2DD4B8', borderRadius:3, borderSkipped:false }] },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>c.parsed.y+' leads' } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:9},color:'#6B85A3',maxTicksLimit:8} },
+          y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{size:9},color:'#6B85A3',stepSize:1} }
+        }
+      }
+    });
+  }
+
+  // ── Demographics ──────────────────────────────────────────────────
+  renderAgeDonut('chart-age-donut-overall', 'demo-legend-overall', audience, AGE_COLORS);
+  renderGenderBars('demo-gender-overall', buildOverallGender(ads));
+  ads.forEach((ad, i) => {
+    renderAgeDonut(`chart-age-donut-${i}`, `demo-legend-${i}`, ad.age||[], AGE_COLORS);
+    renderGenderBars(`demo-gender-${i}`, ad.gender||[]);
+  });
+}
+
+function renderAgeDonut(canvasId, legendId, ageData, colors) {
+  destroyChart(canvasId);
+  const ctx      = document.getElementById(canvasId);
+  const legendEl = document.getElementById(legendId);
+  if (!ctx) return;
+  if (!ageData || !ageData.length) {
+    if (legendEl) legendEl.innerHTML = '<div style="color:var(--text-muted);font-size:.75rem">No age data yet</div>';
+    return;
+  }
+  const labels = ageData.map(b => b.label);
+  const data   = ageData.map(b => b.pct || 0);
+  const total  = data.reduce((s,v)=>s+v,0);
+  charts[canvasId] = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: total>0 ? data : labels.map(()=>1), backgroundColor: colors.slice(0,labels.length), borderWidth:0, hoverOffset:4 }] },
+    options:{
+      responsive:false, cutout:'62%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{ label:c => c.label+': '+(total>0?data[c.dataIndex]:0)+'%' } }
+      }
+    }
+  });
+  if (legendEl) {
+    legendEl.innerHTML = labels.map((l,i) => `
+      <div class="demo-legend-item">
+        <span class="demo-legend-dot" style="background:${colors[i]||'#888'}"></span>
+        <span class="demo-legend-label">${l}</span>
+        <span class="demo-legend-pct">${total>0?data[i]:0}%</span>
+      </div>`).join('');
+  }
+}
+
+function renderGenderBars(containerId, genderData) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!genderData || !genderData.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:.75rem;padding-top:4px">No gender data yet</div>';
+    return;
+  }
+  const female = genderData.find(g=>g.label==='female');
+  const male   = genderData.find(g=>g.label==='male');
+  const fPct   = female?.pct || 0;
+  const mPct   = male?.pct   || 0;
+  const top    = fPct > mPct ? `Female ${fPct}%` : mPct > fPct ? `Male ${mPct}%` : null;
+  el.innerHTML = `
+    <div class="gender-bar-heading">Gender Split</div>
+    <div class="gender-bar-row">
+      <div class="gender-bar-label">Female</div>
+      <div class="gender-bar-track"><div class="gender-bar-fill female" style="width:${fPct}%"></div></div>
+      <div class="gender-bar-pct">${fPct}%</div>
+    </div>
+    <div class="gender-bar-row">
+      <div class="gender-bar-label">Male</div>
+      <div class="gender-bar-track"><div class="gender-bar-fill male" style="width:${mPct}%"></div></div>
+      <div class="gender-bar-pct">${mPct}%</div>
+    </div>
+    ${top ? `<div class="gender-top-segment">Top: ${top}</div>` : ''}
+  `;
+}
+
+function buildOverallGender(creatives) {
+  let fWeighted = 0, mWeighted = 0, total = 0;
+  for (const ad of creatives) {
+    const s = ad.spend || 0;
+    const f = (ad.gender||[]).find(g=>g.label==='female');
+    const m = (ad.gender||[]).find(g=>g.label==='male');
+    fWeighted += (f?.pct||0) * s;
+    mWeighted += (m?.pct||0) * s;
+    total += s;
+  }
+  if (!total) return [];
+  const fPct = Math.round(fWeighted/total);
+  const mPct = Math.round(mWeighted/total);
+  return [
+    { label:'female', pct:fPct },
+    { label:'male',   pct:mPct },
+  ].filter(g=>g.pct>0);
 }
 
 // ─── GHL — hardcoded pipeline structure (connects to live GHL data by name match)
@@ -2829,6 +3108,12 @@ function getLast7DayLabels() {
   return Array.from({length:7}, (_,i) => {
     const d = new Date(); d.setDate(d.getDate()-(6-i));
     return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric'});
+  });
+}
+function getLast30DayLabels() {
+  return Array.from({length:30}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-(29-i));
+    return d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
   });
 }
 function distributeMock(total, n) {
