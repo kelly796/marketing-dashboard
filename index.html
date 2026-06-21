@@ -381,16 +381,44 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .funnel-fill.danger{background:var(--danger);}
 
 /* ─── GHL ─────────────────────────────────────────────────────── */
-.pipeline-stages{display:flex;gap:0;margin-bottom:20px;}
-.pipeline-stage{
-  flex:1;padding:14px 10px;text-align:center;
-  background:var(--surface2);border:1px solid var(--border);border-right:none;
+.ghl-unassigned-banner{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--warning-bg);border:1px solid var(--warning);
+  border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;gap:12px;
 }
-.pipeline-stage:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm);}
-.pipeline-stage:last-child{border-right:1px solid var(--border);border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
-.pipeline-stage.active{background:var(--teal-dim);border-color:var(--teal);}
-.pipeline-stage-count{font-family:var(--fmono);font-size:1.7rem;font-weight:600;color:var(--text);}
-.pipeline-stage-label{font-size:.75rem;color:var(--text-muted);font-weight:600;margin-top:3px;}
+.ghl-unassigned-banner.hidden{display:none;}
+.ghl-unassigned-text{font-size:.88rem;font-weight:600;color:var(--warning);}
+.ghl-unassigned-sub{font-size:.78rem;color:var(--text-muted);margin-top:2px;}
+.ghl-pipelines-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.ghl-pipe-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;}
+.ghl-pipe-header{margin-bottom:12px;}
+.ghl-pipe-name{font-family:var(--fhead);font-size:.88rem;font-weight:700;color:var(--text);line-height:1.3;}
+.ghl-pipe-meta{font-size:.7rem;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;gap:8px;}
+.ghl-pipe-total-count{font-family:var(--fmono);font-size:.85rem;font-weight:700;color:var(--teal);}
+.ghl-pipe-stall{font-size:.68rem;}
+.ghl-pipe-stall.critical{color:var(--danger);}
+.ghl-pipe-stall.warn{color:var(--warning);}
+.ghl-pipe-stall.clean{color:var(--text-muted);}
+.ghl-stages-list{display:flex;flex-direction:column;gap:2px;flex:1;}
+.ghl-stage-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 9px;border-radius:var(--radius-sm);
+  background:var(--surface2);transition:background .15s;
+}
+.ghl-stage-row:hover{background:var(--surface3);}
+.ghl-stage-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;}
+.ghl-stage-dot.active{background:var(--success);}
+.ghl-stage-dot.amber{background:var(--warning);}
+.ghl-stage-dot.red{background:var(--danger);}
+.ghl-stage-name{font-size:.75rem;color:var(--text-dim);font-weight:500;flex:1;line-height:1.2;}
+.ghl-stage-count{font-family:var(--fmono);font-size:.8rem;font-weight:600;color:var(--text);min-width:16px;text-align:right;}
+.ghl-daily-actions{margin-top:12px;border-top:1px solid var(--border);padding-top:12px;}
+.ghl-daily-label{font-size:.7rem;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.ghl-daily-placeholder{
+  background:var(--surface2);border:1px dashed var(--border2);
+  border-radius:var(--radius-sm);padding:12px;
+  text-align:center;font-size:.72rem;color:var(--text-muted);
+}
 .ghl-action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
 .ghl-action-btn{
   padding:14px 12px;border-radius:var(--radius-sm);
@@ -400,6 +428,8 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 }
 .ghl-action-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-glow);}
 .ghl-action-btn svg{display:block;margin:0 auto 6px;}
+@media(max-width:1200px){.ghl-pipelines-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:700px){.ghl-pipelines-grid{grid-template-columns:1fr;}}
 
 /* ─── SKILLS ──────────────────────────────────────────────────── */
 .skills-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
@@ -547,6 +577,16 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       Campaigns
     </a></li>
 
+    <div class="sidebar-section-label">Social</div>
+    <li><a data-page="instagram" onclick="navigate('instagram',this);return false;">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+      Instagram
+    </a></li>
+    <li><a data-page="facebook" onclick="navigate('facebook',this);return false;">
+      <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+      Facebook
+    </a></li>
+
     <div class="sidebar-section-label">Data</div>
     <li><a data-page="ghl" onclick="navigate('ghl',this);return false;">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -555,6 +595,10 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     <li><a data-page="website" onclick="navigate('website',this);return false;">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>
       Website
+    </a></li>
+    <li><a data-page="seo" onclick="navigate('seo',this);return false;">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+      SEO &amp; AI Visibility
     </a></li>
 
     <div class="sidebar-section-label">Tools</div>
@@ -665,7 +709,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     <div class="card">
       <div class="card-title">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Maxx — Weekly Report
+        Ad Performance — Last 7 Days
       </div>
       <div id="maxx-report-overview">
         <div class="loading-state"><div class="spinner"></div>Loading Maxx report…</div>
@@ -734,7 +778,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   <div class="card" style="margin-bottom:20px">
     <div class="card-title">
       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      Maxx — Keep / Kill / Scale
+      Active Ads — Performance
     </div>
     <div id="maxx-decisions-full">
       <div class="loading-state"><div class="spinner"></div>Loading Maxx report…</div>
@@ -850,66 +894,78 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   <div class="section-header">
     <div>
       <div class="section-title">Go High Level</div>
-      <div class="section-subtitle">Pipeline · Contacts · Automations</div>
+      <div class="section-subtitle">Pipelines · Lead Tracking · Automations</div>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;align-items:center">
       <span class="badge badge-watch" id="ghl-status-badge">API Key Needed</span>
-      <button class="btn btn-primary btn-sm" id="ghl-add-lead-btn" onclick="showGhlModal('add-lead')">+ Add Lead</button>
+      <button class="btn btn-primary btn-sm" onclick="window.open('https://app.gohighlevel.com/v2/location/krxuwh4BZNB7b1H4kcKa/contacts/create','_blank')">+ Add Lead</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.open('https://app.gohighlevel.com','_blank')">Open GHL</button>
     </div>
   </div>
 
-  <div class="placeholder-banner" id="ghl-connect-banner">
+  <div class="placeholder-banner" id="ghl-connect-banner" style="display:none">
     <div class="placeholder-icon">🔗</div>
     <div class="placeholder-title">Connect Go High Level</div>
-    <div class="placeholder-text">Add your GHL API key to Netlify to see live pipeline data and run automations from here.</div>
+    <div class="placeholder-text">Add your GHL API key to Netlify to see live pipeline data.</div>
     <div style="font-size:.78rem;color:var(--text-muted);background:var(--bg);padding:10px 14px;border-radius:var(--radius-sm);font-family:var(--fmono);margin-bottom:16px">GHL_API_KEY = your-api-key</div>
     <button class="btn btn-navy" onclick="window.open('https://app.netlify.com','_blank')">Open Netlify Settings</button>
   </div>
 
-  <div class="card" id="ghl-pipeline-card">
-    <div class="card-title">Pipeline — HQ EP Funnel</div>
-    <div class="pipeline-stages" id="ghl-pipeline">
-      <div class="pipeline-stage"><div class="pipeline-stage-count" id="ghl-stage-0">—</div><div class="pipeline-stage-label">New Lead</div></div>
-      <div class="pipeline-stage"><div class="pipeline-stage-count" id="ghl-stage-1">—</div><div class="pipeline-stage-label">Contacted</div></div>
-      <div class="pipeline-stage active"><div class="pipeline-stage-count" id="ghl-stage-2">—</div><div class="pipeline-stage-label">Assessment Booked</div></div>
-      <div class="pipeline-stage"><div class="pipeline-stage-count" id="ghl-stage-3">—</div><div class="pipeline-stage-label">Attended</div></div>
-      <div class="pipeline-stage"><div class="pipeline-stage-count" id="ghl-stage-4">—</div><div class="pipeline-stage-label">Member</div></div>
+  <!-- Unassigned inbox -->
+  <div class="ghl-unassigned-banner hidden" id="ghl-unassigned-banner">
+    <div>
+      <div class="ghl-unassigned-text" id="ghl-unassigned-text">⚠ 0 unrouted leads — assign to a pipeline</div>
+      <div class="ghl-unassigned-sub">These leads have no service assigned. Review and route them before they go cold.</div>
     </div>
+    <button class="btn btn-secondary btn-sm" onclick="window.open('https://app.gohighlevel.com','_blank')">Review in GHL →</button>
+  </div>
 
-    <div class="card-title" style="margin-top:4px">Quick Actions</div>
+  <!-- Pipeline grid -->
+  <div class="ghl-pipelines-grid" id="ghl-pipelines-grid">
+    <div class="ghl-pipe-card" style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">
+      Loading pipelines…
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="card">
+    <div class="card-title">Quick Actions</div>
     <div class="ghl-action-grid">
-      <button class="ghl-action-btn" onclick="showGhlModal('add-lead')">
+      <button class="ghl-action-btn" onclick="window.open('https://app.gohighlevel.com/v2/location/krxuwh4BZNB7b1H4kcKa/contacts/create','_blank')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
         Add Lead
       </button>
-      <button class="ghl-action-btn" onclick="showGhlModal('trigger-automation')">
+      <button class="ghl-action-btn" onclick="window.open('https://app.gohighlevel.com/v2/location/krxuwh4BZNB7b1H4kcKa/automation','_blank')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Trigger Automation
+        Automations
       </button>
-      <button class="ghl-action-btn" onclick="showGhlModal('send-message')">
+      <button class="ghl-action-btn" onclick="window.open('https://app.gohighlevel.com/v2/location/krxuwh4BZNB7b1H4kcKa/conversations','_blank')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Send Message
+        Conversations
       </button>
-      <button class="ghl-action-btn" onclick="showGhlModal('move-stage')">
+      <button class="ghl-action-btn" onclick="window.open('https://app.gohighlevel.com/v2/location/krxuwh4BZNB7b1H4kcKa/opportunities','_blank')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-        Move Stage
+        Pipelines
       </button>
-      <button class="ghl-action-btn" onclick="showGhlModal('view-contacts')">
+      <button class="ghl-action-btn" onclick="window.open('https://app.gohighlevel.com/v2/location/krxuwh4BZNB7b1H4kcKa/contacts','_blank')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        View Contacts
+        All Contacts
       </button>
       <button class="ghl-action-btn" onclick="window.open('https://app.gohighlevel.com','_blank')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         Open GHL
       </button>
     </div>
+  </div>
 
-    <div class="card-title" style="margin-top:4px">Recent Leads</div>
+  <!-- Recent Leads -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Recent Leads — All Pipelines</div>
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>Name</th><th>Source</th><th>Stage</th><th>Added</th><th>Action</th></tr></thead>
+        <thead><tr><th>Name</th><th>Pipeline</th><th>Stage</th><th>Source</th><th>Added</th><th>Status</th></tr></thead>
         <tbody id="ghl-contacts-body">
-          <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">Connect GHL API to see contacts</td></tr>
+          <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -1096,6 +1152,73 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   </div>
 </div>
 
+<!-- ════ SEO & AI VISIBILITY ══════════════════════════════════════ -->
+<div id="tab-seo" class="tab-content">
+  <div class="section-header">
+    <div>
+      <div class="section-title">SEO &amp; AI Visibility</div>
+      <div class="section-subtitle">performotion.com.au · 30-day GSC window · daily scan</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="runSiteAudit(true)">↺ Run Audit</button>
+  </div>
+
+  <!-- Search Performance Stats -->
+  <div class="stat-grid-4" style="margin-bottom:20px" id="seo-stats">
+    <div class="stat-card"><div class="stat-label">Impressions (30d)</div><div class="stat-value sm" id="seo-impressions">—</div></div>
+    <div class="stat-card"><div class="stat-label">Clicks (30d)</div><div class="stat-value sm" id="seo-clicks">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Position</div><div class="stat-value sm" id="seo-position">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg CTR</div><div class="stat-value sm" id="seo-ctr">—</div></div>
+  </div>
+
+  <!-- PageSpeed -->
+  <div class="card-grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+        Mobile Speed
+      </div>
+      <div id="seo-speed-mobile"><div style="color:var(--text-muted);font-size:.83rem">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Desktop Speed
+      </div>
+      <div id="seo-speed-desktop"><div style="color:var(--text-muted);font-size:.83rem">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Keywords + Position Buckets -->
+  <div class="card-grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">Top Keywords</div>
+      <div id="seo-keywords"><div style="color:var(--text-muted);font-size:.83rem">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Position Breakdown</div>
+      <div id="seo-positions"><div style="color:var(--text-muted);font-size:.83rem">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Site Audit -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Site Audit
+    </div>
+    <div id="seo-audit-content"><div class="loading-state"><div class="spinner"></div>Loading audit…</div></div>
+  </div>
+
+  <!-- AI Suitability -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>
+      AI Suitability — ChatGPT, Perplexity &amp; Google AI Overviews
+    </div>
+    <div id="seo-ai-checklist"><div style="color:var(--text-muted);font-size:.83rem">Loading…</div></div>
+  </div>
+</div>
+
 <!-- ════ SKILL LAUNCHER ═══════════════════════════════════════════ -->
 <div id="tab-skills" class="tab-content">
   <div class="section-header">
@@ -1150,6 +1273,96 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   </div>
 </div>
 
+<!-- ─── INSTAGRAM ────────────────────────────────────────────────── -->
+<div id="tab-instagram" class="tab-content">
+  <div class="section-title" style="margin-bottom:20px">Instagram — @performotion_hq</div>
+
+  <!-- Stat cards -->
+  <div class="stat-grid" style="margin-bottom:24px">
+    <div class="stat-card">
+      <div class="stat-label">Followers</div>
+      <div class="stat-value" id="ig-followers">—</div>
+      <div class="stat-trend" id="ig-followers-trend"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Reach (7d)</div>
+      <div class="stat-value" id="ig-reach">—</div>
+      <div class="stat-trend" id="ig-reach-trend"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Views (7d)</div>
+      <div class="stat-value" id="ig-views">—</div>
+      <div class="stat-trend" id="ig-views-trend"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Engagement Rate</div>
+      <div class="stat-value" id="ig-engagement">—</div>
+      <div class="stat-trend" id="ig-engagement-trend"></div>
+    </div>
+  </div>
+
+  <!-- Reach trend chart -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header"><span class="section-title" style="font-size:1rem">Daily Reach — Last 30 Days</span></div>
+    <div class="card-body"><canvas id="chart-ig-reach" height="140"></canvas></div>
+  </div>
+
+  <!-- Recent posts table -->
+  <div class="card">
+    <div class="card-header"><span class="section-title" style="font-size:1rem">Recent Posts</span></div>
+    <div class="card-body">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Type</th><th>Caption</th><th>Likes</th><th>Comments</th><th>Reach</th></tr></thead>
+          <tbody id="ig-posts-body"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">Loading posts...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FACEBOOK ──────────────────────────────────────────────────── -->
+<div id="tab-facebook" class="tab-content">
+  <div class="section-title" style="margin-bottom:20px">Facebook — PerforMotion</div>
+
+  <!-- Stat cards -->
+  <div class="stat-grid" style="margin-bottom:24px">
+    <div class="stat-card">
+      <div class="stat-label">Page Followers</div>
+      <div class="stat-value" id="fb-fans">—</div>
+      <div class="stat-trend" id="fb-fans-trend"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Page Views (7d)</div>
+      <div class="stat-value" id="fb-views">—</div>
+      <div class="stat-trend" id="fb-views-trend"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Engagement (7d)</div>
+      <div class="stat-value" id="fb-engagement">—</div>
+      <div class="stat-trend" id="fb-engagement-trend"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Posts (7d)</div>
+      <div class="stat-value" id="fb-posts">—</div>
+      <div class="stat-trend" id="fb-posts-trend"></div>
+    </div>
+  </div>
+
+  <!-- Page views trend chart -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header"><span class="section-title" style="font-size:1rem">Page Views — Last 30 Days</span></div>
+    <div class="card-body"><canvas id="chart-fb-views" height="140"></canvas></div>
+  </div>
+
+  <!-- Status note -->
+  <div class="card">
+    <div class="card-body">
+      <div id="fb-status-note" style="color:var(--text-muted);font-size:.875rem;line-height:1.6">Loading Facebook page data...</div>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <!-- ─── SUB-PAGES ────────────────────────────────────────────────── -->
@@ -1178,11 +1391,11 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────
 const CACHE_KEY      = 'pm_hub_v4';
-const CACHE_TTL      = 4 * 60 * 60 * 1000;
+const CACHE_TTL      = 1 * 60 * 60 * 1000; // 1h — server-side Blobs cache handles freshness
 const MAXX_URL       = '/.netlify/functions/maxx-report';
 const MAXX_CACHE_KEY = 'pm_maxx_v2';
 const MAXX_CACHE_TTL = 24 * 60 * 60 * 1000;
-const PAGE_TITLES = { overview:'Overview', meta:'Meta Ads', campaigns:'Campaigns', ghl:'Go High Level', website:'Website', skills:'Skill Launcher', ai:'AI Insights' };
+const PAGE_TITLES = { overview:'Overview', meta:'Meta Ads', campaigns:'Campaigns', ghl:'Go High Level', website:'Website', seo:'SEO & AI Visibility', skills:'Skill Launcher', ai:'AI Insights' };
 
 // ─── STATE ────────────────────────────────────────────────────────
 let dashData = null;
@@ -1408,8 +1621,9 @@ async function loadData(force=false) {
   let data = force ? null : getCache();
   if (!data) {
     try {
+      const dataUrl = force ? '/.netlify/functions/get-data?_bypass_blobs=1' : '/.netlify/functions/get-data';
       const [mainRes, ghlRes] = await Promise.allSettled([
-        fetch('/.netlify/functions/get-data').then(r=>r.json()),
+        fetch(dataUrl).then(r=>r.json()),
         fetch('/.netlify/functions/fetch-ghl').then(r=>r.json()).catch(()=>null),
       ]);
       data   = mainRes.status==='fulfilled' ? mainRes.value : {};
@@ -1418,7 +1632,6 @@ async function loadData(force=false) {
     } catch(e) { console.error('Load error', e); data={}; }
   }
   dashData = data;
-  maxxData = await loadMaxxReport(false);
   renderAll();
 }
 function refreshData() { loadData(true); }
@@ -1437,8 +1650,12 @@ function renderAll() {
   renderLTV();
   renderCampaignsPage(meta);
   renderWebsite(ga4, seo, dashData?.clarity || null);
-  renderMaxxReport();
+  renderAdPerformanceOverview(meta);
+  renderAdPerformanceFull(meta);
+  renderSEO(dashData?.seo || null, dashData?.pagespeed || null);
   renderGHL();
+  renderInstagram(dashData?.instagramHQ || null);
+  renderFacebook(dashData?.facebook || null);
   const ts = dashData?.lastUpdated
     ? new Date(dashData.lastUpdated).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
     : 'Just now';
@@ -1506,8 +1723,6 @@ function renderOverview(meta, ga4) {
 // ─── ACTION ITEMS ─────────────────────────────────────────────────
 function renderActionItems(meta) {
   const items = [];
-  if (maxxData?.nextAction)
-    items.push({ priority:'amber', text:maxxData.nextAction, source:'Maxx' });
   if (meta) {
     if (!meta.leads7d || meta.leads7d===0)
       items.push({ priority:'red', text:'No leads generated yet. Check landing page form and pixel firing.', source:'Meta Ads' });
@@ -1591,8 +1806,7 @@ function renderMeta(meta) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">No ad data — check Meta API connection</td></tr>';
   } else {
     tbody.innerHTML = creatives.map(c => {
-      const maxxDec = (maxxData?.decisions||[]).find(d=>d.ad&&c.name&&c.name.toLowerCase().includes(d.ad.toLowerCase().split(' ')[0]));
-      const dec = maxxDec?.decision || (c.leads>0?'KEEP':'WATCH');
+      const dec = c.leads > 0 ? 'KEEP' : c.ctr >= 2.5 ? 'WATCH' : 'REVIEW';
       const safeName = (c.name||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
       return `<tr class="clickable-row" data-adname="${safeName}" onclick="openAdDetail(this.dataset.adname)">
         <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</td>
@@ -1707,9 +1921,10 @@ async function loadMaxxReport(forceRefresh) {
       }
     } catch {}
   }
-  // Fetch fresh from function
+  // Fetch fresh from function — pass leads7d so Maxx uses the same source of truth
   try {
-    const res = await fetch(MAXX_URL + '?t=' + Date.now());
+    const leadsOverride = dashData?.meta?.leads7d ?? 0;
+    const res = await fetch(MAXX_URL + '?t=' + Date.now() + '&leads=' + leadsOverride);
     if (!res.ok) return maxxData || null;
     const data = await res.json();
     if (data && !data.error) {
@@ -1737,104 +1952,334 @@ function maxxTimestamp() {
   });
 }
 
-function renderMaxxReport() { renderMaxxOverview(); renderMaxxFull(); }
-
-function renderMaxxOverview() {
+function renderAdPerformanceOverview(meta) {
   const el = document.getElementById('maxx-report-overview');
   if (!el) return;
-  if (!maxxData) {
-    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.83rem">No Maxx report yet.<br><span style="font-size:.75rem;display:block;margin-top:4px"><button class="btn btn-secondary btn-sm" onclick="refreshMaxxReport()">Generate now</button></span></div>`;
-    return;
-  }
+  if (!meta) { el.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem;padding:12px 0">Loading…</div>`; return; }
+  const leads = meta.leads7d || 0;
+  const spend = meta.spend7d || 0;
+  const cpl   = meta.costPerLead || 0;
+  const ctr   = meta.ctr || 0;
+  const camps = (meta.campaigns || []).filter(c => c.spend > 0);
   el.innerHTML = `
-    <div class="maxx-header">
-      <div class="maxx-avatar">M</div>
-      <div>
-        <div class="maxx-name">Maxx — Daily Report</div>
-        <div class="maxx-time">Generated ${maxxTimestamp()}</div>
-      </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:${camps.length?'16px':'0'}">
+      <div><div style="font-size:.75rem;color:var(--text-muted);margin-bottom:3px">Spend (7d)</div><div style="font-size:1.05rem;font-weight:700">${fmtCurrency(spend)}</div></div>
+      <div><div style="font-size:.75rem;color:var(--text-muted);margin-bottom:3px">Leads</div><div style="font-size:1.05rem;font-weight:700">${leads}</div></div>
+      <div><div style="font-size:.75rem;color:var(--text-muted);margin-bottom:3px">CPL</div><div style="font-size:1.05rem;font-weight:700">${cpl > 0 ? fmtCurrency(cpl) : '—'}</div></div>
+      <div><div style="font-size:.75rem;color:var(--text-muted);margin-bottom:3px">Avg CTR</div><div style="font-size:1.05rem;font-weight:700">${fmtPct(ctr)}</div></div>
     </div>
-    <div class="maxx-summary">${maxxData.summary||'—'}</div>
-    ${maxxData.nextAction?`<div style="font-size:.78rem;color:var(--teal);font-weight:600;margin-top:8px">Next: ${maxxData.nextAction}</div>`:''}`;
+    ${camps.map(c => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--border)">
+        <div style="font-size:.83rem;font-weight:600;color:var(--text)">${c.name}</div>
+        <div style="display:flex;gap:14px;font-size:.78rem;color:var(--text-muted);font-family:var(--fmono)">
+          <span>${fmtCurrency(c.spend)}</span>
+          <span style="color:${c.leads>0?'var(--teal)':'var(--text-muted)'};font-weight:${c.leads>0?'700':'400'}">${c.leads} lead${c.leads!==1?'s':''}</span>
+          <span>CTR ${fmtPct(c.ctr)}</span>
+        </div>
+      </div>`).join('')}`;
 }
 
-function renderMaxxFull() {
+function renderAdPerformanceFull(meta) {
   const el = document.getElementById('maxx-decisions-full');
   if (!el) return;
-  if (!maxxData) {
-    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:.83rem">No Maxx report yet.<br><span style="display:block;margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="refreshMaxxReport()">Generate now</button></span></div>`;
+  if (!meta) { el.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem;padding:12px 0">Loading…</div>`; return; }
+  const ads = (meta.creatives || []).filter(a => a.spend > 0);
+  if (!ads.length) { el.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem;padding:12px 0">No active ads with spend this week.</div>`; return; }
+  el.innerHTML = `<div class="maxx-decisions">
+    ${ads.map(ad => {
+      const status = ad.leads > 0 ? 'KEEP' : ad.ctr >= 2.5 ? 'WATCH' : 'REVIEW';
+      const note   = ad.leads > 0
+        ? `${ad.leads} lead${ad.leads>1?'s':''} at ${fmtCurrency(ad.cpl)} CPL`
+        : ad.ctr >= 2.5
+          ? `Good CTR — no leads yet. Check form completion.`
+          : `Low CTR — review creative or audience targeting.`;
+      return `<div class="maxx-decision-row">
+        <div>${adBadge(status)}</div>
+        <div class="maxx-decision-info">
+          <div class="maxx-decision-ad">${ad.name}</div>
+          <div class="maxx-decision-reason">${note}</div>
+          <div class="maxx-decision-metrics">
+            <span>Spend: <strong>${fmtCurrency(ad.spend)}</strong></span>
+            <span>CTR: <strong>${fmtPct(ad.ctr)}</strong></span>
+            <span>Leads: <strong>${ad.leads}</strong></span>
+            ${ad.cpl>0?`<span>CPL: <strong>${fmtCurrency(ad.cpl)}</strong></span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ─── GHL — hardcoded pipeline structure (connects to live GHL data by name match)
+const GHL_PIPELINES = [
+  {
+    key: 'hq-ep',
+    name: 'HQ EP',
+    subtitle: 'Exercise Physiology',
+    stages: ['New Lead','Called','No Answer','Picked Up — Thinking','Picked Up — Booked','Consult Done — PAYG','Consult Done — Membership','Lost — Nurture'],
+  },
+  {
+    key: 'gym',
+    name: 'Gym',
+    subtitle: 'Membership',
+    stages: ['New Lead','Call Made','No Answer','Tour Booked','Member','Lost'],
+  },
+  {
+    key: 'online',
+    name: 'Online Coaching',
+    subtitle: 'Remote clients',
+    stages: ['New Lead','Call Booked','Call Had','Member','Lost'],
+  },
+  {
+    key: 'education',
+    name: 'Education',
+    subtitle: 'Biomechanics course',
+    stages: ['New Lead','Free Course','Nurturing','Paid Course','Lost'],
+  },
+];
+
+// ─── INSTAGRAM RENDER ─────────────────────────────────────────────
+function renderInstagram(ig) {
+  if (!ig) {
+    document.getElementById('ig-posts-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">No Instagram data — check Meta token</td></tr>';
     return;
   }
-  const decisions = maxxData.decisions||[];
-  el.innerHTML = `
-    <div class="maxx-header" style="justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="maxx-avatar">M</div>
-        <div>
-          <div class="maxx-name">Maxx — Daily Report</div>
-          <div class="maxx-time">Generated ${maxxTimestamp()}</div>
-        </div>
-      </div>
-      <button class="btn btn-secondary btn-sm" onclick="refreshMaxxReport()" title="Force regenerate">↺ Refresh</button>
-    </div>
-    <div class="maxx-summary">${maxxData.topInsight||maxxData.summary||'—'}</div>
-    <div class="maxx-decisions">
-      ${decisions.map(d=>`
-        <div class="maxx-decision-row">
-          <div>${adBadge(d.decision)}</div>
-          <div class="maxx-decision-info">
-            <div class="maxx-decision-ad">${d.ad}</div>
-            <div class="maxx-decision-reason">${d.reason}</div>
-            ${d.metrics?`<div class="maxx-decision-metrics">
-              <span>Spend: <strong>${fmtCurrency(d.metrics.spend)}</strong></span>
-              <span>CTR: <strong>${fmtPct(d.metrics.ctr)}</strong></span>
-              <span>Leads: <strong>${d.metrics.leads}</strong></span>
-              ${d.metrics.cpl>0?`<span>CPL: <strong>${fmtCurrency(d.metrics.cpl)}</strong></span>`:''}
-            </div>`:''}
-          </div>
-        </div>`).join('')}
-    </div>
-    ${maxxData.nextAction?`<div style="margin-top:14px;font-size:.82rem;color:var(--teal);font-weight:600;padding:10px 14px;background:var(--teal-dim);border-radius:var(--radius-sm)">Next: ${maxxData.nextAction}</div>`:''}
-    ${maxxData.accountHealth?`<div style="margin-top:12px;font-size:.78rem;color:var(--text-muted);padding:8px 0">Account health: <strong style="color:var(--text)">${maxxData.accountHealth.score}/10</strong> — ${maxxData.accountHealth.notes}</div>`:''}`;
+
+  // Stat cards
+  document.getElementById('ig-followers').textContent = fmtNum(ig.followers ?? 0);
+  const followT = trendArrow(ig.followers ?? 0, ig.followersPrev ?? 0);
+  document.getElementById('ig-followers-trend').className = 'stat-trend ' + followT.cls;
+  document.getElementById('ig-followers-trend').textContent = followT.arrow + ' ' + followT.pct + ' vs last week';
+
+  document.getElementById('ig-reach').textContent = fmtNum(ig.reach7d ?? 0);
+  const reachT = trendArrow(ig.reach7d ?? 0, ig.reach7dPrev ?? 0);
+  document.getElementById('ig-reach-trend').className = 'stat-trend ' + reachT.cls;
+  document.getElementById('ig-reach-trend').textContent = reachT.arrow + ' ' + reachT.pct + ' vs last week';
+
+  document.getElementById('ig-views').textContent = fmtNum(ig.impressions7d ?? 0);
+  const viewT = trendArrow(ig.impressions7d ?? 0, ig.impressionsPrev ?? 0);
+  document.getElementById('ig-views-trend').className = 'stat-trend ' + viewT.cls;
+  document.getElementById('ig-views-trend').textContent = viewT.arrow + ' ' + viewT.pct + ' vs last week';
+
+  const engRate = ig.engagementRate ?? 0;
+  document.getElementById('ig-engagement').textContent = engRate > 0 ? fmtPct(engRate) : '—';
+  const engT = trendArrow(engRate, ig.engagementRatePrev ?? 0);
+  document.getElementById('ig-engagement-trend').className = 'stat-trend ' + engT.cls;
+  document.getElementById('ig-engagement-trend').textContent = engRate > 0 ? engT.arrow + ' ' + engT.pct + ' vs last week' : '';
+
+  // Reach trend chart
+  destroyChart('chart-ig-reach');
+  const ctx = document.getElementById('chart-ig-reach');
+  if (ctx && ig.reachTrend?.length) {
+    const labels = Array.from({length: ig.reachTrend.length}, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (ig.reachTrend.length - 1 - i));
+      return d.toLocaleDateString('en-AU', {day:'numeric', month:'short'});
+    });
+    charts['chart-ig-reach'] = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Reach', data: ig.reachTrend, backgroundColor: 'rgba(45,212,184,0.7)', borderRadius: 3, borderSkipped: false }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtNum(c.parsed.y) + ' reach' } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#6B85A3', maxTicksLimit: 10 } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 10 }, color: '#6B85A3', callback: v => fmtNum(v) } }
+        }
+      }
+    });
+  }
+
+  // Posts table
+  const posts = ig.posts || [];
+  const tbody = document.getElementById('ig-posts-body');
+  if (!posts.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">No recent posts found</td></tr>';
+    return;
+  }
+  const typeIcon = t => t === 'VIDEO' || t === 'REEL' ? '🎬' : t === 'CAROUSEL_ALBUM' ? '🖼️' : '📷';
+  tbody.innerHTML = posts.map(p => {
+    const date = p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-AU', {day:'numeric',month:'short'}) : '—';
+    const caption = (p.caption || '').replace(/</g,'&lt;').substring(0, 60) + ((p.caption||'').length > 60 ? '…' : '');
+    return `<tr>
+      <td style="font-family:var(--fmono);font-size:.8rem">${date}</td>
+      <td>${typeIcon(p.type || p.media_type)}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted);font-size:.83rem">${caption || '—'}</td>
+      <td style="font-family:var(--fmono)">${fmtNum(p.likes ?? p.like_count ?? 0)}</td>
+      <td style="font-family:var(--fmono)">${fmtNum(p.comments ?? p.comments_count ?? 0)}</td>
+      <td style="font-family:var(--fmono)">${p.reach > 0 ? fmtNum(p.reach) : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── FACEBOOK RENDER ──────────────────────────────────────────────
+function renderFacebook(fb) {
+  const noData = !fb || (!fb.fanCount && !fb.pageViews7d);
+
+  document.getElementById('fb-fans').textContent = fb?.fanCount ? fmtNum(fb.fanCount) : '—';
+  document.getElementById('fb-fans-trend').textContent = fb?.fanCount ? 'Page followers' : '';
+
+  document.getElementById('fb-views').textContent = fb?.pageViews7d ? fmtNum(fb.pageViews7d) : '—';
+  const viewT = trendArrow(fb?.pageViews7d ?? 0, fb?.pageViewsPrev ?? 0);
+  if (fb?.pageViews7d) {
+    document.getElementById('fb-views-trend').className = 'stat-trend ' + viewT.cls;
+    document.getElementById('fb-views-trend').textContent = viewT.arrow + ' ' + viewT.pct + ' vs last week';
+  }
+
+  document.getElementById('fb-engagement').textContent = fb?.engagement7d ? fmtNum(fb.engagement7d) : '—';
+  document.getElementById('fb-posts').textContent = fb?.posts7d ?? '—';
+
+  // Page views trend chart
+  destroyChart('chart-fb-views');
+  const ctx = document.getElementById('chart-fb-views');
+  if (ctx && fb?.reachTrend?.some(v => v > 0)) {
+    const labels = Array.from({length: fb.reachTrend.length}, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (fb.reachTrend.length - 1 - i));
+      return d.toLocaleDateString('en-AU', {day:'numeric', month:'short'});
+    });
+    charts['chart-fb-views'] = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{ label: 'Page Views', data: fb.reachTrend, borderColor: '#4F86F7', backgroundColor: 'rgba(79,134,247,0.1)', tension: 0.4, fill: true, pointRadius: 2 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtNum(c.parsed.y) + ' views' } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#6B85A3', maxTicksLimit: 10 } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 10 }, color: '#6B85A3', callback: v => fmtNum(v) } }
+        }
+      }
+    });
+  } else if (ctx) {
+    document.getElementById('fb-status-note').textContent = 'Facebook page insights require a Page Access Token with pages_read_engagement permission. Follower count is showing correctly. Page view trends will appear once the token is upgraded.';
+    return;
+  }
+
+  document.getElementById('fb-status-note').textContent = noData ? 'No Facebook page data available — check Meta token permissions.' : '';
 }
 
 // ─── GHL RENDER ───────────────────────────────────────────────────
 function renderGHL() {
   const hasApi = ghlData && !ghlData.placeholder;
+
   const banner = document.getElementById('ghl-connect-banner');
   if (banner) banner.style.display = hasApi ? 'none' : 'block';
+
   const badge = document.getElementById('ghl-status-badge');
-  if (badge) { badge.textContent = hasApi?'Connected':'API Key Needed'; badge.className='badge '+(hasApi?'badge-good':'badge-watch'); }
-  const p = ghlData?.pipeline||{};
-  ['0','1','2','3','4'].forEach(i => {
-    const el = document.getElementById('ghl-stage-'+i);
-    if (el) el.textContent = p.stages?.[i]??'—';
+  if (badge) {
+    badge.textContent = hasApi ? 'Connected' : 'Awaiting GHL Setup';
+    badge.className = 'badge ' + (hasApi ? 'badge-good' : 'badge-watch');
+  }
+
+  // Unassigned inbox banner
+  const unassignedBanner = document.getElementById('ghl-unassigned-banner');
+  const unassignedText   = document.getElementById('ghl-unassigned-text');
+  const unassignedCount  = ghlData?.unassigned?.count || 0;
+  if (unassignedBanner) {
+    if (unassignedCount > 0) {
+      unassignedBanner.classList.remove('hidden');
+      if (unassignedText) unassignedText.textContent = `⚠ ${unassignedCount} unrouted ${unassignedCount === 1 ? 'lead' : 'leads'} — assign to a pipeline`;
+    } else {
+      unassignedBanner.classList.add('hidden');
+    }
+  }
+
+  // Build a lookup: GHL pipeline name → stage name → {count, stalledCount, criticalCount}
+  const ghlLookup = {};
+  (ghlData?.pipelines || []).forEach(p => {
+    const pipeKey = p.name.toLowerCase();
+    ghlLookup[pipeKey] = {};
+    (p.stages || []).forEach(s => {
+      ghlLookup[pipeKey][s.name.toLowerCase()] = {
+        count:         s.count || 0,
+        stalledCount:  s.stalledCount || 0,
+        criticalCount: s.criticalCount || 0,
+      };
+    });
   });
+
+  // Resolve live counts for a pipeline + stage name
+  function getLiveCounts(pipelineName, stageName) {
+    const pipeKey  = pipelineName.toLowerCase();
+    const stageKey = stageName.toLowerCase();
+    // Try exact match first, then partial name match
+    for (const [k, stages] of Object.entries(ghlLookup)) {
+      if (k.includes(pipeKey.split(' ')[0]) || pipeKey.includes(k.split(' ')[0])) {
+        const s = stages[stageKey];
+        if (s !== undefined) return s;
+      }
+    }
+    return null;
+  }
+
+  // Render pipeline cards
+  const grid = document.getElementById('ghl-pipelines-grid');
+  if (grid) {
+    grid.innerHTML = GHL_PIPELINES.map(pipe => {
+      let totalLeads = 0, stalledTotal = 0, criticalTotal = 0;
+
+      const stagesHtml = pipe.stages.map(stageName => {
+        const live = getLiveCounts(pipe.name, stageName);
+        const count    = live?.count         ?? 0;
+        const stalled  = live?.stalledCount  ?? 0;
+        const critical = live?.criticalCount ?? 0;
+        totalLeads   += count;
+        stalledTotal += stalled;
+        criticalTotal += critical;
+
+        const dotClass = count === 0 ? '' : critical > 0 ? 'red' : stalled > 0 ? 'amber' : 'active';
+        return `<div class="ghl-stage-row">
+          <span class="ghl-stage-dot ${dotClass}"></span>
+          <span class="ghl-stage-name">${stageName}</span>
+          <span class="ghl-stage-count">${hasApi ? count : '—'}</span>
+        </div>`;
+      }).join('');
+
+      const stallClass = criticalTotal > 0 ? 'critical' : stalledTotal > 0 ? 'warn' : 'clean';
+      const stallText  = !hasApi ? 'GHL not connected'
+        : criticalTotal > 0 ? `${criticalTotal} critical`
+        : stalledTotal  > 0 ? `${stalledTotal} stalled`
+        : 'All clear';
+
+      return `<div class="ghl-pipe-card">
+        <div class="ghl-pipe-header">
+          <div class="ghl-pipe-name">${pipe.name}</div>
+          <div class="ghl-pipe-meta">
+            <span>${pipe.subtitle}</span>
+            <span class="ghl-pipe-total-count">${hasApi ? totalLeads : '—'}</span>
+            <span class="ghl-pipe-stall ${stallClass}">${stallText}</span>
+          </div>
+        </div>
+        <div class="ghl-stages-list">${stagesHtml}</div>
+        <div class="ghl-daily-actions">
+          <div class="ghl-daily-label">Daily Actions</div>
+          <div class="ghl-daily-placeholder">No actions configured yet</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Recent leads table
   const tbody = document.getElementById('ghl-contacts-body');
   if (!tbody) return;
-  const contacts = ghlData?.recentContacts||[];
+  const contacts = ghlData?.recentContacts || [];
   if (!contacts.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">Connect GHL API to see contacts</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">${hasApi ? 'No leads yet.' : 'Pipelines not yet set up in GHL.'}</td></tr>`;
   } else {
-    tbody.innerHTML = contacts.map(c=>`<tr>
-      <td style="font-weight:600">${c.name}</td>
-      <td>${c.source||'—'}</td>
-      <td><span class="badge badge-live">${c.stage}</span></td>
-      <td>${c.addedAt?new Date(c.addedAt).toLocaleDateString('en-AU'):'—'}</td>
-      <td><button class="btn btn-secondary btn-sm" onclick="showGhlModal('move-stage','${c.id}')">Move</button></td>
-    </tr>`).join('');
+    tbody.innerHTML = contacts.map(c => {
+      const statusBadge = c.critical
+        ? '<span class="badge badge-watch">Critical</span>'
+        : c.stalled
+        ? '<span class="badge" style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">Stalled</span>'
+        : '<span class="badge badge-good">Active</span>';
+      return `<tr>
+        <td style="font-weight:600">${c.name}</td>
+        <td style="font-size:.8rem;color:var(--text-muted)">${c.pipeline || '—'}</td>
+        <td><span class="badge badge-live">${c.stage}</span></td>
+        <td>${c.source || '—'}</td>
+        <td>${c.addedAt ? new Date(c.addedAt).toLocaleDateString('en-AU') : '—'}</td>
+        <td>${statusBadge}</td>
+      </tr>`;
+    }).join('');
   }
-}
-function showGhlModal(action, id) {
-  const messages = {
-    'add-lead':'Open GHL → Contacts → Add Contact.',
-    'trigger-automation':'Open GHL → Automation to trigger a workflow.',
-    'send-message':'Open GHL → Conversations to send a message.',
-    'move-stage':'Open GHL → Pipeline to move this contact.',
-    'view-contacts':'Open GHL → Contacts to view all contacts.',
-  };
-  showToast(messages[action]||'Open GHL to complete this action.');
-  setTimeout(()=>window.open('https://app.gohighlevel.com','_blank'),800);
 }
 
 // ─── WEBSITE RENDER ───────────────────────────────────────────────
@@ -2413,6 +2858,267 @@ function distributeMock(total, n) {
 }
 function truncate(str, max) {
   return str&&str.length>max ? str.slice(0,max)+'…' : str;
+}
+
+// ─── SEO & AI VISIBILITY ──────────────────────────────────────────
+const SEO_AUDIT_CACHE_KEY = 'pm_site_audit_v1';
+const SEO_AUDIT_CACHE_TTL = 24 * 60 * 60 * 1000;
+let siteAuditData = null;
+
+function renderSEO(seo, pagespeed) {
+  renderSEOStats(seo);
+  renderSEOSpeed(pagespeed);
+  renderSEOKeywords(seo);
+  renderSEOPositions(seo);
+  // Load audit from cache or trigger fetch
+  try {
+    const cached = JSON.parse(localStorage.getItem(SEO_AUDIT_CACHE_KEY) || 'null');
+    if (cached && cached.data && (Date.now() - cached.ts) < SEO_AUDIT_CACHE_TTL) {
+      siteAuditData = cached.data;
+      renderSEOAudit(siteAuditData);
+      renderAIChecklist(siteAuditData, pagespeed);
+      return;
+    }
+  } catch {}
+  runSiteAudit(false);
+}
+
+async function runSiteAudit(force) {
+  if (!force) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(SEO_AUDIT_CACHE_KEY) || 'null');
+      if (cached && cached.data && (Date.now() - cached.ts) < SEO_AUDIT_CACHE_TTL) {
+        siteAuditData = cached.data;
+        renderSEOAudit(siteAuditData);
+        renderAIChecklist(siteAuditData, dashData?.pagespeed);
+        return;
+      }
+    } catch {}
+  }
+  const auditEl = document.getElementById('seo-audit-content');
+  const aiEl    = document.getElementById('seo-ai-checklist');
+  if (auditEl) auditEl.innerHTML = `<div class="loading-state"><div class="spinner"></div>Crawling site — up to 30 seconds…</div>`;
+  if (aiEl)    aiEl.innerHTML    = `<div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">Waiting for audit…</div>`;
+  try {
+    const res  = await fetch('/.netlify/functions/fetch-site-audit');
+    const data = res.ok ? await res.json() : null;
+    if (data && !data.error) {
+      siteAuditData = data;
+      localStorage.setItem(SEO_AUDIT_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+      renderSEOAudit(siteAuditData);
+      renderAIChecklist(siteAuditData, dashData?.pagespeed);
+    } else {
+      if (auditEl) auditEl.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">Audit unavailable — ${data?.error || 'unknown error'}</div>`;
+    }
+  } catch (e) {
+    if (auditEl) auditEl.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem;padding:8px 0">Audit failed — ${e.message}</div>`;
+  }
+}
+
+function renderSEOStats(seo) {
+  if (!seo) return;
+  const kws = seo.keywords || [];
+  const totalImpr = kws.reduce((s, k) => s + (k.volume || 0), 0);
+  const totalClicks = seo.totalClicks || kws.reduce((s, k) => s + (k.clicks || 0), 0);
+  const avgPos = kws.length ? Math.round(kws.reduce((s, k) => s + k.current, 0) / kws.length) : null;
+  const avgCtr = totalImpr > 0 && totalClicks > 0 ? ((totalClicks / totalImpr) * 100).toFixed(1) : null;
+  document.getElementById('seo-impressions').textContent = fmtNum(totalImpr) || '—';
+  document.getElementById('seo-clicks').textContent      = totalClicks ? fmtNum(totalClicks) : '—';
+  document.getElementById('seo-position').textContent    = avgPos ? '#' + avgPos : '—';
+  document.getElementById('seo-ctr').textContent         = avgCtr ? avgCtr + '%' : '—';
+}
+
+function renderSEOSpeed(ps) {
+  function speedCard(data, elId) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (!data) { el.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem">No data</div>`; return; }
+    const col = data.score >= 90 ? 'var(--teal)' : data.score >= 50 ? '#f59e0b' : '#ef4444';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:14px">
+        <div style="width:56px;height:56px;border-radius:50%;border:4px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:1.15rem;font-weight:700;color:${col}">${data.score}</span>
+        </div>
+        <div style="font-size:1rem;font-weight:700;color:${col}">${data.grade}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem">
+        ${[['FCP',data.fcp],['LCP',data.lcp],['CLS',data.cls],['TBT',data.tbt]].map(([k,v])=>`
+          <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px">
+            <div style="color:var(--text-muted);font-size:.72rem;margin-bottom:2px">${k}</div>
+            <div style="font-family:var(--fmono);font-weight:600">${v||'—'}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+  speedCard(ps?.mobile,  'seo-speed-mobile');
+  speedCard(ps?.desktop, 'seo-speed-desktop');
+}
+
+function renderSEOKeywords(seo) {
+  const el = document.getElementById('seo-keywords');
+  if (!el) return;
+  const kws = (seo?.keywords || []).slice(0, 20);
+  if (!kws.length) { el.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem">No keyword data</div>`; return; }
+  el.innerHTML = `<div style="overflow-x:auto"><table class="data-table"><thead><tr>
+    <th>Keyword</th><th>Position</th><th>Change</th><th>Impressions</th>
+  </tr></thead><tbody>
+    ${kws.map(k => {
+      const diff = k.previous - k.current;
+      const arrow = diff > 0 ? `<span style="color:var(--teal)">↑${diff}</span>` : diff < 0 ? `<span style="color:#ef4444">↓${Math.abs(diff)}</span>` : `<span style="color:var(--text-muted)">—</span>`;
+      const posCol = k.current <= 3 ? 'var(--teal)' : k.current <= 10 ? '#f59e0b' : 'var(--text-muted)';
+      return `<tr>
+        <td style="font-size:.82rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${k.keyword}">${k.keyword}</td>
+        <td style="font-family:var(--fmono);font-weight:700;color:${posCol}">#${k.current}</td>
+        <td>${arrow}</td>
+        <td style="font-family:var(--fmono)">${fmtNum(k.volume)}</td>
+      </tr>`;
+    }).join('')}
+  </tbody></table></div>`;
+}
+
+function renderSEOPositions(seo) {
+  const el = document.getElementById('seo-positions');
+  if (!el) return;
+  const kws = seo?.keywords || [];
+  if (!kws.length) { el.innerHTML = `<div style="color:var(--text-muted);font-size:.83rem">No data</div>`; return; }
+  const buckets = [
+    { label:'#1–3',   color:'var(--teal)',    count: kws.filter(k=>k.current<=3).length },
+    { label:'#4–10',  color:'#22c55e',        count: kws.filter(k=>k.current>3&&k.current<=10).length },
+    { label:'#11–20', color:'#f59e0b',        count: kws.filter(k=>k.current>10&&k.current<=20).length },
+    { label:'#21–50', color:'#f97316',        count: kws.filter(k=>k.current>20&&k.current<=50).length },
+    { label:'50+',    color:'var(--text-muted)', count: kws.filter(k=>k.current>50).length },
+  ];
+  const total = kws.length;
+  el.innerHTML = `<div style="font-size:.78rem;color:var(--text-muted);margin-bottom:12px">${total} keywords tracked</div>
+    ${buckets.map(b => {
+      const pct = total > 0 ? Math.round((b.count/total)*100) : 0;
+      return `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:.82rem">
+          <span style="color:${b.color};font-weight:600">${b.label}</span>
+          <span style="font-family:var(--fmono);color:var(--text-muted)">${b.count} (${pct}%)</span>
+        </div>
+        <div style="background:var(--surface2);border-radius:3px;height:6px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${b.color};border-radius:3px;transition:width .4s"></div>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+function renderSEOAudit(audit) {
+  const el = document.getElementById('seo-audit-content');
+  if (!el || !audit) return;
+  const sum  = audit.summary || {};
+  const pages = (audit.pages || []).filter(p => !p.error);
+  const audited = new Date(audit.auditedAt);
+  const timeStr = isNaN(audited) ? '' : audited.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  const sevColor = { critical:'#ef4444', warning:'#f59e0b', opportunity:'var(--teal)', info:'var(--text-muted)' };
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="display:flex;gap:16px;font-size:.83rem">
+        <span>${sum.totalCrawled || 0} pages crawled</span>
+        ${sum.criticalIssues ? `<span style="color:#ef4444;font-weight:700">${sum.criticalIssues} critical</span>` : ''}
+        ${sum.warnings ? `<span style="color:#f59e0b">${sum.warnings} warnings</span>` : ''}
+        ${!sum.criticalIssues && !sum.warnings ? `<span style="color:var(--teal)">No critical issues</span>` : ''}
+      </div>
+      ${timeStr ? `<div style="font-size:.75rem;color:var(--text-muted)">Last run: ${timeStr}</div>` : ''}
+    </div>
+    ${pages.map(p => {
+      const issueCount = (p.issues||[]).length;
+      const crits = (p.issues||[]).filter(i=>i.severity==='critical').length;
+      const rowColor = crits > 0 ? 'border-left:3px solid #ef4444' : issueCount > 0 ? 'border-left:3px solid #f59e0b' : 'border-left:3px solid var(--teal)';
+      const slug = p.url.replace(/^https?:\/\/[^/]+/, '') || '/';
+      return `<div style="padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;${rowColor}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${issueCount?'8px':'0'}">
+          <div style="font-size:.82rem;font-weight:600;font-family:var(--fmono);color:var(--text-muted)">${slug}</div>
+          <div style="font-size:.75rem;color:var(--text-muted)">${p.wordCountEstimate||0} words · ${p.links?.internal||0} int links</div>
+        </div>
+        ${(p.issues||[]).map(i=>`<div style="font-size:.78rem;color:${sevColor[i.severity]||'var(--text-muted)'};margin-bottom:3px">
+          ${i.severity==='critical'?'⚠ ':i.severity==='warning'?'· ':'○ '}${i.text}
+        </div>`).join('')}
+        ${!issueCount ? `<div style="font-size:.78rem;color:var(--teal)">✓ No issues</div>` : ''}
+      </div>`;
+    }).join('')}`;
+}
+
+function renderAIChecklist(audit, pagespeed) {
+  const el = document.getElementById('seo-ai-checklist');
+  if (!el) return;
+  const pages  = (audit?.pages || []).filter(p => !p.error);
+  const home   = pages.find(p => p.url && (p.url.endsWith('/') || /performotion\.com\.au\/?$/.test(p.url))) || pages[0];
+  const checks = [
+    {
+      label: 'Schema markup (structured data)',
+      pass:  pages.length > 0 && pages.some(p => p.hasSchema),
+      note:  'Helps AI extract entity and business info. Add LocalBusiness + FAQ schema.',
+    },
+    {
+      label: 'H1 on all crawled pages',
+      pass:  pages.length > 0 && pages.every(p => p.h1),
+      note:  'AI systems use H1 to understand page topic. Every page needs one clear H1.',
+    },
+    {
+      label: 'Meta description on all pages',
+      pass:  pages.length > 0 && pages.every(p => p.metaDescription),
+      note:  'Used as excerpt in AI-generated answers and search snippets.',
+    },
+    {
+      label: 'Open Graph tags',
+      pass:  home ? !!home.openGraph?.title : null,
+      note:  'Enables rich previews when content is cited or shared.',
+    },
+    {
+      label: 'Sufficient page content (300+ words)',
+      pass:  pages.length > 0 && pages.filter(p=>(p.wordCountEstimate||0)>=300).length >= Math.ceil(pages.length*0.8),
+      note:  'AI systems extract answers from substantive content — thin pages rarely get cited.',
+    },
+    {
+      label: 'Mobile PageSpeed ≥ 50',
+      pass:  pagespeed?.mobile?.score != null ? pagespeed.mobile.score >= 50 : null,
+      note:  'AI crawlers and Google both penalise slow mobile pages.',
+    },
+    {
+      label: 'Desktop PageSpeed ≥ 70',
+      pass:  pagespeed?.desktop?.score != null ? pagespeed.desktop.score >= 70 : null,
+      note:  'Core Web Vitals are a ranking factor for Google AI Overviews.',
+    },
+    {
+      label: 'FAQ or Q&A content present',
+      pass:  pages.some(p => (p.h2s||[]).some(h => /\?/.test(h)) || (p.url||'').includes('faq')),
+      note:  'FAQ pages are a primary source for AI-generated answers on health queries.',
+    },
+    {
+      label: 'Internal linking (3+ per page)',
+      pass:  pages.length > 0 && pages.every(p => (p.links?.internal||0) >= 3),
+      note:  'Helps AI crawlers discover and connect related content across your site.',
+    },
+    {
+      label: 'Canonical tags present',
+      pass:  pages.length > 0 && pages.filter(p=>p.canonical).length >= Math.ceil(pages.length*0.7),
+      note:  'Prevents duplicate content from diluting your authority signals.',
+    },
+  ];
+  const passed  = checks.filter(c => c.pass === true).length;
+  const unknown = checks.filter(c => c.pass === null).length;
+  const scored  = checks.length - unknown;
+  const score   = scored > 0 ? Math.round((passed / scored) * 10) : null;
+  const scoreCol = score >= 8 ? 'var(--teal)' : score >= 5 ? '#f59e0b' : '#ef4444';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+      ${score !== null ? `<div style="width:52px;height:52px;border-radius:50%;border:3px solid ${scoreCol};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:1.1rem;font-weight:700;color:${scoreCol}">${score}/10</span>
+      </div>` : ''}
+      <div style="font-size:.83rem;color:var(--text-muted)">${passed} of ${scored} checks passed · ${unknown > 0 ? `${unknown} need audit data` : 'all checks scored'}</div>
+    </div>
+    ${checks.map(c => {
+      const icon = c.pass === true ? '✓' : c.pass === false ? '✗' : '○';
+      const col  = c.pass === true ? 'var(--teal)' : c.pass === false ? '#ef4444' : 'var(--text-muted)';
+      return `<div style="display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--border)">
+        <div style="font-size:.95rem;color:${col};font-weight:700;flex-shrink:0;width:16px">${icon}</div>
+        <div>
+          <div style="font-size:.83rem;font-weight:600;margin-bottom:2px;color:${c.pass===false?'var(--text)':'var(--text-muted)'}">${c.label}</div>
+          ${c.pass === false ? `<div style="font-size:.77rem;color:var(--text-muted);line-height:1.5">${c.note}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('')}`;
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────
