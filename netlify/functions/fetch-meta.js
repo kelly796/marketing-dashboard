@@ -96,28 +96,18 @@ exports.handler = async () => {
       igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'views,total_interactions', metric_type: 'total_value', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
       igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'views,total_interactions', metric_type: 'total_value', period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
 
-      // ── FACEBOOK PAGE (use HQ page) ────────────────────────────────────────
-      hqPageId ? metaGet(`/${hqPageId}/insights`, {
-        metric: 'page_views_total,page_post_engagements',
-        period: 'day',
-        since: since7,
-        until: now,
-        access_token: pageToken,
-      }).catch(() => null) : null,
-      hqPageId ? metaGet(`/${hqPageId}/insights`, {
-        metric: 'page_views_total,page_post_engagements',
-        period: 'day',
-        since: since14,
-        until: since7,
-        access_token: pageToken,
-      }).catch(() => null) : null,
+      // ── FACEBOOK PAGE ──────────────────────────────────────────────────────
+      // Note: Page insights are not available for New Pages Experience via API.
+      // We fetch posts directly instead.
       hqPageId ? metaGet(`/${hqPageId}/posts`, {
-        fields: 'id,created_time',
-        since: since7,
+        fields: 'id,message,created_time,likes.summary(true),comments.summary(true)',
+        since: since30,
         until: now,
-        limit: 50,
+        limit: 10,
         access_token: pageToken,
       }).catch(() => null) : null,
+      null, // fbInsightsPrev — not used
+      null, // fbPosts — merged into fbInsights slot above
 
       // ── META ADS ───────────────────────────────────────────────────────────
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
@@ -300,47 +290,27 @@ function buildIGData(account, insights7d, insights7dPrev, insights30d, media, po
 }
 
 // ─── FACEBOOK PAGE DATA BUILDER ───────────────────────────────────────────────
-function buildFBData(insights, insightsPrev, pageAccount, postsResp) {
-  if (!insights && !pageAccount) return null;
+function buildFBData(postsResp, _unused1, pageAccount, _unused2) {
+  if (!pageAccount) return null;
 
-  function latestValue(insightsResp, name) {
-    const metric = (insightsResp?.data || []).find(m => m.name === name);
-    const vals   = metric?.values || [];
-    return Number(vals[vals.length - 1]?.value || 0);
-  }
-
-  function sumValues(insightsResp, name) {
-    const metric = (insightsResp?.data || []).find(m => m.name === name);
-    return (metric?.values || []).reduce((s, v) => s + Number(v.value || 0), 0);
-  }
-
-  function dailyArray(insightsResp, name) {
-    const metric = (insightsResp?.data || []).find(m => m.name === name);
-    return (metric?.values || []).map(v => Number(v.value) || 0);
-  }
-
-  const reach7d           = sumValues(insights, 'page_views_total');
-  const reach7dPrev       = sumValues(insightsPrev, 'page_views_total');
-  const impressions7d     = reach7d;
-  const impressionsPrev   = reach7dPrev;
-  const engaged           = sumValues(insights, 'page_post_engagements');
-  const engagedPrev       = sumValues(insightsPrev, 'page_post_engagements');
-  const engagementRate    = reach7d > 0 ? +((engaged / reach7d) * 100).toFixed(2) : 0;
-  const engagementRatePrev = reach7dPrev > 0 ? +((engagedPrev / reach7dPrev) * 100).toFixed(2) : 0;
-  const posts7d           = (postsResp?.data || []).length;
+  const posts = (postsResp?.data || []).map(p => ({
+    id:        p.id,
+    message:   (p.message || '').substring(0, 120),
+    date:      p.created_time,
+    likes:     Number(p.likes?.summary?.total_count || 0),
+    comments:  Number(p.comments?.summary?.total_count || 0),
+  }));
 
   return {
-    reach7d,
-    reach7dPrev,
-    engagementRate,
-    engagementRatePrev,
-    impressions7d,
-    impressionsPrev,
-    pageLikes:       Number(pageAccount?.fan_count || 0),
-    pageLikesPrev:   0,
-    posts7d,
-    reachTrend:      padTo30(dailyArray(insights, 'page_views_total')),
-    engagementTrend: padTo30(dailyArray(insights, 'page_post_engagements')),
+    fanCount:        Number(pageAccount?.fan_count || 0),
+    followersCount:  Number(pageAccount?.followers_count || pageAccount?.fan_count || 0),
+    posts30d:        posts.length,
+    recentPosts:     posts,
+    // Page view insights not available via API for New Pages Experience
+    pageViews7d:     null,
+    pageViewsPrev:   null,
+    engagement7d:    null,
+    reachTrend:      Array(30).fill(0),
   };
 }
 

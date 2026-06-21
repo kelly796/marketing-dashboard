@@ -1333,32 +1333,31 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       <div class="stat-trend" id="fb-fans-trend"></div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Page Views (7d)</div>
-      <div class="stat-value" id="fb-views">—</div>
-      <div class="stat-trend" id="fb-views-trend"></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Engagement (7d)</div>
-      <div class="stat-value" id="fb-engagement">—</div>
-      <div class="stat-trend" id="fb-engagement-trend"></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Posts (7d)</div>
+      <div class="stat-label">Posts (30d)</div>
       <div class="stat-value" id="fb-posts">—</div>
       <div class="stat-trend" id="fb-posts-trend"></div>
     </div>
   </div>
 
-  <!-- Page views trend chart -->
+  <!-- API limitation notice -->
   <div class="card" style="margin-bottom:20px">
-    <div class="card-header"><span class="section-title" style="font-size:1rem">Page Views — Last 30 Days</span></div>
-    <div class="card-body"><canvas id="chart-fb-views" height="140"></canvas></div>
+    <div class="card-body">
+      <div style="font-size:.83rem;color:var(--text-muted);line-height:1.7">
+        <strong style="color:var(--text)">Page Insights Unavailable</strong> — Facebook has deprecated page view and engagement metrics for pages on the New Pages Experience. Follower count and recent posts are fetched live. For deeper Facebook analytics, use <a href="https://www.facebook.com/insights" target="_blank" style="color:var(--teal)">Meta Business Suite Insights</a> directly.
+      </div>
+    </div>
   </div>
 
-  <!-- Status note -->
+  <!-- Recent posts table -->
   <div class="card">
+    <div class="card-header"><span class="section-title" style="font-size:1rem">Recent Posts (30 days)</span></div>
     <div class="card-body">
-      <div id="fb-status-note" style="color:var(--text-muted);font-size:.875rem;line-height:1.6">Loading Facebook page data...</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Message</th><th>Likes</th><th>Comments</th></tr></thead>
+          <tbody id="fb-posts-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Loading...</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -2113,47 +2112,28 @@ function renderInstagram(ig) {
 
 // ─── FACEBOOK RENDER ──────────────────────────────────────────────
 function renderFacebook(fb) {
-  const noData = !fb || (!fb.fanCount && !fb.pageViews7d);
-
   document.getElementById('fb-fans').textContent = fb?.fanCount ? fmtNum(fb.fanCount) : '—';
-  document.getElementById('fb-fans-trend').textContent = fb?.fanCount ? 'Page followers' : '';
+  document.getElementById('fb-fans-trend').textContent = fb?.fanCount ? 'Page followers' : 'Check Meta token';
 
-  document.getElementById('fb-views').textContent = fb?.pageViews7d ? fmtNum(fb.pageViews7d) : '—';
-  const viewT = trendArrow(fb?.pageViews7d ?? 0, fb?.pageViewsPrev ?? 0);
-  if (fb?.pageViews7d) {
-    document.getElementById('fb-views-trend').className = 'stat-trend ' + viewT.cls;
-    document.getElementById('fb-views-trend').textContent = viewT.arrow + ' ' + viewT.pct + ' vs last week';
-  }
+  document.getElementById('fb-posts').textContent = fb?.posts30d ?? '—';
+  document.getElementById('fb-posts-trend').textContent = 'Last 30 days';
 
-  document.getElementById('fb-engagement').textContent = fb?.engagement7d ? fmtNum(fb.engagement7d) : '—';
-  document.getElementById('fb-posts').textContent = fb?.posts7d ?? '—';
-
-  // Page views trend chart
-  destroyChart('chart-fb-views');
-  const ctx = document.getElementById('chart-fb-views');
-  if (ctx && fb?.reachTrend?.some(v => v > 0)) {
-    const labels = Array.from({length: fb.reachTrend.length}, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - (fb.reachTrend.length - 1 - i));
-      return d.toLocaleDateString('en-AU', {day:'numeric', month:'short'});
-    });
-    charts['chart-fb-views'] = new Chart(ctx, {
-      type: 'line',
-      data: { labels, datasets: [{ label: 'Page Views', data: fb.reachTrend, borderColor: '#4F86F7', backgroundColor: 'rgba(79,134,247,0.1)', tension: 0.4, fill: true, pointRadius: 2 }] },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtNum(c.parsed.y) + ' views' } } },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#6B85A3', maxTicksLimit: 10 } },
-          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 10 }, color: '#6B85A3', callback: v => fmtNum(v) } }
-        }
-      }
-    });
-  } else if (ctx) {
-    document.getElementById('fb-status-note').textContent = 'Facebook page insights require a Page Access Token with pages_read_engagement permission. Follower count is showing correctly. Page view trends will appear once the token is upgraded.';
+  const posts = fb?.recentPosts || [];
+  const tbody = document.getElementById('fb-posts-body');
+  if (!posts.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">No posts in the last 30 days</td></tr>';
     return;
   }
-
-  document.getElementById('fb-status-note').textContent = noData ? 'No Facebook page data available — check Meta token permissions.' : '';
+  tbody.innerHTML = posts.map(p => {
+    const date = p.date ? new Date(p.date).toLocaleDateString('en-AU', {day:'numeric', month:'short'}) : '—';
+    const msg  = (p.message || '').replace(/</g, '&lt;').substring(0, 80) + ((p.message||'').length > 80 ? '…' : '');
+    return `<tr>
+      <td style="font-family:var(--fmono);font-size:.8rem;white-space:nowrap">${date}</td>
+      <td style="color:var(--text-muted);font-size:.83rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg || '(No caption)'}</td>
+      <td style="font-family:var(--fmono)">${fmtNum(p.likes)}</td>
+      <td style="font-family:var(--fmono)">${fmtNum(p.comments)}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ─── GHL RENDER ───────────────────────────────────────────────────
