@@ -8,6 +8,7 @@
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs"]
 
 [functions."auto-refresh"]
   schedule = "0 0,4,8,12,16,20 * * *"
