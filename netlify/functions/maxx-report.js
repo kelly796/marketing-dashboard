@@ -26,6 +26,9 @@ exports.handler = async () => {
   }
 
   try {
+    // leads param passed by the frontend (already has the correct breakdown-aware value)
+    const leadsOverride = parseInt(event?.queryStringParameters?.leads || '0', 10);
+
     // ── Fetch account totals + per-ad performance in parallel ──────────────────
     const [totalsRes, adsRes] = await Promise.all([
       metaGet(`/act_${adAccountId}/insights`, {
@@ -43,7 +46,8 @@ exports.handler = async () => {
 
     const totRow  = totalsRes?.data?.[0] || {};
     const spend7d = +(Number(totRow.spend || 0)).toFixed(2);
-    const leads7d = getAction(totRow.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
+    const leadsFromAggregate = getAction(totRow.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
+    const leads7d = leadsFromAggregate > 0 ? leadsFromAggregate : leadsOverride;
     const ctr7d   = +(Number(totRow.ctr || 0)).toFixed(2);
     const cpl7d   = leads7d > 0 ? +(spend7d / leads7d).toFixed(2) : 0;
 

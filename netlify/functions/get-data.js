@@ -2,8 +2,9 @@
  * Get Dashboard Data
  *
  * Called by the browser on every page load (after localStorage cache miss).
- * Calls all data sources in parallel and returns a merged object.
- * The browser falls back to MOCK for any key that is null/undefined.
+ * Checks Netlify Blobs for a fresh server-side cache first.
+ * Falls back to live parallel fetch if cache is stale or missing.
+ * The auto-refresh scheduled function pre-warms this cache every 4 hours.
  *
  * Data sources:
  *  ✅ Meta / Instagram       — META_ACCESS_TOKEN + META_AD_ACCOUNT_ID + META_HQ_PAGE_ID + META_ONLINE_PAGE_ID
@@ -14,30 +15,59 @@
  *  ✅ Go High Level          — GHL_API_KEY + GHL_LOCATION_ID
  */
 
+const { getStore }              = require('@netlify/blobs');
 const { handler: fetchMeta }        = require('./fetch-meta');
 const { handler: fetchGA4 }         = require('./fetch-ga4');
 const { handler: fetchWPAnalytics } = require('./fetch-wordpress-analytics');
 const { handler: fetchGSC }         = require('./fetch-gsc');
 const { handler: fetchClarity }     = require('./fetch-clarity');
 const { handler: fetchGHL }         = require('./fetch-ghl');
+const { handler: fetchPageSpeed }   = require('./fetch-pagespeed');
+
+const BLOBS_TTL = 4 * 60 * 60 * 1000; // 4 hours
 
 exports.handler = async (event) => {
+  // auto-refresh passes _bypass_blobs=1 to force a live fetch and update the cache
+  const bypass = event?.queryStringParameters?._bypass_blobs === '1' || event?._bypassBlobs;
+
+  if (!bypass) {
+    try {
+      const store = getStore('dashboard-cache');
+      const raw = await store.get('latest');
+      if (raw) {
+        const cached = JSON.parse(raw);
+        const age = Date.now() - new Date(cached._cachedAt || 0).getTime();
+        if (age < BLOBS_TTL) {
+          return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' },
+            body: raw,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[get-data] Blobs read failed, falling through to live fetch:', e.message);
+    }
+  }
+
   try {
-    const [metaRes, ga4Res, wpRes, gscRes, clarityRes, ghlRes] = await Promise.allSettled([
+    const [metaRes, ga4Res, wpRes, gscRes, clarityRes, ghlRes, pageSpeedRes] = await Promise.allSettled([
       fetchMeta(event),
       fetchGA4(event),
       fetchWPAnalytics(event),
       fetchGSC(event),
       fetchClarity(event),
       fetchGHL(event),
+      fetchPageSpeed(event),
     ]);
 
-    const metaData    = parse(metaRes,    'Meta');
-    const ga4Data     = parse(ga4Res,     'GA4');
-    const wpData      = parse(wpRes,      'WPAnalytics');
-    const gscData     = parse(gscRes,     'GSC');
-    const clarityData = parse(clarityRes, 'Clarity');
-    const ghlData     = parse(ghlRes,     'GHL');
+    const metaData      = parse(metaRes,      'Meta');
+    const ga4Data       = parse(ga4Res,       'GA4');
+    const wpData        = parse(wpRes,        'WPAnalytics');
+    const gscData       = parse(gscRes,       'GSC');
+    const clarityData   = parse(clarityRes,   'Clarity');
+    const ghlData       = parse(ghlRes,       'GHL');
+    const pageSpeedData = parse(pageSpeedRes, 'PageSpeed');
 
     // Meta returns multiple keys
     const metaKeys = metaData ? {
@@ -66,11 +96,13 @@ exports.handler = async (event) => {
     const data = {
       lastUpdated: new Date().toISOString(),
       dataSource:  'Live',
+      _cachedAt:   new Date().toISOString(),
       ...metaKeys,
       ...analyticsKeys,
-      ...(gscData     ? { seo:     gscData.seo } : {}),
-      ...(clarityData ? { clarity: clarityData } : {}),
-      ...(ghlData     ? { ghl:     ghlData }     : {}),
+      ...(gscData       ? { seo:       gscData.seo   } : {}),
+      ...(clarityData   ? { clarity:   clarityData   } : {}),
+      ...(ghlData       ? { ghl:       ghlData       } : {}),
+      ...(pageSpeedData ? { pagespeed: pageSpeedData } : {}),
     };
 
     const hasAnyData = metaData || ga4Data || wpData || gscData || clarityData || ghlData;
@@ -79,6 +111,14 @@ exports.handler = async (event) => {
         statusCode: 503,
         body: JSON.stringify({ error: 'No API credentials configured' }),
       };
+    }
+
+    // Store fresh result in Blobs for next request
+    try {
+      const store = getStore('dashboard-cache');
+      await store.set('latest', JSON.stringify(data));
+    } catch (e) {
+      console.warn('[get-data] Blobs write failed:', e.message);
     }
 
     return {

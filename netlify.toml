@@ -9,9 +9,11 @@
 [functions]
   node_bundler = "esbuild"
 
+[functions."auto-refresh"]
+  schedule = "0 0,4,8,12,16,20 * * *"
+
 [functions."fetch-site-audit"]
   timeout = 26
-
 
 [functions."ai-seo-enhanced"]
   timeout = 26
