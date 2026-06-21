@@ -11,7 +11,7 @@
  *  { access_token, token_type, expires_in }
  */
 
-const CLIENT_ID = '975503045267299';
+const CLIENT_ID = '1009566004951226';
 const GRAPH     = 'https://graph.facebook.com/v19.0';
 
 exports.handler = async (event) => {
