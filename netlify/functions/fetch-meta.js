@@ -78,19 +78,19 @@ exports.handler = async () => {
 
       // ── IG HQ ──────────────────────────────────────────────────────────────
       igHqId ? metaGet(`/${igHqId}`, { fields: 'followers_count,media_count,name', access_token: token }).catch(() => null) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,views,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,views',              period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'reach,views',              period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
       igHqId ? metaGet(`/${igHqId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }).catch(() => null) : null,
-      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'audience_gender_age',            period: 'lifetime',                            access_token: token }).catch(() => null) : null,
+      igHqId ? metaGet(`/${igHqId}/insights`, { metric: 'follower_demographics',    period: 'lifetime', breakdown: 'age,gender', access_token: token }).catch(() => null) : null,
 
       // ── IG ONLINE ──────────────────────────────────────────────────────────
       igOnlineId ? metaGet(`/${igOnlineId}`, { fields: 'followers_count,media_count,name', access_token: token }).catch(() => null) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,impressions',              period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,views,profile_views', period: 'day', since: since7,  until: now,    access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,views',              period: 'day', since: since14, until: since7, access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'reach,views',              period: 'day', since: since30, until: now,    access_token: token }).catch(() => null) : null,
       igOnlineId ? metaGet(`/${igOnlineId}/media`,    { fields: 'id,caption,media_type,timestamp,like_count,comments_count', limit: 10, access_token: token }).catch(() => null) : null,
-      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'audience_gender_age',            period: 'lifetime',                            access_token: token }).catch(() => null) : null,
+      igOnlineId ? metaGet(`/${igOnlineId}/insights`, { metric: 'follower_demographics',    period: 'lifetime', breakdown: 'age,gender', access_token: token }).catch(() => null) : null,
 
       // ── FACEBOOK PAGE (use HQ page) ────────────────────────────────────────
       hqPageId ? metaGet(`/${hqPageId}/insights`, {
@@ -197,7 +197,7 @@ async function fetchPostInsights(posts, token) {
     posts.map(async post => {
       try {
         const data = await metaGet(`/${post.id}/insights`, {
-          metric: 'reach,saved,impressions',
+          metric: 'reach,saved,views',
           access_token: token,
         });
         const map = {};
@@ -226,10 +226,10 @@ function buildIGData(account, insights7d, insights7dPrev, insights30d, media, po
 
   const reach7d          = sumMetric(insights7d,     'reach');
   const reach7dPrev      = sumMetric(insights7dPrev, 'reach');
-  const impressions7d    = sumMetric(insights7d,     'impressions');
-  const impressionsPrev  = sumMetric(insights7dPrev, 'impressions');
+  const impressions7d    = sumMetric(insights7d,     'views');
+  const impressionsPrev  = sumMetric(insights7dPrev, 'views');
   const reachTrend       = padTo30(dailyArray(insights30d, 'reach'));
-  const impressionsTrend = padTo30(dailyArray(insights30d, 'impressions'));
+  const impressionsTrend = padTo30(dailyArray(insights30d, 'views'));
 
   const audienceDemographics = parseAudienceDemographics(audienceInsights);
 
@@ -340,9 +340,10 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
   if (!insights7d) return null;
 
   function getAction(actions, ...types) {
-    return types.reduce((s, t) => {
-      const found = (actions || []).find(a => a.action_type === t);
-      return s + Number(found?.value || 0);
+    return (actions || []).reduce((s, a) => {
+      const t = a.action_type || '';
+      const match = types.includes(t) || t === 'form_success' || t.startsWith('offsite_conversion.custom.');
+      return match ? s + Number(a.value || 0) : s;
     }, 0);
   }
 
@@ -352,23 +353,32 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
   const clicks7d      = Number(current.clicks        || 0);
   const ctr           = +(Number(current.ctr         || 0)).toFixed(2);
 
-  const leads7d     = getAction(current.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
+  const leadsFromInsights = getAction(current.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
   const revenue     = getAction(current.action_values, 'purchase', 'offsite_conversion.fb_pixel_purchase');
   const roas        = spend7d > 0 && revenue > 0 ? +(revenue / spend7d).toFixed(2) : 0;
-  const costPerLead = leads7d > 0 ? +(spend7d / leads7d).toFixed(2) : 0;
 
   const prev            = insights7dPrev?.data?.[0] || {};
   const spendPrev       = +(Number(prev.spend || 0)).toFixed(2);
-  const leadsPrev       = getAction(prev.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
+  const leadsPrev       = getAction(prev.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped')
+                        + sumCustomConversions(prev.custom_conversions);
   const costPerLeadPrev = leadsPrev > 0 ? +(spendPrev / leadsPrev).toFixed(2) : 0;
   const revenuePrev     = getAction(prev.action_values, 'purchase', 'offsite_conversion.fb_pixel_purchase');
   const roasPrev        = spendPrev > 0 && revenuePrev > 0 ? +(revenuePrev / spendPrev).toFixed(2) : 0;
+
+  // Audience breakdown — build early so we can derive leads7d from it.
+  // Meta custom conversions (form_success etc.) appear in actions only when a
+  // breakdown dimension is used; the aggregate account-level insight returns an
+  // empty actions array for custom events.
+  const audienceBreakdown = buildAudienceBreakdown(audienceData);
+  const leadsFromBreakdown = audienceBreakdown.reduce((s, b) => s + (b.leads || 0), 0);
+  const leads7d = leadsFromInsights > 0 ? leadsFromInsights : leadsFromBreakdown;
+  const costPerLead = leads7d > 0 ? +(spend7d / leads7d).toFixed(2) : 0;
 
   // Campaigns
   const campaigns = (campaignsData?.data || []).map(c => {
     const ci    = c.insights?.data?.[0] || {};
     const cSpend = +(Number(ci.spend || 0)).toFixed(2);
-    const cLeads = getAction(ci.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
+    const cLeads = getAction(ci.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
     const cCpl   = cLeads > 0 ? +(cSpend / cLeads).toFixed(2) : 0;
     const brand  = /online|coaching|rehab|network|classroom/i.test(c.name) ? 'Online' : 'HQ';
 
@@ -384,8 +394,28 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
     };
   });
 
-  // Audience breakdown — aggregate by age+gender bucket, express as percentages
-  const audienceBreakdown = buildAudienceBreakdown(audienceData);
+  // If campaign-level API returns 0 leads but the account total is > 0,
+  // distribute leads7d across campaigns proportionally by spend.
+  const totalCampaignLeads = campaigns.reduce((s, c) => s + c.leads, 0);
+  if (totalCampaignLeads === 0 && leads7d > 0) {
+    const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
+    if (totalSpend > 0) {
+      let assigned = 0;
+      campaigns.forEach((c, i) => {
+        if (i < campaigns.length - 1) {
+          const share = Math.round(leads7d * c.spend / totalSpend);
+          c.leads = share;
+          assigned += share;
+        } else {
+          c.leads = leads7d - assigned;
+        }
+        c.cpl = c.leads > 0 ? +(c.spend / c.leads).toFixed(2) : 0;
+      });
+    } else if (campaigns.length > 0) {
+      campaigns[0].leads = leads7d;
+      campaigns[0].cpl = campaigns[0].spend > 0 ? +(campaigns[0].spend / leads7d).toFixed(2) : 0;
+    }
+  }
 
   // Creative performance — top ads by spend, enriched with per-ad audience
   const creatives = buildCreatives(adsData, perAdBreakdown);
@@ -406,7 +436,7 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
     ctr,
     ctrPrev:     +(Number(prev.ctr || 0)).toFixed(2),
     spendTrend:  buildDailyTrend(insights30d, r => +(Number(r.spend || 0)).toFixed(2)),
-    leadsTrend:  buildDailyTrend(insights30d, r => getAction(r.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead')),
+    leadsTrend:  buildDailyTrend(insights30d, r => getAction(r.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped') + sumCustomConversions(r.custom_conversions)),
     campaigns,
     creatives,
     audienceBreakdown,
@@ -426,9 +456,10 @@ function buildAudienceBreakdown(audienceData) {
     ageBuckets[age].spend      += Number(row.spend       || 0);
     ageBuckets[age].impressions += Number(row.impressions || 0);
     ageBuckets[age].clicks     += Number(row.clicks      || 0);
-    const rowLeads = ['lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead'].reduce((s, t) => {
-      const f = (row.actions || []).find(a => a.action_type === t);
-      return s + Number(f?.value || 0);
+    const rowLeads = (row.actions || []).reduce((s, a) => {
+      const t = a.action_type || '';
+      return (t === 'lead' || t === 'form_success' || t.startsWith('offsite_conversion.') || t === 'onsite_web_lead' || t === 'onsite_conversion.lead_grouped')
+        ? s + Number(a.value || 0) : s;
     }, 0);
     ageBuckets[age].leads += rowLeads;
   }
@@ -473,9 +504,10 @@ function buildCreatives(adsData, perAdBreakdown) {
   if (!ads.length) return [];
 
   function getAct(actions, ...types) {
-    return types.reduce((s, t) => {
-      const found = (actions || []).find(a => a.action_type === t);
-      return s + Number(found?.value || 0);
+    return (actions || []).reduce((s, a) => {
+      const t = a.action_type || '';
+      const match = types.includes(t) || t === 'form_success' || t.startsWith('offsite_conversion.custom.');
+      return match ? s + Number(a.value || 0) : s;
     }, 0);
   }
 
@@ -488,7 +520,13 @@ function buildCreatives(adsData, perAdBreakdown) {
     const s     = Number(row.spend       || 0);
     const impr  = Number(row.impressions || 0);
     const clks  = Number(row.clicks      || 0);
-    const leads = getAct(row.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
+    // Use the same broad offsite_conversion.* match as buildAudienceBreakdown so
+    // custom conversions (e.g. form_success) are captured regardless of their exact action_type suffix.
+    const leads = (row.actions || []).reduce((s, a) => {
+      const t = a.action_type || '';
+      return (t === 'lead' || t === 'form_success' || t.startsWith('offsite_conversion.') || t === 'onsite_web_lead' || t === 'onsite_conversion.lead_grouped')
+        ? s + Number(a.value || 0) : s;
+    }, 0);
 
     audienceByAdId[id].spend += s;
 
@@ -533,16 +571,20 @@ function buildCreatives(adsData, perAdBreakdown) {
     .map(ad => {
       const ins   = ad.insights?.data?.[0] || {};
       const spend = +(Number(ins.spend || 0)).toFixed(2);
-      const leads = getAct(ins.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead');
-      const cpl   = leads > 0 ? +(spend / leads).toFixed(2) : 0;
-      const ctr   = +(Number(ins.ctr || 0)).toFixed(2);
-      const impressions = Number(ins.impressions || 0);
       const brand = /online|coaching|rehab|network|classroom/i.test(ad.name) ? 'Online' : 'HQ';
 
       const aud      = audienceByAdId[ad.id] || null;
       const audTotal = aud?.spend || 0;
       const gender   = aud ? toGenderBuckets(aud.genderSpend, audTotal, 3) : [];
       const age      = aud ? toAgeBuckets(aud.ageData, audTotal) : [];
+
+      // Custom conversions appear in breakdown-level insights only, so sum from per-ad age data
+      const leadsFromInsights = getAct(ins.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
+      const leadsFromBreakdown = aud ? Object.values(aud.ageData).reduce((s, b) => s + (b.leads || 0), 0) : 0;
+      const leads = leadsFromInsights > 0 ? leadsFromInsights : leadsFromBreakdown;
+      const cpl   = leads > 0 ? +(spend / leads).toFixed(2) : 0;
+      const ctr   = +(Number(ins.ctr || 0)).toFixed(2);
+      const impressions = Number(ins.impressions || 0);
 
       return { id: ad.id, name: ad.name, brand, spend, leads, cpl, ctr, impressions, gender, age };
     })
@@ -577,6 +619,13 @@ function parseAudienceDemographics(insightsResp) {
       .filter(b => ageBuckets[b])
       .map(b => ({ b, pct: Math.round(ageBuckets[b] / total * 100) })),
   };
+}
+
+// ─── CUSTOM CONVERSION HELPER ────────────────────────────────────────────────
+// Meta custom conversions (form_success etc.) come back in a separate
+// custom_conversions array rather than actions — sum all of them as leads.
+function sumCustomConversions(customConversions) {
+  return (customConversions || []).reduce((s, c) => s + Number(c.value || 0), 0);
 }
 
 // ─── ARRAY HELPERS ────────────────────────────────────────────────────────────
