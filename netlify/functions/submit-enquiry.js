@@ -6,7 +6,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-const TO_ADDRESSES = ['kelly@performotion.net'];
+const TO_ADDRESSES = ['kelly@performotion.net', 'steve@performotion.net'];
 
 const NAVY  = '#1B2B5E';
 const TEAL  = '#67A7AC';
