@@ -9,8 +9,7 @@
  */
 
 const { getStore } = require('@netlify/blobs');
-
-const GHL_BASE = 'https://services.leadconnectorhq.com';
+const { createGhlContact } = require('./lib/ghl');
 
 async function getLeads(store) {
   try {
@@ -19,37 +18,6 @@ async function getLeads(store) {
   } catch {
     return [];
   }
-}
-
-async function createGhlContact(lead, apiKey, locationId) {
-  const [firstName, ...rest] = (lead.name || 'Unknown').split(' ');
-  const lastName = rest.join(' ');
-
-  const res = await fetch(`${GHL_BASE}/contacts/`, {
-    method: 'POST',
-    headers: {
-      Authorization:  `Bearer ${apiKey}`,
-      Version:        '2021-07-28',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      locationId,
-      firstName,
-      lastName,
-      email:  lead.email  || '',
-      phone:  lead.phone  || '',
-      source: 'Meta Lead Ad',
-      tags:   ['meta-lead-ad'],
-    }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`GHL ${res.status}: ${text}`);
-  }
-
-  const data = await res.json();
-  return data?.contact?.id || data?.id || null;
 }
 
 exports.handler = async (event) => {
