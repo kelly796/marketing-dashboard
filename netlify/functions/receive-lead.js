@@ -6,8 +6,10 @@
  *
  * ─── REQUIRED ENV VARS ───────────────────────────────────────────
  *  WEBHOOK_VERIFY_TOKEN  — Token set in Meta webhook config
+ *  META_APP_SECRET       — App secret from Meta developer console (for signature verification)
  */
 
+const crypto    = require('crypto');
 const { getStore } = require('@netlify/blobs');
 
 const MAX_LEADS = 500;
@@ -19,6 +21,15 @@ async function getLeads(store) {
   } catch {
     return [];
   }
+}
+
+function verifyMetaSignature(body, sigHeader, appSecret) {
+  if (!sigHeader || !sigHeader.startsWith('sha256=')) return false;
+  const received = sigHeader.slice(7); // strip 'sha256='
+  const expected = crypto.createHmac('sha256', appSecret).update(body).digest('hex');
+  // timingSafeEqual requires same-length buffers
+  if (received.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(received, 'hex'), Buffer.from(expected, 'hex'));
 }
 
 function parseMetaPayload(payload) {
@@ -46,9 +57,9 @@ function parseMetaPayload(payload) {
     for (const field of (change.field_data || [])) {
       const name = (field.name || '').toLowerCase();
       const val  = (field.values || [])[0] || '';
-      if (name.includes('email'))                       lead.email = val;
+      if (name.includes('email'))                              lead.email = val;
       else if (name.includes('phone') || name.includes('mobile')) lead.phone = val;
-      else if (name.includes('name'))                   lead.name  = val;
+      else if (name.includes('name'))                          lead.name  = val;
     }
   } catch { /* partial payload — keep defaults */ }
 
@@ -58,8 +69,12 @@ function parseMetaPayload(payload) {
 exports.handler = async (event) => {
   // ── GET: Meta webhook verification ────────────────────────────
   if (event.httpMethod === 'GET') {
+    const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN;
+    if (!verifyToken) {
+      console.error('[receive-lead] WEBHOOK_VERIFY_TOKEN not set');
+      return { statusCode: 500, body: 'Server misconfiguration' };
+    }
     const p = event.queryStringParameters || {};
-    const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN || 'performotion_webhook_2026';
     if (p['hub.mode'] === 'subscribe' && p['hub.verify_token'] === verifyToken) {
       return { statusCode: 200, body: p['hub.challenge'] };
     }
@@ -68,6 +83,18 @@ exports.handler = async (event) => {
 
   // ── POST: receive lead ─────────────────────────────────────────
   if (event.httpMethod === 'POST') {
+    // Verify Meta signature if app secret is configured
+    const appSecret = process.env.META_APP_SECRET;
+    if (appSecret) {
+      const sig = event.headers['x-hub-signature-256'] || '';
+      if (!verifyMetaSignature(event.body || '', sig, appSecret)) {
+        console.warn('[receive-lead] Signature verification failed');
+        return { statusCode: 403, body: 'Invalid signature' };
+      }
+    } else {
+      console.warn('[receive-lead] META_APP_SECRET not set — skipping signature check');
+    }
+
     let payload;
     try {
       payload = JSON.parse(event.body);
@@ -85,6 +112,8 @@ exports.handler = async (event) => {
       await store.set('all-leads', JSON.stringify(leads));
     } catch (err) {
       console.error('[receive-lead] Blobs write failed:', err.message);
+      // Return 500 so Meta retries delivery
+      return { statusCode: 500, body: JSON.stringify({ error: 'Storage write failed' }) };
     }
 
     return {
