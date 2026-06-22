@@ -105,11 +105,15 @@ exports.handler = async () => {
         };
       });
 
+      const openOpps = opps.filter(o => o.status !== 'won' && o.status !== 'lost');
+      const totalValue = openOpps.reduce((sum, o) => sum + (Number(o.monetaryValue) || 0), 0);
+
       return {
         id:            pipe.id,
         name:          pipe.name,
         isUnassigned:  pipe.name.toLowerCase().includes('unassigned'),
         totalLeads:    stages.reduce((n, s) => n + s.count, 0),
+        totalValue:    totalValue || null,
         stalledLeads:  stages.reduce((n, s) => n + s.stalledCount + s.criticalCount, 0),
         criticalLeads: stages.reduce((n, s) => n + s.criticalCount, 0),
         stages,
@@ -150,7 +154,7 @@ exports.handler = async () => {
         recentContacts,
         pipeline: {
           totalContacts: summary.totalLeads,
-          totalValue:    null,
+          totalValue:    mainPipelines.reduce((sum, p) => sum + (p.totalValue || 0), 0) || null,
           stages:        {},
         },
       }),

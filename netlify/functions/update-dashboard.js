@@ -49,9 +49,15 @@ exports.handler = async (event) => {
   });
   // GA4 preferred; WP analytics fills in if GA4 failed
   absorb(ga4Res, 'GA4', d => {
-    if (d.ga4)          results.ga4          = d.ga4;
-    if (d.ga4Countries) results.ga4Countries = d.ga4Countries;
-    if (d.ga4TopPages)  results.ga4TopPages  = d.ga4TopPages;
+    if (d.ga4)              results.ga4              = d.ga4;
+    if (d.ga4Countries)     results.ga4Countries     = d.ga4Countries;
+    if (d.ga4TopPages)      results.ga4TopPages      = d.ga4TopPages;
+    if (d.ga4Demographics)  results.ga4Demographics  = d.ga4Demographics;
+    if (d.ga4Devices)       results.ga4Devices       = d.ga4Devices;
+    if (d.ga4Channels)      results.ga4Channels      = d.ga4Channels;
+    if (d.ga4Sources)       results.ga4Sources       = d.ga4Sources;
+    if (d.ga4LandingPages)  results.ga4LandingPages  = d.ga4LandingPages;
+    if (d.ga4DailyTrend)    results.ga4DailyTrend    = d.ga4DailyTrend;
   });
   absorb(wpRes, 'WPAnalytics', d => {
     if (d.wpAnalytics && !results.ga4) {

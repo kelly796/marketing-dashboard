@@ -668,6 +668,11 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   </div>
 </header>
 
+<!-- ─── MOCK DATA BANNER ─────────────────────────────────────────── -->
+<div id="mock-data-banner" style="display:none; background:#7C3AED; color:#fff; font-size:12px; font-weight:600; text-align:center; padding:8px 16px; letter-spacing:0.04em;">
+  ⚠ Mock data — all API calls failed on last refresh. Connect your API keys in Netlify environment variables to see live data.
+</div>
+
 <!-- ─── MAIN ─────────────────────────────────────────────────────── -->
 <main class="main">
 
@@ -1655,16 +1660,18 @@ function destroyChart(key) {
 async function loadData(force=false) {
   setHeaderStatus('Loading…');
   let data = force ? null : getCache();
-  if (!data) {
+  if (data) {
+    ghlData = data._ghl || null;
+  } else {
     try {
       const dataUrl = force ? '/.netlify/functions/get-data?_bypass_blobs=1' : '/.netlify/functions/get-data';
       const [mainRes, ghlRes] = await Promise.allSettled([
         fetch(dataUrl).then(r=>r.json()),
         fetch('/.netlify/functions/fetch-ghl').then(r=>r.json()).catch(()=>null),
       ]);
-      data   = mainRes.status==='fulfilled' ? mainRes.value : {};
+      data    = mainRes.status==='fulfilled' ? mainRes.value : {};
       ghlData = ghlRes.status==='fulfilled'  ? ghlRes.value  : null;
-      if (data && Object.keys(data).length) setCache(data);
+      if (data && Object.keys(data).length) setCache({ ...data, _ghl: ghlData });
     } catch(e) { console.error('Load error', e); data={}; }
   }
   dashData = data;
@@ -1678,6 +1685,10 @@ function setHeaderStatus(msg) {
 
 // ─── RENDER ALL ───────────────────────────────────────────────────
 function renderAll() {
+  const isMock = dashData?.dataSource === 'Mock';
+  const mockBanner = document.getElementById('mock-data-banner');
+  if (mockBanner) mockBanner.style.display = isMock ? 'block' : 'none';
+
   const meta = dashData?.meta || null;
   const ga4  = dashData?.ga4  || null;
   const seo  = dashData?.seo  || null;
@@ -1738,7 +1749,7 @@ function renderOverview(meta, ga4) {
   const sessT = trendArrow(sessions, ga4?.sessionsPrev ?? 0);
   const sessTrend = document.getElementById('stat-sessions-trend');
   sessTrend.className = 'stat-trend '+sessT.cls;
-  sessTrend.textContent = sessT.arrow+' '+sessT.pct+' vs last week';
+  sessTrend.textContent = sessT.arrow+' '+sessT.pct+' vs last month';
 
   // Lead ROAS = (leads × avg member LTV) / spend — uses the LTV calculator values
   const ltvTiers   = loadLTVConfig();
@@ -1753,7 +1764,7 @@ function renderOverview(meta, ga4) {
 
   // Overview spend chart with projection
   const labels  = getLast7DayLabels();
-  const spendData = meta?.spendTrend?.length ? meta.spendTrend : distributeMock(spend, 7);
+  const spendData = meta?.spendTrend?.length ? meta.spendTrend.slice(-7) : Array(7).fill(0);
   buildProjectionChart('chart-spend-overview', labels, spendData, 'bar', 7);
 
   // Mini campaign snapshot

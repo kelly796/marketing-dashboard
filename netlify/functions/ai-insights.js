@@ -14,6 +14,10 @@ exports.handler = async (event) => {
   let data = {};
   try { data = JSON.parse(event.body || '{}'); } catch { /* use empty */ }
 
+  // Use the prompt from the request body if provided (frontend builds its own),
+  // otherwise fall back to the structured buildPrompt using the context data.
+  const prompt = data.prompt || buildPrompt(data.context || data);
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -22,9 +26,9 @@ exports.handler = async (event) => {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
-      messages: [{ role: 'user', content: buildPrompt(data) }],
+      messages: [{ role: 'user', content: prompt }],
     }),
   });
 
@@ -35,14 +39,11 @@ exports.handler = async (event) => {
 
   const result = await res.json();
   const text = result.content?.[0]?.text || '';
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  let insights = {};
-  try { insights = JSON.parse(jsonMatch?.[0] || '{}'); } catch { insights = { raw: text }; }
 
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ insights }),
+    body: JSON.stringify({ result: text }),
   };
 };
 

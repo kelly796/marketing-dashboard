@@ -32,7 +32,7 @@
  *  Tip: set a recurring calendar reminder for every 50 days so you never miss it.
  */
 
-const GRAPH   = 'https://graph.facebook.com/v19.0';
+const GRAPH   = 'https://graph.facebook.com/v21.0';
 const WINDSOR = 'https://connectors.windsor.ai/all';
 
 exports.handler = async () => {
@@ -114,12 +114,12 @@ exports.handler = async () => {
         fields: 'spend,impressions,clicks,ctr,reach,actions,action_values,conversions',
         date_preset: 'last_7d',
         access_token: token,
-      }) : null,
+      }).catch(() => null) : null,
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
         fields: 'spend,impressions,clicks,ctr,reach,actions,action_values,conversions',
         time_range: JSON.stringify({ since: fmtDate(since14), until: fmtDate(since7) }),
         access_token: token,
-      }) : null,
+      }).catch(() => null) : null,
       adAccountId ? metaGet(`/act_${adAccountId}/campaigns`, {
         fields: 'name,status,objective,insights.date_preset(last_7d){spend,impressions,clicks,ctr,actions,conversions}',
         effective_status: JSON.stringify(['ACTIVE', 'PAUSED']),
@@ -243,7 +243,7 @@ function buildIGData(account, insights7d, insights7dPrev, insights30d, media, po
 
     return {
       id:            post.id,
-      caption:       (post.caption || '').slice(0, 120),
+        caption:       escapeHtml((post.caption || '').slice(0, 120)),
       type:          normalizeMediaType(post.media_type),
       date:          (post.timestamp || '').slice(0, 10),
       reach:         postReach,
@@ -295,7 +295,7 @@ function buildFBData(postsResp, _unused1, pageAccount, _unused2) {
 
   const posts = (postsResp?.data || []).map(p => ({
     id:        p.id,
-    message:   (p.message || '').substring(0, 120),
+    message:   escapeHtml((p.message || '').substring(0, 120)),
     date:      p.created_time,
     likes:     Number(p.likes?.summary?.total_count || 0),
     comments:  Number(p.comments?.summary?.total_count || 0),
@@ -667,6 +667,11 @@ async function metaGet(path, params = {}, retries = 3) {
     return res.json();
   }
   throw new Error(`Meta API ${path} failed after ${retries} retries`);
+}
+
+// ─── HTML ESCAPE ─────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ─── DATE HELPERS ─────────────────────────────────────────────────────────────

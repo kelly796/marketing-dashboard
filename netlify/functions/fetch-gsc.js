@@ -64,7 +64,11 @@ exports.handler = async () => {
     const d31ago     = fmtDate(daysAgo(31));
     const d90ago     = fmtDate(daysAgo(90));
 
-    const [keywordReport, prevReport, dateReport] = await Promise.all([
+    const d7ago      = fmtDate(daysAgo(7));
+    const d8ago      = fmtDate(daysAgo(8));
+    const d14ago     = fmtDate(daysAgo(14));
+
+    const [keywordReport, prevReport, dateReport, clicks7dReport, clicks7dPrevReport] = await Promise.all([
       // Current 30-day keyword positions
       gscQuery(apiBase, token, {
         startDate:    d30ago,
@@ -89,6 +93,22 @@ exports.handler = async () => {
         rowLimit:     5000,
         dataState:    'final',
       }),
+      // Daily site aggregate for the last 7 days (click/impression totals)
+      gscQuery(apiBase, token, {
+        startDate:    d7ago,
+        endDate:      today,
+        dimensions:   ['date'],
+        rowLimit:     7,
+        dataState:    'final',
+      }).catch(() => null),
+      // Daily site aggregate for the prior 7-day window
+      gscQuery(apiBase, token, {
+        startDate:    d14ago,
+        endDate:      d8ago,
+        dimensions:   ['date'],
+        rowLimit:     7,
+        dataState:    'final',
+      }).catch(() => null),
     ]);
 
     // ── KEYWORD TABLE ─────────────────────────────────────────────────────────
@@ -103,11 +123,14 @@ exports.handler = async () => {
       const current = Math.round(row.position);
       const prev    = prevPositionMap[kw] || current;
       return {
-        keyword:  kw,
-        brand:    tagBrand(kw),
+        keyword:     kw,
+        brand:       tagBrand(kw),
         current,
-        previous: prev,
-        volume:   row.impressions, // GSC impressions used as volume proxy
+        previous:    prev,
+        volume:      row.impressions,
+        clicks:      row.clicks      || 0,
+        impressions: row.impressions || 0,
+        ctr:         row.ctr        || 0,
       };
     });
 
@@ -131,8 +154,20 @@ exports.handler = async () => {
       pos50plus: sortedDates.map(d => dateMap[d].filter(p => p > 50).length),
     };
 
+    const sumRows = (report, field) =>
+      (report?.rows || []).reduce((n, r) => n + (r[field] || 0), 0);
+
+    const totalClicks      = sumRows(keywordReport, 'clicks');
+    const totalImpressions = sumRows(keywordReport, 'impressions');
+    const clicks7d         = sumRows(clicks7dReport, 'clicks');
+    const clicksPrev       = sumRows(clicks7dPrevReport, 'clicks');
+
     const seo = {
-      connectionNote: `Google Search Console connected. Data covers ${d30ago} – ${today}.`,
+      connectionNote:   `Google Search Console connected. Data covers ${d30ago} – ${today}.`,
+      totalClicks,
+      totalImpressions,
+      clicks7d,
+      clicksPrev,
       rankTrend30: { labels, ...buckets },
       keywords,
     };
