@@ -93,17 +93,22 @@ All dashboard code lives in one file. Key sections (search by comment header):
 ## Required Environment Variables (set in Netlify dashboard)
 
 ```
-META_ACCESS_TOKEN        # Long-lived Meta Graph API token
+META_ACCESS_TOKEN        # Long-lived Meta Graph API token (expires 60 days — set calendar reminder)
 META_AD_ACCOUNT_ID       # e.g. 866923722901513
 META_HQ_PAGE_ID          # PerforMotion HQ Facebook Page ID
+META_ONLINE_PAGE_ID      # Optional — second Instagram account (pending approval)
 META_APP_SECRET          # For webhook signature verification
 WEBHOOK_VERIFY_TOKEN     # For Meta webhook GET handshake
+WINDSOR_API_KEY          # Optional — Windsor.ai ad attribution enrichment
 GHL_API_KEY              # GoHighLevel private integration token
 GHL_LOCATION_ID          # GHL sub-account ID
 GA4_PROPERTY_ID
 GOOGLE_CLIENT_EMAIL      # Service account for GA4 + GSC
 GOOGLE_PRIVATE_KEY
 GSC_SITE_URL
+GSC_CLIENT_ID            # Optional — OAuth alternative to service account for GSC
+GSC_CLIENT_SECRET        # Optional
+GSC_REFRESH_TOKEN        # Optional
 CLARITY_API_KEY
 CLARITY_PROJECT_ID
 AC_API_KEY
