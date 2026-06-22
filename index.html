@@ -1878,6 +1878,15 @@ async function loadData(force=false) {
       ]);
       data    = mainRes.status==='fulfilled' ? mainRes.value : {};
       ghlData = ghlRes.status==='fulfilled'  ? ghlRes.value  : null;
+      // Supplement missing Meta/IG keys from static fallback (used when API token is expired)
+      if (!data.instagramHQ || !data.facebook || !data.meta) {
+        try {
+          const fb = await fetch('/data/dashboard-data.json').then(r=>r.json());
+          if (!data.instagramHQ && fb.instagramHQ) data.instagramHQ = fb.instagramHQ;
+          if (!data.facebook    && fb.facebook)    data.facebook    = fb.facebook;
+          if (!data.meta        && fb.meta)         data.meta        = fb.meta;
+        } catch {}
+      }
       if (data && Object.keys(data).length) setCache({ ...data, _ghl: ghlData });
     } catch(e) { console.error('Load error', e); data={}; }
   }
@@ -2638,9 +2647,9 @@ function renderInstagram(ig) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">No recent posts found</td></tr>';
     return;
   }
-  const typeIcon = t => t === 'VIDEO' || t === 'REEL' ? '🎬' : t === 'CAROUSEL_ALBUM' ? '🖼️' : '📷';
+  const typeIcon = t => { const s = (t||'').toLowerCase(); return s==='reel'||s==='video' ? '🎬' : s==='carousel' ? '🖼️' : '📷'; };
   tbody.innerHTML = posts.map(p => {
-    const date = p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-AU', {day:'numeric',month:'short'}) : '—';
+    const date = (p.date||p.timestamp) ? new Date(p.date||p.timestamp).toLocaleDateString('en-AU', {day:'numeric',month:'short'}) : '—';
     const caption = (p.caption || '').replace(/</g,'&lt;').substring(0, 60) + ((p.caption||'').length > 60 ? '…' : '');
     return `<tr>
       <td style="font-family:var(--fmono);font-size:.8rem">${date}</td>
