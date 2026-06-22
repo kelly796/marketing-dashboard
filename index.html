@@ -609,6 +609,11 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v4H3z"/><path d="M3 10h18v4H3z"/><path d="M3 17h18v4H3z"/></svg>
       Campaigns
     </a></li>
+    <li><a data-page="leads" onclick="navigate('leads',this);return false;">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      Meta Leads
+      <span class="badge badge-watch" id="sidebar-leads-badge" style="display:none;margin-left:auto;font-size:.6rem;padding:1px 5px">0</span>
+    </a></li>
 
     <div class="sidebar-section-label">Social</div>
     <li><a data-page="instagram" onclick="navigate('instagram',this);return false;">
@@ -927,6 +932,55 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       <div class="campaign-card-body">
         <div style="color:var(--text-muted);font-size:.85rem;line-height:1.6">Landing page to build before ads go live. Course currently in development.</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ META LEADS ══════════════════════════════════════════════ -->
+<div id="tab-leads" class="tab-content">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Meta Leads</div>
+      <div class="section-subtitle">Live feed from Meta Lead Ads · Webhook capture · GHL sync</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary btn-sm" id="leads-sync-btn" onclick="syncLeadsToGHL()">Sync Pending to GHL</button>
+      <button class="btn btn-secondary btn-sm" onclick="loadLeads(true)">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div id="leads-sync-result" style="display:none;margin-bottom:16px"></div>
+
+  <!-- Summary stats -->
+  <div class="stat-grid" style="margin-bottom:16px" id="leads-stats-grid">
+    <div class="stat-card"><div class="stat-label">Total Leads</div><div class="stat-value sm" id="leads-stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Synced to GHL</div><div class="stat-value sm" id="leads-stat-synced">—</div></div>
+    <div class="stat-card"><div class="stat-label">Pending Sync</div><div class="stat-value sm" id="leads-stat-pending">—</div></div>
+    <div class="stat-card"><div class="stat-label">Sync Errors</div><div class="stat-value sm" id="leads-stat-errors">—</div></div>
+  </div>
+
+  <!-- Webhook URL info -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">Webhook Endpoint</div>
+    <div style="font-family:var(--fmono);font-size:.8rem;background:var(--bg);padding:10px 14px;border-radius:var(--radius-sm);color:var(--teal);word-break:break-all">
+      https://monumental-syrniki-3b33aa.netlify.app/.netlify/functions/receive-lead
+    </div>
+    <div style="font-size:.75rem;color:var(--text-muted);margin-top:6px">Verify token: <code style="font-family:var(--fmono)">performotion_webhook_2026</code> &nbsp;·&nbsp; Subscribe to: <code style="font-family:var(--fmono)">leadgen</code>, <code style="font-family:var(--fmono)">leadgen_update</code></div>
+  </div>
+
+  <!-- Leads table -->
+  <div class="card">
+    <div class="card-title">Lead Feed</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Received</th><th>Name</th><th>Email</th><th>Phone</th><th>Form / Ad</th><th>GHL Status</th><th></th></tr></thead>
+        <tbody id="leads-table-body">
+          <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Loading…</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -1436,7 +1490,7 @@ const CACHE_TTL      = 1 * 60 * 60 * 1000; // 1h — server-side Blobs cache han
 const MAXX_URL       = '/.netlify/functions/maxx-report';
 const MAXX_CACHE_KEY = 'pm_maxx_v2';
 const MAXX_CACHE_TTL = 24 * 60 * 60 * 1000;
-const PAGE_TITLES = { overview:'Overview', meta:'Meta Ads', campaigns:'Campaigns', ghl:'Go High Level', website:'Website', seo:'SEO & AI Visibility', skills:'Skill Launcher', ai:'AI Insights' };
+const PAGE_TITLES = { overview:'Overview', meta:'Meta Ads', campaigns:'Campaigns', leads:'Meta Leads', ghl:'Go High Level', website:'Website', seo:'SEO & AI Visibility', skills:'Skill Launcher', ai:'AI Insights' };
 
 // ─── STATE ────────────────────────────────────────────────────────
 let dashData = null;
@@ -3399,6 +3453,113 @@ function renderAIChecklist(audit, pagespeed) {
 
 // ─── INIT ─────────────────────────────────────────────────────────
 loadData();
+
+// ─── META LEADS ───────────────────────────────────────────────────
+
+let leadsData = [];
+
+async function loadLeads(force = false) {
+  const tbody = document.getElementById('leads-table-body');
+  if (!tbody) return;
+  if (!force && leadsData.length) { renderLeads(); return; }
+
+  try {
+    const res = await fetch('/api/get-leads');
+    leadsData = res.ok ? await res.json() : [];
+  } catch {
+    leadsData = [];
+  }
+  renderLeads();
+}
+
+function renderLeads() {
+  const tbody = document.getElementById('leads-table-body');
+  if (!tbody) return;
+
+  const total   = leadsData.length;
+  const synced  = leadsData.filter(l => l.ghlSynced).length;
+  const pending = leadsData.filter(l => !l.ghlSynced && !l.syncError).length;
+  const errors  = leadsData.filter(l => l.syncError).length;
+
+  document.getElementById('leads-stat-total').textContent   = total;
+  document.getElementById('leads-stat-synced').textContent  = synced;
+  document.getElementById('leads-stat-pending').textContent = pending;
+  document.getElementById('leads-stat-errors').textContent  = errors;
+
+  // Update sidebar badge
+  const badge = document.getElementById('sidebar-leads-badge');
+  if (badge) {
+    badge.textContent    = pending;
+    badge.style.display  = pending > 0 ? 'inline-block' : 'none';
+  }
+
+  if (!total) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">No leads yet. Waiting for Meta Lead Ad submissions.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = leadsData.map(l => {
+    const date = l.receivedAt ? l.receivedAt.slice(0,16).replace('T',' ') : '—';
+    const statusBadge = l.ghlSynced
+      ? `<span class="badge badge-live">Synced</span>`
+      : l.syncError
+        ? `<span class="badge badge-watch" title="${l.syncError}">Error</span>`
+        : `<span class="badge" style="background:var(--surface2);color:var(--text-muted)">Pending</span>`;
+    const syncBtn = !l.ghlSynced
+      ? `<button class="btn btn-secondary btn-sm" onclick="syncOneLead('${l.id}')">Sync</button>`
+      : `<span style="color:var(--text-muted);font-size:.75rem">${l.ghlContactId ? 'ID: '+l.ghlContactId.slice(0,8)+'…' : ''}</span>`;
+    return `<tr>
+      <td style="font-size:.78rem;color:var(--text-muted)">${date}</td>
+      <td><strong>${l.name || '—'}</strong></td>
+      <td>${l.email || '—'}</td>
+      <td>${l.phone || '—'}</td>
+      <td style="font-size:.75rem;color:var(--text-muted)">
+        ${l.formId ? 'Form: '+l.formId.slice(0,8)+'…' : ''}
+        ${l.adId   ? '<br>Ad: '+l.adId.slice(0,8)+'…'   : ''}
+      </td>
+      <td>${statusBadge}</td>
+      <td>${syncBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function syncLeadsToGHL() {
+  const btn    = document.getElementById('leads-sync-btn');
+  const result = document.getElementById('leads-sync-result');
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+
+  try {
+    const res  = await fetch('/api/sync-leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await res.json();
+    const msg  = `Synced ${data.synced?.length || 0} · Failed ${data.failed?.length || 0} · Skipped ${data.skipped?.length || 0}`;
+    if (result) {
+      result.style.display = 'block';
+      result.innerHTML = `<div class="placeholder-banner" style="padding:12px 16px;margin:0">${msg}</div>`;
+    }
+    await loadLeads(true);
+  } catch (err) {
+    if (result) { result.style.display='block'; result.innerHTML=`<div class="placeholder-banner" style="padding:12px 16px;margin:0">Sync error: ${err.message}</div>`; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sync Pending to GHL'; }
+  }
+}
+
+async function syncOneLead(leadId) {
+  try {
+    await fetch('/api/sync-leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leadId }) });
+    await loadLeads(true);
+  } catch (err) {
+    alert('Sync failed: ' + err.message);
+  }
+}
+
+// Load leads when the tab is opened
+const _origNavigate = window.navigate || navigate;
+const _navWithLeads = function(name, el) {
+  _origNavigate(name, el);
+  if (name === 'leads') loadLeads();
+};
+if (typeof navigate === 'function') { window.navigate = _navWithLeads; }
 </script>
 </body>
 </html>
