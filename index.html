@@ -48,8 +48,9 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 /* ─── LAYOUT ──────────────────────────────────────────────────── */
 .sidebar{
   position:fixed;top:0;left:0;bottom:0;width:var(--sidebar);
-  background:#070F1B;display:flex;flex-direction:column;z-index:100;
+  background:#070F1B;display:flex;flex-direction:column;z-index:200;
   border-right:1px solid var(--border);overflow-y:auto;
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
 }
 .header{
   position:fixed;top:0;left:var(--sidebar);right:0;height:var(--header);
@@ -61,6 +62,12 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   margin-left:var(--sidebar);margin-top:var(--header);
   padding:28px;min-height:calc(100vh - var(--header));
 }
+/* hamburger — hidden on desktop */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--text);flex-shrink:0;}
+.hamburger svg{display:block;}
+/* sidebar overlay backdrop */
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;}
+.sidebar-backdrop.visible{display:block;}
 
 /* ─── PAGE TRANSITIONS ────────────────────────────────────────── */
 .tab-content{display:none;opacity:0;}
@@ -74,7 +81,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   position:fixed;top:var(--header);left:var(--sidebar);right:0;bottom:0;
   background:var(--bg);transform:translateX(100%);
   transition:transform .25s cubic-bezier(.4,0,.2,1);
-  overflow-y:auto;z-index:50;padding:28px;
+  overflow-y:auto;z-index:50;padding:28px;will-change:transform;
 }
 .subpage.open{transform:translateX(0);}
 
@@ -439,6 +446,13 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   background:var(--surface2);transition:background .15s;
 }
 .ghl-stage-row:hover{background:var(--surface3);}
+.ghl-stage-clickable{cursor:pointer;}
+.ghl-stage-clickable:hover{background:var(--teal-glow)!important;border-left:2px solid var(--teal);}
+.ghl-stage-clickable:hover .ghl-stage-count{color:var(--teal);}
+.ghl-stage-active{background:var(--teal-glow)!important;border-left:2px solid var(--teal);}
+.ghl-stage-active .ghl-stage-count{color:var(--teal);}
+.ghl-filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--teal-glow);border:1px solid var(--teal);border-radius:var(--radius-sm);font-size:.82rem;color:var(--teal);font-weight:600;}
+.ghl-filter-bar button{margin-left:auto;font-size:.75rem;background:none;border:1px solid var(--teal);color:var(--teal);border-radius:var(--radius-sm);padding:3px 10px;cursor:pointer;}
 .ghl-stage-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;}
 .ghl-stage-dot.active{background:var(--success);}
 .ghl-stage-dot.amber{background:var(--warning);}
@@ -583,6 +597,43 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   .clarity-grid{grid-template-columns:repeat(2,1fr);}
   .card-grid-60-40,.card-grid-2{grid-template-columns:1fr;}
 }
+@media(max-width:768px){
+  /* sidebar becomes off-canvas overlay */
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  /* header + main go full width */
+  .header{left:0;padding:0 16px;}
+  .main{margin-left:0;padding:16px;}
+  .subpage{left:0;padding:16px;}
+  /* show hamburger */
+  .hamburger{display:flex;align-items:center;}
+  /* collapse all grids to 1 or 2 cols */
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-card{padding:14px;}
+  .stat-value{font-size:1.6rem;}
+  .card-grid-60-40,.card-grid-2{grid-template-columns:1fr;}
+  .campaign-grid{grid-template-columns:1fr;}
+  .clarity-grid{grid-template-columns:repeat(2,1fr);}
+  .skills-grid{grid-template-columns:repeat(2,1fr);}
+  .ghl-pipelines-grid{grid-template-columns:1fr;}
+  .ghl-action-grid{grid-template-columns:repeat(2,1fr);}
+  /* cards */
+  .card{border-radius:10px;}
+  .card-body{padding:14px;}
+  /* section headers stack */
+  .section-header{flex-direction:column;align-items:flex-start;gap:10px;}
+  .section-header > div:last-child{display:flex;flex-wrap:wrap;gap:8px;}
+  /* header elements */
+  .last-updated{display:none;}
+  .page-title{font-size:1rem;}
+  /* hide AI button text */
+  .btn-primary svg{margin:0;}
+  /* funnel bars */
+  .funnel-bar{height:6px;}
+  /* reduce chart heights */
+  canvas{max-height:220px!important;}
+}
 </style>
 </head>
 <body>
@@ -655,9 +706,15 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   </div>
 </nav>
 
+<!-- ─── SIDEBAR BACKDROP ──────────────────────────────────────────── -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
 <!-- ─── HEADER ───────────────────────────────────────────────────── -->
 <header class="header">
-  <div class="header-left">
+  <div class="header-left" style="display:flex;align-items:center;gap:10px;min-width:0;">
+    <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <span class="page-title" id="page-title">Overview</span>
     <div class="breadcrumb" id="breadcrumb"></div>
   </div>
@@ -1525,6 +1582,18 @@ Chart.register({
   }
 });
 
+// ─── MOBILE SIDEBAR ───────────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar  = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const isOpen   = sidebar.classList.toggle('open');
+  backdrop.classList.toggle('visible', isOpen);
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('visible');
+}
+
 // ─── ROUTER ───────────────────────────────────────────────────────
 function navigate(name, el) {
   closeSubPage(true);
@@ -1543,6 +1612,7 @@ function navigate(name, el) {
   currentPage = name;
   document.getElementById('page-title').textContent = PAGE_TITLES[name] || name;
   updateBreadcrumb();
+  closeSidebar();
   return false;
 }
 function switchTab(name, el) { return navigate(name, el); }
@@ -2550,7 +2620,8 @@ function renderGHL() {
         criticalTotal += critical;
 
         const dotClass = count === 0 ? '' : critical > 0 ? 'red' : stalled > 0 ? 'amber' : 'active';
-        return `<div class="ghl-stage-row">
+        const clickable = hasApi && count > 0;
+        return `<div class="ghl-stage-row${clickable ? ' ghl-stage-clickable' : ''}" ${clickable ? `onclick="filterGHLByStage('${pipe.name}','${stageName}')"` : ''} title="${clickable ? `Show ${count} contact${count!==1?'s':''} in ${stageName}` : ''}">
           <span class="ghl-stage-dot ${dotClass}"></span>
           <span class="ghl-stage-name">${stageName}</span>
           <span class="ghl-stage-count">${hasApi ? count : '—'}</span>
@@ -2582,28 +2653,76 @@ function renderGHL() {
   }
 
   // Recent leads table
-  const tbody = document.getElementById('ghl-contacts-body');
-  if (!tbody) return;
-  const contacts = ghlData?.recentContacts || [];
-  if (!contacts.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">${hasApi ? 'No leads yet.' : 'Pipelines not yet set up in GHL.'}</td></tr>`;
-  } else {
-    tbody.innerHTML = contacts.map(c => {
-      const statusBadge = c.critical
-        ? '<span class="badge badge-watch">Critical</span>'
-        : c.stalled
-        ? '<span class="badge" style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">Stalled</span>'
-        : '<span class="badge badge-good">Active</span>';
-      return `<tr>
-        <td style="font-weight:600">${c.name}</td>
-        <td style="font-size:.8rem;color:var(--text-muted)">${c.pipeline || '—'}</td>
-        <td><span class="badge badge-live">${c.stage}</span></td>
-        <td>${c.source || '—'}</td>
-        <td>${c.addedAt ? new Date(c.addedAt).toLocaleDateString('en-AU') : '—'}</td>
-        <td>${statusBadge}</td>
-      </tr>`;
-    }).join('');
+  ghlActiveFilter = null;
+  renderGHLContactsTable(ghlData?.recentContacts || []);
+}
+
+// ─── GHL STAGE FILTER ─────────────────────────────────────────────
+let ghlActiveFilter = null;
+
+function filterGHLByStage(pipeline, stage) {
+  const isSame = ghlActiveFilter?.pipeline === pipeline && ghlActiveFilter?.stage === stage;
+
+  // Clear all active highlights
+  document.querySelectorAll('.ghl-stage-active').forEach(el => el.classList.remove('ghl-stage-active'));
+
+  if (isSame) {
+    ghlActiveFilter = null;
+    renderGHLContactsTable(ghlData?.recentContacts || []);
+    return;
   }
+
+  ghlActiveFilter = { pipeline, stage };
+
+  // Highlight the tapped row
+  document.querySelectorAll('.ghl-stage-clickable').forEach(el => {
+    if (el.textContent.includes(stage) && el.closest('.ghl-pipe-card')?.querySelector('.ghl-pipe-name')?.textContent === pipeline) {
+      el.classList.add('ghl-stage-active');
+    }
+  });
+
+  const filtered = (ghlData?.recentContacts || []).filter(c =>
+    c.pipeline === pipeline && c.stage === stage
+  );
+  renderGHLContactsTable(filtered, `${pipeline} › ${stage}`);
+
+  // Scroll to the contacts table
+  document.getElementById('ghl-contacts-body')?.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderGHLContactsTable(contacts, filterLabel) {
+  const tbody = document.getElementById('ghl-contacts-body');
+  const card  = tbody?.closest('.card');
+  if (!tbody) return;
+
+  // Update card title
+  const title = card?.querySelector('.card-title');
+  if (title) {
+    title.innerHTML = filterLabel
+      ? `Recent Leads — <span style="color:var(--teal)">${filterLabel}</span> <button onclick="filterGHLByStage(ghlActiveFilter?.pipeline,ghlActiveFilter?.stage)" style="margin-left:8px;font-size:.72rem;background:none;border:1px solid var(--border2);color:var(--text-muted);border-radius:4px;padding:2px 8px;cursor:pointer">Clear ✕</button>`
+      : 'Recent Leads — All Pipelines';
+  }
+
+  if (!contacts.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">${filterLabel ? 'No contacts in this stage.' : 'No leads yet.'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = contacts.map(c => {
+    const statusBadge = c.critical
+      ? '<span class="badge badge-watch">Critical</span>'
+      : c.stalled
+      ? '<span class="badge" style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">Stalled</span>'
+      : '<span class="badge badge-good">Active</span>';
+    return `<tr>
+      <td style="font-weight:600">${c.name}</td>
+      <td style="font-size:.8rem;color:var(--text-muted)">${c.pipeline || '—'}</td>
+      <td><span class="badge badge-live">${c.stage}</span></td>
+      <td>${c.source || '—'}</td>
+      <td>${c.addedAt ? new Date(c.addedAt).toLocaleDateString('en-AU') : '—'}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ─── WEBSITE RENDER ───────────────────────────────────────────────
