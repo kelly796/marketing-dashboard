@@ -399,6 +399,21 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .fc-roas-num.bad{color:var(--danger);}
 .fc-roas-label{font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;}
 .fc-roas-sub{font-size:.78rem;color:var(--text-dim);text-align:right;max-width:200px;}
+.fc-blended-display{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
+.fc-blended-label{font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.fc-blended-val{font-family:var(--fmono);font-size:1.2rem;font-weight:700;color:var(--teal);line-height:1;}
+.fc-blended-sub{font-size:.68rem;color:var(--text-muted);margin-top:4px;}
+.fc-tiers{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px;}
+.fc-tiers table{width:100%;border-collapse:collapse;}
+.fc-tiers th{font-size:.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;padding:7px 10px;background:var(--surface2);text-align:right;}
+.fc-tiers th:first-child{text-align:left;}
+.fc-tiers td{padding:7px 10px;border-top:1px solid var(--border);text-align:right;vertical-align:middle;}
+.fc-tiers td:first-child{text-align:left;}
+.fc-tiers tfoot td{font-family:var(--fmono);font-weight:700;color:var(--teal);background:var(--surface2);font-size:.82rem;border-top:2px solid var(--border2);}
+.fc-tiers-input{width:70px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:.82rem;font-family:var(--fmono);color:var(--text);text-align:right;outline:none;box-sizing:border-box;}
+.fc-tiers-input:focus{border-color:var(--teal);}
+.fc-tiers-name{background:transparent;border:none;border-bottom:1px solid transparent;padding:2px 0;font-size:.82rem;color:var(--text);outline:none;width:100%;}
+.fc-tiers-name:focus{border-bottom-color:var(--teal);}
 @media(max-width:768px){.fc-inputs{grid-template-columns:1fr;}}
 .campaign-card-header{
   padding:16px 20px;display:flex;align-items:center;
@@ -905,6 +920,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     <div class="card-title">Revenue Forecaster</div>
     <div class="fc-subtitle">Adjust inputs to project your funnel revenue</div>
     <div class="fc-inputs" id="fc-inputs"></div>
+    <div id="fc-tiers-wrap"></div>
     <div class="fc-results" id="fc-results"></div>
     <div class="fc-roas-bar" id="fc-roas-bar"></div>
   </div>
@@ -1943,7 +1959,7 @@ function renderOverview(meta, ga4) {
   sessTrend.textContent = sessT.arrow+' '+sessT.pct+' vs last month';
 
   // Lead ROAS = (leads × avg client value) / spend
-  const avgLTV     = loadFCConfig().price || 1500;
+  const avgLTV     = calcBlendedPrice(loadFCConfig().tiers) || 1500;
   const leadRoas   = (leads > 0 && spend > 0 && avgLTV > 0) ? +((leads * avgLTV) / spend).toFixed(1) : 0;
   const roasEl     = document.getElementById('stat-roas-val');
   const roasTrend  = document.getElementById('stat-roas-trend');
@@ -3313,13 +3329,30 @@ function renderAudienceByAge(breakdown) {
 
 // ─── REVENUE FORECASTER ───────────────────────────────────────────
 const FC_KEY = 'pm_forecaster_v1';
-const FC_DEFAULTS = { budget: 50, price: 199, cpl: 0, closeRate: 20 };
+const FC_DEFAULTS = {
+  budget: 50,
+  cpl: 0,
+  closeRate: 20,
+  tiers: [
+    { name: 'Perf Core',  price: 149, mix: 40 },
+    { name: 'Perf Plus',  price: 199, mix: 40 },
+    { name: 'Perf Prime', price: 249, mix: 20 },
+  ]
+};
 
 function loadFCConfig() {
-  try { return { ...FC_DEFAULTS, ...JSON.parse(localStorage.getItem(FC_KEY)) }; }
-  catch { return { ...FC_DEFAULTS }; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(FC_KEY)) || {};
+    return { ...FC_DEFAULTS, ...saved, tiers: saved.tiers || FC_DEFAULTS.tiers };
+  } catch { return { ...FC_DEFAULTS }; }
 }
 function saveFCConfig(cfg) { localStorage.setItem(FC_KEY, JSON.stringify(cfg)); }
+
+function calcBlendedPrice(tiers) {
+  const totalMix = tiers.reduce((s, t) => s + (t.mix || 0), 0);
+  if (!totalMix) return 0;
+  return tiers.reduce((s, t) => s + (t.price || 0) * ((t.mix || 0) / totalMix), 0);
+}
 
 function renderForecaster() {
   const cfg     = loadFCConfig();
@@ -3329,14 +3362,13 @@ function renderForecaster() {
   const inputsEl = document.getElementById('fc-inputs');
   if (!inputsEl) return;
 
+  const blended    = calcBlendedPrice(cfg.tiers);
+  const totalMix   = cfg.tiers.reduce((s, t) => s + (t.mix || 0), 0);
+
   inputsEl.innerHTML = `
     <div class="fc-field">
       <div class="fc-field-label">Daily Ad Budget ($)</div>
       <input class="fc-field-input" type="number" min="0" step="1" value="${cfg.budget}" data-fc="budget" oninput="onFCInput(this)">
-    </div>
-    <div class="fc-field">
-      <div class="fc-field-label">Product Price ($)</div>
-      <input class="fc-field-input" type="number" min="0" step="1" value="${cfg.price}" data-fc="price" oninput="onFCInput(this)">
     </div>
     <div class="fc-field">
       <div class="fc-field-label">Cost Per Lead ($)</div>
@@ -3345,6 +3377,30 @@ function renderForecaster() {
     <div class="fc-field">
       <div class="fc-field-label">Close Rate (%)</div>
       <input class="fc-field-input" type="number" min="0" max="100" step="1" value="${cfg.closeRate}" data-fc="closeRate" oninput="onFCInput(this)">
+    </div>
+    <div class="fc-blended-display">
+      <div class="fc-blended-label">Avg Client Value</div>
+      <div class="fc-blended-val" id="fc-blended-val">${blended > 0 ? fmtCurrency(blended) : '—'}</div>
+      <div class="fc-blended-sub">weighted across ${cfg.tiers.length} tiers</div>
+    </div>`;
+
+  const tiersWrap = document.getElementById('fc-tiers-wrap');
+  if (tiersWrap) tiersWrap.innerHTML = `
+    <div class="fc-tiers">
+      <table>
+        <thead><tr><th>Service</th><th>Price ($)</th><th>Mix (%)</th></tr></thead>
+        <tbody>
+          ${cfg.tiers.map((t, i) => `
+          <tr>
+            <td><input class="fc-tiers-name" type="text" value="${t.name}" data-tier="${i}" data-field="name" oninput="onFCTierInput(this)"></td>
+            <td><input class="fc-tiers-input" type="number" min="0" step="1" value="${t.price}" data-tier="${i}" data-field="price" oninput="onFCTierInput(this)"></td>
+            <td><input class="fc-tiers-input" type="number" min="0" max="100" step="1" value="${t.mix}" data-tier="${i}" data-field="mix" oninput="onFCTierInput(this)"></td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr><td>Blended Avg</td><td id="fc-tiers-blended">${blended > 0 ? fmtCurrency(blended) : '—'}</td><td>${totalMix}%</td></tr>
+        </tfoot>
+      </table>
     </div>`;
 
   updateFCResults(cfg);
@@ -3357,11 +3413,29 @@ function onFCInput(input) {
   updateFCResults(cfg);
 }
 
+function onFCTierInput(input) {
+  const cfg   = loadFCConfig();
+  const idx   = parseInt(input.dataset.tier);
+  const field = input.dataset.field;
+  cfg.tiers[idx][field] = field === 'name' ? input.value : (parseFloat(input.value) || 0);
+  saveFCConfig(cfg);
+  const blended  = calcBlendedPrice(cfg.tiers);
+  const totalMix = cfg.tiers.reduce((s, t) => s + (t.mix || 0), 0);
+  const blendEl  = document.getElementById('fc-blended-val');
+  const footEl   = document.getElementById('fc-tiers-blended');
+  if (blendEl) blendEl.textContent = blended > 0 ? fmtCurrency(blended) : '—';
+  if (footEl)  footEl.textContent  = blended > 0 ? fmtCurrency(blended) : '—';
+  const footRow = footEl?.parentElement;
+  if (footRow) footRow.lastElementChild.textContent = totalMix + '%';
+  updateFCResults(cfg);
+}
+
 function updateFCResults(cfg) {
   const resultsEl = document.getElementById('fc-results');
   const roasEl    = document.getElementById('fc-roas-bar');
   if (!resultsEl) return;
 
+  const price          = calcBlendedPrice(cfg.tiers);
   const cpl            = cfg.cpl || dashData?.meta?.costPerLead || 0;
   const monthlySpend   = cfg.budget * 30;
   const annualSpend    = cfg.budget * 365;
@@ -3369,8 +3443,8 @@ function updateFCResults(cfg) {
   const annualLeads    = cpl > 0 ? annualSpend  / cpl : 0;
   const monthlyClients = monthlyLeads * (cfg.closeRate / 100);
   const annualClients  = annualLeads  * (cfg.closeRate / 100);
-  const monthlyRev     = monthlyClients * cfg.price;
-  const annualRev      = annualClients  * cfg.price;
+  const monthlyRev     = monthlyClients * price;
+  const annualRev      = annualClients  * price;
   const roas           = monthlySpend > 0 ? monthlyRev / monthlySpend : 0;
 
   resultsEl.innerHTML = `
