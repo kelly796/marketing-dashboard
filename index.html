@@ -378,29 +378,28 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .age-table tr:last-child td{border-bottom:none;}
 .age-table .top-row td{color:var(--teal);font-weight:600;}
 
-/* LTV section */
-.ltv-tier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;}
-.ltv-tier-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;}
-.ltv-tier-name{font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:10px;}
-.ltv-field-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:.75rem;}
-.ltv-field-label{color:var(--text-muted);}
-.ltv-field-input{
-  width:70px;background:var(--surface3);border:1px solid var(--border2);border-radius:5px;
-  padding:3px 7px;font-size:.78rem;font-family:var(--fmono);color:var(--text);
-  text-align:right;outline:none;
-}
-.ltv-field-input:focus{border-color:var(--teal);}
-.ltv-computed{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
-  font-size:.82rem;color:var(--teal);font-family:var(--fmono);font-weight:600;}
-.ltv-summary-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:12px;padding:16px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);}
-.ltv-summary-item-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
-  color:var(--text-muted);margin-bottom:4px;}
-.ltv-summary-item-val{font-family:var(--fmono);font-size:1.1rem;font-weight:600;color:var(--text);}
-.ltv-summary-item-val.good{color:var(--success);}
-.ltv-summary-item-val.warn{color:var(--warning);}
-.ltv-summary-item-val.bad{color:var(--danger);}
-.ltv-note{font-size:.73rem;color:var(--text-muted);margin-top:12px;}
+/* Revenue Forecaster */
+.fc-subtitle{font-size:.75rem;color:var(--text-muted);margin-bottom:16px;}
+.fc-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.fc-field{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;}
+.fc-field-label{font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.fc-field-input{width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:.9rem;font-family:var(--fmono);color:var(--text);outline:none;box-sizing:border-box;}
+.fc-field-input:focus{border-color:var(--teal);}
+.fc-results{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:16px;}
+.fc-results table{width:100%;border-collapse:collapse;}
+.fc-results th{font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 14px;background:var(--surface2);text-align:right;}
+.fc-results th:first-child{text-align:left;}
+.fc-results td{padding:10px 14px;font-size:.85rem;border-top:1px solid var(--border);text-align:right;}
+.fc-results td:first-child{text-align:left;color:var(--text-muted);font-size:.8rem;}
+.fc-results td.num{font-family:var(--fmono);color:var(--text);font-weight:600;}
+.fc-roas-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-radius:var(--radius-sm);background:var(--surface2);}
+.fc-roas-num{font-family:var(--fmono);font-size:2rem;font-weight:700;line-height:1;}
+.fc-roas-num.good{color:var(--success);}
+.fc-roas-num.warn{color:var(--warning);}
+.fc-roas-num.bad{color:var(--danger);}
+.fc-roas-label{font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;}
+.fc-roas-sub{font-size:.78rem;color:var(--text-dim);text-align:right;max-width:200px;}
+@media(max-width:768px){.fc-inputs{grid-template-columns:1fr;}}
 .campaign-card-header{
   padding:16px 20px;display:flex;align-items:center;
   justify-content:space-between;border-bottom:1px solid var(--border);
@@ -854,7 +853,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       <div class="stat-label">Lead ROAS (7d)</div>
       <div class="stat-value sm" id="stat-roas-val">—</div>
       <div class="stat-footer">
-        <span class="stat-trend neutral" id="stat-roas-trend">Leads × avg LTV ÷ spend</span>
+        <span class="stat-trend neutral" id="stat-roas-trend">Set product price in forecaster</span>
         <span id="stat-roas-badge"></span>
       </div>
     </div>
@@ -901,12 +900,13 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     </div>
   </div>
 
-  <!-- Member Lifetime Value -->
-  <div class="card" id="ltv-section">
-    <div class="card-title">Member Lifetime Value</div>
-    <div class="ltv-tier-grid" id="ltv-tiers"></div>
-    <div class="ltv-summary-row" id="ltv-summary"></div>
-    <div class="ltv-note">Adjust values to match current pricing — saves automatically.</div>
+  <!-- Revenue Forecaster -->
+  <div class="card" id="forecaster-section">
+    <div class="card-title">Revenue Forecaster</div>
+    <div class="fc-subtitle">Adjust inputs to project your funnel revenue</div>
+    <div class="fc-inputs" id="fc-inputs"></div>
+    <div class="fc-results" id="fc-results"></div>
+    <div class="fc-roas-bar" id="fc-roas-bar"></div>
   </div>
 
 </div>
@@ -1885,7 +1885,7 @@ function renderAll() {
   const seo  = dashData?.seo  || null;
   renderOverview(meta, ga4);
   renderMeta(meta);
-  renderLTV();
+  renderForecaster();
   renderCampaignsPage(meta);
   renderWebsite(ga4, seo, dashData?.clarity || null);
   renderAdPerformanceOverview(meta);
@@ -1942,15 +1942,14 @@ function renderOverview(meta, ga4) {
   sessTrend.className = 'stat-trend '+sessT.cls;
   sessTrend.textContent = sessT.arrow+' '+sessT.pct+' vs last month';
 
-  // Lead ROAS = (leads × avg member LTV) / spend — uses the LTV calculator values
-  const ltvTiers   = loadLTVConfig();
-  const avgLTV     = ltvTiers.reduce((s, t) => s + t.monthly * t.months, 0) / ltvTiers.length;
+  // Lead ROAS = (leads × avg client value) / spend
+  const avgLTV     = loadFCConfig().price || 1500;
   const leadRoas   = (leads > 0 && spend > 0 && avgLTV > 0) ? +((leads * avgLTV) / spend).toFixed(1) : 0;
   const roasEl     = document.getElementById('stat-roas-val');
   const roasTrend  = document.getElementById('stat-roas-trend');
   roasEl.textContent = leadRoas > 0 ? leadRoas.toFixed(1)+'x' : '—';
   roasTrend.className = 'stat-trend neutral';
-  roasTrend.textContent = leadRoas > 0 ? 'Leads × LTV ÷ spend' : 'Leads × avg LTV ÷ spend';
+  roasTrend.textContent = leadRoas > 0 ? 'Leads × client value ÷ spend' : 'Set product price in forecaster';
   document.getElementById('stat-roas-badge').innerHTML = leadRoas >= 15 ? '<span class="badge badge-good">Strong</span>' : leadRoas >= 8 ? '<span class="badge badge-watch">Fair</span>' : leadRoas > 0 ? '<span class="badge badge-act">Low</span>' : '';
 
   // Overview spend chart with projection
@@ -3312,93 +3311,88 @@ function renderAudienceByAge(breakdown) {
     </div>`;
 }
 
-// ─── LIFETIME VALUE ───────────────────────────────────────────────
-const LTV_STORAGE_KEY = 'pm_ltv_v1';
-const LTV_DEFAULTS = [
-  { id:'core',  name:'Perf Core',       monthly:149, months:8  },
-  { id:'plus',  name:'Perf Plus',       monthly:199, months:10 },
-  { id:'prime', name:'Perf Prime II/III', monthly:249, months:14 },
-];
+// ─── REVENUE FORECASTER ───────────────────────────────────────────
+const FC_KEY = 'pm_forecaster_v1';
+const FC_DEFAULTS = { budget: 50, price: 199, cpl: 0, closeRate: 20 };
 
-function loadLTVConfig() {
-  try { return JSON.parse(localStorage.getItem(LTV_STORAGE_KEY)) || LTV_DEFAULTS; }
-  catch { return LTV_DEFAULTS; }
+function loadFCConfig() {
+  try { return { ...FC_DEFAULTS, ...JSON.parse(localStorage.getItem(FC_KEY)) }; }
+  catch { return { ...FC_DEFAULTS }; }
 }
-function saveLTVConfig(tiers) {
-  localStorage.setItem(LTV_STORAGE_KEY, JSON.stringify(tiers));
-}
+function saveFCConfig(cfg) { localStorage.setItem(FC_KEY, JSON.stringify(cfg)); }
 
-function renderLTV() {
-  const tiersEl   = document.getElementById('ltv-tiers');
-  const summaryEl = document.getElementById('ltv-summary');
-  if (!tiersEl || !summaryEl) return;
+function renderForecaster() {
+  const cfg     = loadFCConfig();
+  const liveCpl = dashData?.meta?.costPerLead;
+  if (liveCpl && cfg.cpl === 0) cfg.cpl = liveCpl;
 
-  const tiers = loadLTVConfig();
-  const cpl   = dashData?.meta?.costPerLead ?? 0;
+  const inputsEl = document.getElementById('fc-inputs');
+  if (!inputsEl) return;
 
-  tiersEl.innerHTML = tiers.map(t => {
-    const ltv = t.monthly * t.months;
-    return `
-    <div class="ltv-tier-card">
-      <div class="ltv-tier-name">${t.name}</div>
-      <div class="ltv-field-row">
-        <span class="ltv-field-label">Monthly value ($)</span>
-        <input class="ltv-field-input" type="number" min="0" step="1"
-          value="${t.monthly}" data-tier="${t.id}" data-field="monthly"
-          oninput="onLTVInput(this)">
-      </div>
-      <div class="ltv-field-row">
-        <span class="ltv-field-label">Avg months</span>
-        <input class="ltv-field-input" type="number" min="1" step="1"
-          value="${t.months}" data-tier="${t.id}" data-field="months"
-          oninput="onLTVInput(this)">
-      </div>
-      <div class="ltv-computed">LTV: ${fmtCurrency(ltv)}</div>
+  inputsEl.innerHTML = `
+    <div class="fc-field">
+      <div class="fc-field-label">Daily Ad Budget ($)</div>
+      <input class="fc-field-input" type="number" min="0" step="1" value="${cfg.budget}" data-fc="budget" oninput="onFCInput(this)">
+    </div>
+    <div class="fc-field">
+      <div class="fc-field-label">Product Price ($)</div>
+      <input class="fc-field-input" type="number" min="0" step="1" value="${cfg.price}" data-fc="price" oninput="onFCInput(this)">
+    </div>
+    <div class="fc-field">
+      <div class="fc-field-label">Cost Per Lead ($)</div>
+      <input class="fc-field-input" type="number" min="0" step="0.01" value="${cfg.cpl || ''}" placeholder="${liveCpl ? fmtCurrency(liveCpl) : 'Enter CPL'}" data-fc="cpl" oninput="onFCInput(this)">
+    </div>
+    <div class="fc-field">
+      <div class="fc-field-label">Close Rate (%)</div>
+      <input class="fc-field-input" type="number" min="0" max="100" step="1" value="${cfg.closeRate}" data-fc="closeRate" oninput="onFCInput(this)">
     </div>`;
-  }).join('');
 
-  updateLTVSummary(tiers, cpl);
+  updateFCResults(cfg);
 }
 
-function onLTVInput(input) {
-  const tiers = loadLTVConfig();
-  const tier  = tiers.find(t => t.id === input.dataset.tier);
-  if (!tier) return;
-  tier[input.dataset.field] = Number(input.value) || 0;
-  saveLTVConfig(tiers);
-  // Update just this card's LTV display
-  const card  = input.closest('.ltv-tier-card');
-  const ltv   = tier.monthly * tier.months;
-  card.querySelector('.ltv-computed').textContent = 'LTV: ' + fmtCurrency(ltv);
-  updateLTVSummary(tiers, dashData?.meta?.costPerLead ?? 0);
+function onFCInput(input) {
+  const cfg = loadFCConfig();
+  cfg[input.dataset.fc] = parseFloat(input.value) || 0;
+  saveFCConfig(cfg);
+  updateFCResults(cfg);
 }
 
-function updateLTVSummary(tiers, cpl) {
-  const summaryEl = document.getElementById('ltv-summary');
-  if (!summaryEl) return;
-  const avgLTV      = tiers.reduce((s, t) => s + t.monthly * t.months, 0) / tiers.length;
-  const ltvCplRatio = cpl > 0 ? +(avgLTV / cpl).toFixed(1) : null;
-  const breakEvenCpl = +(avgLTV * 0.3).toFixed(0); // spend up to 30% of LTV on acquisition
+function updateFCResults(cfg) {
+  const resultsEl = document.getElementById('fc-results');
+  const roasEl    = document.getElementById('fc-roas-bar');
+  if (!resultsEl) return;
 
-  const ratioClass = ltvCplRatio >= 5 ? 'good' : ltvCplRatio >= 3 ? 'warn' : 'bad';
+  const cpl            = cfg.cpl || dashData?.meta?.costPerLead || 0;
+  const monthlySpend   = cfg.budget * 30;
+  const annualSpend    = cfg.budget * 365;
+  const monthlyLeads   = cpl > 0 ? monthlySpend / cpl : 0;
+  const annualLeads    = cpl > 0 ? annualSpend  / cpl : 0;
+  const monthlyClients = monthlyLeads * (cfg.closeRate / 100);
+  const annualClients  = annualLeads  * (cfg.closeRate / 100);
+  const monthlyRev     = monthlyClients * cfg.price;
+  const annualRev      = annualClients  * cfg.price;
+  const roas           = monthlySpend > 0 ? monthlyRev / monthlySpend : 0;
 
-  summaryEl.innerHTML = `
-    <div>
-      <div class="ltv-summary-item-label">Avg Blended LTV</div>
-      <div class="ltv-summary-item-val">${fmtCurrency(avgLTV)}</div>
-    </div>
-    <div>
-      <div class="ltv-summary-item-label">Current CPL</div>
-      <div class="ltv-summary-item-val">${cpl > 0 ? fmtCurrency(cpl) : '—'}</div>
-    </div>
-    <div>
-      <div class="ltv-summary-item-label">LTV : CPL Ratio</div>
-      <div class="ltv-summary-item-val ${ltvCplRatio ? ratioClass : ''}">${ltvCplRatio ? ltvCplRatio + 'x' : '—'}</div>
-    </div>
-    <div>
-      <div class="ltv-summary-item-label">Break-even CPL (30%)</div>
-      <div class="ltv-summary-item-val">${fmtCurrency(breakEvenCpl)}</div>
-    </div>`;
+  resultsEl.innerHTML = `
+    <table>
+      <thead><tr><th>Metric</th><th>Monthly</th><th>Annual</th></tr></thead>
+      <tbody>
+        <tr><td>Ad Spend</td><td class="num">${fmtCurrency(monthlySpend)}</td><td class="num">${fmtCurrency(annualSpend)}</td></tr>
+        <tr><td>Leads</td><td class="num">${Math.round(monthlyLeads)}</td><td class="num">${Math.round(annualLeads)}</td></tr>
+        <tr><td>New Clients</td><td class="num">${Math.round(monthlyClients)}</td><td class="num">${Math.round(annualClients)}</td></tr>
+        <tr><td>Revenue</td><td class="num">${fmtCurrency(monthlyRev)}</td><td class="num">${fmtCurrency(annualRev)}</td></tr>
+      </tbody>
+    </table>`;
+
+  if (roasEl) {
+    const roasClass = roas >= 10 ? 'good' : roas >= 4 ? 'warn' : 'bad';
+    roasEl.innerHTML = `
+      <div>
+        <div class="fc-roas-num ${roasClass}">${roas > 0 ? roas.toFixed(1)+'x' : '—'}</div>
+        <div class="fc-roas-label">Projected ROAS</div>
+      </div>
+      <div class="fc-roas-sub">${roas > 0 ? 'For every $1 spent you return $'+roas.toFixed(2) : 'Enter CPL and budget to calculate'}</div>`;
+  }
 }
 
 // ─── UTILITIES ────────────────────────────────────────────────────
