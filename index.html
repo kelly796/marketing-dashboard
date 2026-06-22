@@ -48,8 +48,9 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 /* ─── LAYOUT ──────────────────────────────────────────────────── */
 .sidebar{
   position:fixed;top:0;left:0;bottom:0;width:var(--sidebar);
-  background:#070F1B;display:flex;flex-direction:column;z-index:100;
+  background:#070F1B;display:flex;flex-direction:column;z-index:200;
   border-right:1px solid var(--border);overflow-y:auto;
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
 }
 .header{
   position:fixed;top:0;left:var(--sidebar);right:0;height:var(--header);
@@ -61,6 +62,12 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   margin-left:var(--sidebar);margin-top:var(--header);
   padding:28px;min-height:calc(100vh - var(--header));
 }
+/* hamburger — hidden on desktop */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--text);flex-shrink:0;}
+.hamburger svg{display:block;}
+/* sidebar overlay backdrop */
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;}
+.sidebar-backdrop.visible{display:block;}
 
 /* ─── PAGE TRANSITIONS ────────────────────────────────────────── */
 .tab-content{display:none;opacity:0;}
@@ -74,7 +81,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   position:fixed;top:var(--header);left:var(--sidebar);right:0;bottom:0;
   background:var(--bg);transform:translateX(100%);
   transition:transform .25s cubic-bezier(.4,0,.2,1);
-  overflow-y:auto;z-index:50;padding:28px;
+  overflow-y:auto;z-index:50;padding:28px;will-change:transform;
 }
 .subpage.open{transform:translateX(0);}
 
@@ -590,6 +597,43 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   .clarity-grid{grid-template-columns:repeat(2,1fr);}
   .card-grid-60-40,.card-grid-2{grid-template-columns:1fr;}
 }
+@media(max-width:768px){
+  /* sidebar becomes off-canvas overlay */
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  /* header + main go full width */
+  .header{left:0;padding:0 16px;}
+  .main{margin-left:0;padding:16px;}
+  .subpage{left:0;padding:16px;}
+  /* show hamburger */
+  .hamburger{display:flex;align-items:center;}
+  /* collapse all grids to 1 or 2 cols */
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-card{padding:14px;}
+  .stat-value{font-size:1.6rem;}
+  .card-grid-60-40,.card-grid-2{grid-template-columns:1fr;}
+  .campaign-grid{grid-template-columns:1fr;}
+  .clarity-grid{grid-template-columns:repeat(2,1fr);}
+  .skills-grid{grid-template-columns:repeat(2,1fr);}
+  .ghl-pipelines-grid{grid-template-columns:1fr;}
+  .ghl-action-grid{grid-template-columns:repeat(2,1fr);}
+  /* cards */
+  .card{border-radius:10px;}
+  .card-body{padding:14px;}
+  /* section headers stack */
+  .section-header{flex-direction:column;align-items:flex-start;gap:10px;}
+  .section-header > div:last-child{display:flex;flex-wrap:wrap;gap:8px;}
+  /* header elements */
+  .last-updated{display:none;}
+  .page-title{font-size:1rem;}
+  /* hide AI button text */
+  .btn-primary svg{margin:0;}
+  /* funnel bars */
+  .funnel-bar{height:6px;}
+  /* reduce chart heights */
+  canvas{max-height:220px!important;}
+}
 </style>
 </head>
 <body>
@@ -662,9 +706,15 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   </div>
 </nav>
 
+<!-- ─── SIDEBAR BACKDROP ──────────────────────────────────────────── -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
 <!-- ─── HEADER ───────────────────────────────────────────────────── -->
 <header class="header">
-  <div class="header-left">
+  <div class="header-left" style="display:flex;align-items:center;gap:10px;min-width:0;">
+    <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <span class="page-title" id="page-title">Overview</span>
     <div class="breadcrumb" id="breadcrumb"></div>
   </div>
@@ -1532,6 +1582,18 @@ Chart.register({
   }
 });
 
+// ─── MOBILE SIDEBAR ───────────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar  = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const isOpen   = sidebar.classList.toggle('open');
+  backdrop.classList.toggle('visible', isOpen);
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('visible');
+}
+
 // ─── ROUTER ───────────────────────────────────────────────────────
 function navigate(name, el) {
   closeSubPage(true);
@@ -1550,6 +1612,7 @@ function navigate(name, el) {
   currentPage = name;
   document.getElementById('page-title').textContent = PAGE_TITLES[name] || name;
   updateBreadcrumb();
+  closeSidebar();
   return false;
 }
 function switchTab(name, el) { return navigate(name, el); }
