@@ -46,7 +46,8 @@ exports.handler = async () => {
 
   try {
     // ── Fetch all pipelines ─────────────────────────────────────────
-    const pipelinesRes  = await fetch(`${GHL_BASE}/opportunities/pipelines?locationId=${locationId}`, { headers });
+    const pipelinesRes = await fetch(`${GHL_BASE}/opportunities/pipelines?locationId=${locationId}`, { headers });
+    if (!pipelinesRes.ok) throw new Error(`GHL pipelines ${pipelinesRes.status}: ${await pipelinesRes.text()}`);
     const pipelinesData = await pipelinesRes.json();
     const allPipelines  = pipelinesData.pipelines || [];
 
@@ -54,7 +55,7 @@ exports.handler = async () => {
     const oppsResults = await Promise.allSettled(
       allPipelines.map(pipe =>
         fetch(`${GHL_BASE}/opportunities/search?location_id=${locationId}&pipeline_id=${pipe.id}&limit=100`, { headers })
-          .then(r => r.json())
+          .then(r => { if (!r.ok) throw new Error(`GHL opps ${r.status}`); return r.json(); })
       )
     );
 

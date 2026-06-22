@@ -19,7 +19,15 @@ const BASE = 'https://clarity.microsoft.com/api/v1';
 
 exports.handler = async () => {
   const apiKey    = process.env.CLARITY_API_KEY;
-  const projectId = process.env.CLARITY_PROJECT_ID || 'x0ihxl738b';
+  const projectId = process.env.CLARITY_PROJECT_ID;
+
+  if (!projectId) {
+    return {
+      statusCode: 503,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'CLARITY_PROJECT_ID not set' }),
+    };
+  }
 
   // ── PLACEHOLDER — no API key configured ──────────────────────────
   if (!apiKey) {
