@@ -66,10 +66,9 @@ exports.handler = async (event) => {
   const lastName    = c(data.last_name);
   const instagram   = c(data.instagram);
   const service     = c(data.service);
-  const state       = c(data.state);
-  const country     = c(data.country);
   const goals       = c(data.goals);
   const coaching    = c(data.coaching);
+  const competed    = c(data.competed);
   const competition = c(data.competition);
   const weightClass = c(data.weight_class);
   const squat       = c(data.squat);
@@ -88,7 +87,6 @@ exports.handler = async (event) => {
   const howHeard    = c(data.how_heard);
 
   const name     = [firstName, lastName].filter(Boolean).join(' ') || email;
-  const location = [state, country].filter(Boolean).join(', ');
   const lifts    = [squat && `Squat ${squat}`, bench && `Bench ${bench}`, deadlift && `Deadlift ${deadlift}`, total && `Total ${total}`].filter(Boolean).join(' / ');
   const submitted = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Brisbane', dateStyle: 'medium', timeStyle: 'short' });
 
@@ -118,9 +116,9 @@ exports.handler = async (event) => {
         )}
 
         ${section('Training information',
-          row('Location', location) +
           row('Goals', goals) +
           row('Currently coached', coaching) +
+          row('Competed before', competed) +
           row('Upcoming competition', competition) +
           row('Weight class', weightClass) +
           row('Lifts', lifts) +

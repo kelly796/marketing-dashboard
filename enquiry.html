@@ -414,18 +414,20 @@
 
       <div class="field field-row">
         <div>
-          <label for="first-name">First name</label>
+          <label for="first-name">First name <span class="req">*</span></label>
           <input type="text" id="first-name" placeholder="First" autocomplete="given-name">
+          <div class="field-error" id="first-name-error">Please enter your first name.</div>
         </div>
         <div>
-          <label for="last-name">Last name</label>
+          <label for="last-name">Last name <span class="req">*</span></label>
           <input type="text" id="last-name" placeholder="Last" autocomplete="family-name">
+          <div class="field-error" id="last-name-error">Please enter your last name.</div>
         </div>
       </div>
 
       <div class="field">
         <label for="phone">Phone <span class="req">*</span></label>
-        <input type="tel" id="phone" placeholder="04xx xxx xxx" autocomplete="tel">
+        <input type="tel" id="phone" placeholder="+" autocomplete="tel">
         <div class="field-error" id="phone-error">Please enter your phone number.</div>
       </div>
 
@@ -436,18 +438,20 @@
       </div>
 
       <div class="field">
-        <label for="instagram">Social media handle</label>
+        <label for="instagram">Social media handle <span class="req">*</span></label>
         <input type="text" id="instagram" placeholder="@instagram">
+        <div class="field-error" id="instagram-error">Please enter your social media handle.</div>
       </div>
 
       <div class="field">
-        <label for="service">What service are you most interested in (weekly $AUD)?</label>
+        <label for="service">What service are you most interested in (weekly $AUD)? <span class="req">*</span></label>
         <select id="service">
           <option value="">Select a service...</option>
           <option value="48hr Feedback - Snr Online Coach - $77.50">48hr Feedback — Senior Online Coach — $77.50</option>
           <option value="24hr Feedback - Online Coach - $71.50">24hr Feedback — Online Coach — $71.50</option>
           <option value="24hr Feedback - JUNIOR SQUAD - $55.50">24hr Feedback — Junior Squad — $55.50</option>
         </select>
+        <div class="field-error" id="service-error">Please select a service.</div>
       </div>
 
       <div class="form-actions">
@@ -461,17 +465,6 @@
       <div class="step-title">Training information</div>
       <div class="step-desc">Help us understand your background and goals.</div>
 
-      <div class="field field-row">
-        <div>
-          <label for="state">State / region</label>
-          <input type="text" id="state" placeholder="e.g. Queensland">
-        </div>
-        <div>
-          <label for="country">Country</label>
-          <input type="text" id="country" placeholder="e.g. Australia">
-        </div>
-      </div>
-
       <div class="field">
         <label for="goals">What are your training goals? Please outline in detail. <span class="req">*</span></label>
         <textarea id="goals" placeholder="Tell us what you are working towards..."></textarea>
@@ -483,6 +476,14 @@
         <div class="radio-group">
           <label class="radio-option"><input type="radio" name="coaching" value="Yes"> Yes</label>
           <label class="radio-option"><input type="radio" name="coaching" value="No" checked> No</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Have you competed before?</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="competed" value="Yes"> Yes</label>
+          <label class="radio-option"><input type="radio" name="competed" value="No" checked> No</label>
         </div>
       </div>
 
@@ -557,16 +558,18 @@
       </div>
 
       <div class="field">
-        <label class="field-label">Would you like to engage one of our Exercise Physiologists?</label>
+        <label class="field-label">If yes, are you open to engaging with an Exercise Physiologist at PerforMotion? <span class="req">*</span></label>
         <div class="radio-group">
           <label class="radio-option"><input type="radio" name="ep" value="Yes"> Yes</label>
-          <label class="radio-option"><input type="radio" name="ep" value="No" checked> No</label>
+          <label class="radio-option"><input type="radio" name="ep" value="No"> No</label>
         </div>
+        <div class="field-error" id="ep-error">Please select an option.</div>
       </div>
 
       <div class="field">
-        <label for="why-perf">What made you seek online coaching from PerforMotion?</label>
+        <label for="why-perf">What made you seek online coaching from PerforMotion? <span class="req">*</span></label>
         <textarea id="why-perf" placeholder="Tell us how you found us and what made you reach out..."></textarea>
+        <div class="field-error" id="why-perf-error">Please tell us what made you reach out.</div>
       </div>
 
       <div class="form-actions">
@@ -581,10 +584,11 @@
       <div class="step-desc">Please take your time with this question. Select one first preference and one second preference. Our online coaches are all trained, mentored and supported by Kelly and Steve.</div>
 
       <div class="coach-note">
-        Please select your preferences carefully. Entries cannot be changed once your application is submitted.
+        Please select your preferences carefully. Applications cannot be amended once submitted.
       </div>
 
       <div class="field">
+        <div class="field-error" id="pref-error" style="margin-bottom:8px">Please select a 1st and 2nd preference coach.</div>
         <table class="coach-table">
           <thead>
             <tr>
@@ -646,8 +650,9 @@
       </div>
 
       <div class="field">
-        <label for="why-fit">Outline why you think you would work well under your choices</label>
+        <label for="why-fit">Outline why you think you would work well under your choices <span class="req">*</span></label>
         <textarea id="why-fit" placeholder="What makes you a good fit for these coaches?"></textarea>
+        <div class="field-error" id="why-fit-error">Please outline why you would work well with your chosen coaches.</div>
       </div>
 
       <div class="field">
@@ -726,30 +731,56 @@
 
   function validateStep1() {
     let valid = true;
-    const phone = document.getElementById('phone').value.trim();
-    const email = document.getElementById('email').value.trim();
+    const firstName = document.getElementById('first-name').value.trim();
+    const lastName  = document.getElementById('last-name').value.trim();
+    const phone     = document.getElementById('phone').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const instagram = document.getElementById('instagram').value.trim();
+    const service   = document.getElementById('service').value;
+    if (!firstName) { setError('first-name', 'first-name-error', true); valid = false; }
+    else setError('first-name', 'first-name-error', false);
+    if (!lastName) { setError('last-name', 'last-name-error', true); valid = false; }
+    else setError('last-name', 'last-name-error', false);
     if (!phone) { setError('phone', 'phone-error', true); valid = false; }
     else setError('phone', 'phone-error', false);
     if (!email || !email.includes('@')) { setError('email', 'email-error', true); valid = false; }
     else setError('email', 'email-error', false);
+    if (!instagram) { setError('instagram', 'instagram-error', true); valid = false; }
+    else setError('instagram', 'instagram-error', false);
+    if (!service) { setError('service', 'service-error', true); valid = false; }
+    else setError('service', 'service-error', false);
     return valid;
   }
 
   function validateStep2() {
-    const goals = document.getElementById('goals').value.trim();
-    if (!goals) { setError('goals', 'goals-error', true); return false; }
-    setError('goals', 'goals-error', false);
-    return true;
+    let valid = true;
+    const goals   = document.getElementById('goals').value.trim();
+    const ep      = document.querySelector('input[name="ep"]:checked');
+    const whyPerf = document.getElementById('why-perf').value.trim();
+    if (!goals) { setError('goals', 'goals-error', true); valid = false; }
+    else setError('goals', 'goals-error', false);
+    if (!ep) { document.getElementById('ep-error').classList.add('show'); valid = false; }
+    else document.getElementById('ep-error').classList.remove('show');
+    if (!whyPerf) { setError('why-perf', 'why-perf-error', true); valid = false; }
+    else setError('why-perf', 'why-perf-error', false);
+    return valid;
   }
 
   function validateStep3() {
     let valid = true;
-    if (!document.getElementById('why-coaches').value.trim()) {
-      setError('why-coaches', 'why-coaches-error', true); valid = false;
-    } else setError('why-coaches', 'why-coaches-error', false);
-    if (!document.getElementById('how-heard').value) {
-      setError('how-heard', 'how-heard-error', true); valid = false;
-    } else setError('how-heard', 'how-heard-error', false);
+    const pref1     = document.querySelector('input[name="pref1"]:checked');
+    const pref2     = document.querySelector('input[name="pref2"]:checked');
+    const whyCoaches = document.getElementById('why-coaches').value.trim();
+    const whyFit    = document.getElementById('why-fit').value.trim();
+    const howHeard  = document.getElementById('how-heard').value;
+    if (!pref1 || !pref2) { document.getElementById('pref-error').classList.add('show'); valid = false; }
+    else document.getElementById('pref-error').classList.remove('show');
+    if (!whyCoaches) { setError('why-coaches', 'why-coaches-error', true); valid = false; }
+    else setError('why-coaches', 'why-coaches-error', false);
+    if (!whyFit) { setError('why-fit', 'why-fit-error', true); valid = false; }
+    else setError('why-fit', 'why-fit-error', false);
+    if (!howHeard) { setError('how-heard', 'how-heard-error', true); valid = false; }
+    else setError('how-heard', 'how-heard-error', false);
     return valid;
   }
 
@@ -772,10 +803,9 @@
       email:         document.getElementById('email').value,
       instagram:     document.getElementById('instagram').value,
       service:       document.getElementById('service').value,
-      state:         document.getElementById('state').value,
-      country:       document.getElementById('country').value,
       goals:         document.getElementById('goals').value,
       coaching:      radio('coaching'),
+      competed:      radio('competed'),
       competition:   radio('competition'),
       weight_class:  document.getElementById('weight-class').value,
       squat:         document.getElementById('squat').value,
