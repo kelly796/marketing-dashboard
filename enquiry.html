@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Client Enquiry — PerforMotion</title>
+<style>
+  :root {
+    --navy: #1B2B5E;
+    --teal: #67A7AC;
+    --blue-grey: #B7C5D2;
+    --light: #f8f9fc;
+    --border: #e1e5ee;
+    --error: #d93025;
+    --text: #1a1a1a;
+    --muted: #666;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--light);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 16px;
+  }
+
+  .form-container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(27,43,94,0.10);
+    overflow: hidden;
+  }
+
+  /* Header */
+  .form-header {
+    background: var(--navy);
+    padding: 32px 40px 28px;
+  }
+
+  .form-header h1 {
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    letter-spacing: -0.2px;
+  }
+
+  /* Progress */
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .step-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.4);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+
+  .step-dot.active { border-color: var(--teal); background: var(--teal); color: white; }
+  .step-dot.done { border-color: var(--teal); background: var(--teal); color: white; }
+
+  .step-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .step-label.active { color: white; }
+
+  .step-line {
+    height: 2px;
+    flex: 1;
+    background: rgba(255,255,255,0.15);
+    margin: 0 12px;
+    border-radius: 1px;
+    transition: background 0.3s;
+  }
+
+  .step-line.done { background: var(--teal); }
+
+  /* Body */
+  .form-body { padding: 36px 40px; }
+
+  .step { display: none; }
+  .step.active { display: block; }
+
+  .step-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+
+  .step-desc {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.65;
+  }
+
+  /* Section label */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--teal);
+    padding: 20px 0 10px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  /* Fields */
+  .field { margin-bottom: 18px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+  .field label, label.field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+
+  .req { color: var(--error); margin-left: 2px; }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 10px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 14px;
+    color: var(--text);
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(103,167,172,0.12);
+  }
+
+  input.error, select.error, textarea.error { border-color: var(--error); }
+
+  textarea { min-height: 96px; resize: vertical; }
+
+  .field-error {
+    font-size: 12px;
+    color: var(--error);
+    margin-top: 5px;
+    display: none;
+  }
+  .field-error.show { display: block; }
+
+  /* Radio */
+  .radio-group { display: flex; gap: 20px; flex-wrap: wrap; }
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 400;
+  }
+
+  .radio-option input[type="radio"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--teal);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Days pills */
+  .days-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+
+  .day-pill { position: relative; }
+
+  .day-pill input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .day-pill label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 40px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 0;
+  }
+
+  .day-pill input:checked + label {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+
+  /* Coach table */
+  .coach-note {
+    background: #fff8e6;
+    border: 1px solid #f0d070;
+    border-radius: 7px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #5a4200;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .coach-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .coach-table th {
+    background: var(--navy);
+    color: white;
+    padding: 11px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .coach-table th:not(:first-child) { text-align: center; }
+
+  .coach-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .coach-table tr:last-child td { border-bottom: none; }
+  .coach-table tr:nth-child(even) td { background: var(--light); }
+  .coach-table td:not(:first-child) { text-align: center; }
+
+  .coach-table input[type="radio"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--teal);
+    cursor: pointer;
+  }
+
+  .coach-name { font-weight: 600; color: var(--navy); display: block; font-size: 13px; }
+  .coach-meta { font-size: 12px; color: var(--muted); }
+  .coach-badge {
+    display: inline-block;
+    font-size: 10px;
+    background: #fff3cd;
+    color: #856404;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-top: 3px;
+    font-weight: 500;
+  }
+
+  /* Buttons */
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-next, .btn-submit {
+    background: var(--teal);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+  }
+
+  .btn-next:hover, .btn-submit:hover { background: #5a9499; }
+
+  .btn-back {
+    background: none;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .btn-back:hover { border-color: var(--navy); color: var(--navy); }
+
+  /* Success */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 64px 40px;
+  }
+
+  .success-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--teal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 26px;
+    color: white;
+  }
+
+  .success-screen h2 { font-size: 20px; color: var(--navy); margin-bottom: 10px; }
+  .success-screen p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+
+  @media (max-width: 560px) {
+    .form-header { padding: 24px 20px; }
+    .form-body { padding: 28px 20px; }
+    .field-row { grid-template-columns: 1fr; }
+    .field-row-4 { grid-template-columns: 1fr 1fr; }
+    .step-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="form-container">
+
+  <div class="form-header" id="form-header">
+    <h1>Online Client Enquiry</h1>
+    <div class="progress">
+      <div class="progress-step">
+        <div class="step-dot active" id="dot-1">1</div>
+        <span class="step-label active" id="label-1">Your details</span>
+      </div>
+      <div class="step-line" id="line-1"></div>
+      <div class="progress-step">
+        <div class="step-dot" id="dot-2">2</div>
+        <span class="step-label" id="label-2">Training</span>
+      </div>
+      <div class="step-line" id="line-2"></div>
+      <div class="progress-step">
+        <div class="step-dot" id="dot-3">3</div>
+        <span class="step-label" id="label-3">Coach selection</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-body" id="form-body">
+
+    <!-- Step 1: Your details -->
+    <div class="step active" id="step-1">
+      <div class="step-title">Your details</div>
+      <div class="step-desc">Tell us a bit about yourself so we can get in touch.</div>
+
+      <div class="field field-row">
+        <div>
+          <label for="first-name">First name</label>
+          <input type="text" id="first-name" placeholder="First" autocomplete="given-name">
+        </div>
+        <div>
+          <label for="last-name">Last name</label>
+          <input type="text" id="last-name" placeholder="Last" autocomplete="family-name">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="phone">Phone <span class="req">*</span></label>
+        <input type="tel" id="phone" placeholder="04xx xxx xxx" autocomplete="tel">
+        <div class="field-error" id="phone-error">Please enter your phone number.</div>
+      </div>
+
+      <div class="field">
+        <label for="email">Email <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        <div class="field-error" id="email-error">Please enter a valid email address.</div>
+      </div>
+
+      <div class="field">
+        <label for="instagram">Social media handle</label>
+        <input type="text" id="instagram" placeholder="@instagram">
+      </div>
+
+      <div class="field">
+        <label for="service">What service are you most interested in (weekly $AUD)?</label>
+        <select id="service">
+          <option value="">Select a service...</option>
+          <option value="48hr Feedback - Snr Online Coach - $77.50">48hr Feedback — Senior Online Coach — $77.50</option>
+          <option value="24hr Feedback - Online Coach - $71.50">24hr Feedback — Online Coach — $71.50</option>
+          <option value="24hr Feedback - JUNIOR SQUAD - $55.50">24hr Feedback — Junior Squad — $55.50</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <span></span>
+        <button class="btn-next" onclick="nextStep(1)">Next &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Training info -->
+    <div class="step" id="step-2">
+      <div class="step-title">Training information</div>
+      <div class="step-desc">Help us understand your background and goals.</div>
+
+      <div class="field field-row">
+        <div>
+          <label for="state">State / region</label>
+          <input type="text" id="state" placeholder="e.g. Queensland">
+        </div>
+        <div>
+          <label for="country">Country</label>
+          <input type="text" id="country" placeholder="e.g. Australia">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="goals">What are your training goals? Please outline in detail. <span class="req">*</span></label>
+        <textarea id="goals" placeholder="Tell us what you are working towards..."></textarea>
+        <div class="field-error" id="goals-error">Please outline your training goals.</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Do you currently receive coaching?</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="coaching" value="Yes"> Yes</label>
+          <label class="radio-option"><input type="radio" name="coaching" value="No" checked> No</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Do you have an upcoming competition?</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="competition" value="Yes"> Yes</label>
+          <label class="radio-option"><input type="radio" name="competition" value="No" checked> No</label>
+        </div>
+      </div>
+
+      <div class="section-label">Competition lifts — leave blank if not applicable</div>
+
+      <div class="field">
+        <label for="weight-class">Weight class</label>
+        <input type="text" id="weight-class" placeholder="e.g. 83kg">
+      </div>
+
+      <div class="field field-row-4">
+        <div>
+          <label for="squat">Squat</label>
+          <input type="text" id="squat" placeholder="kg">
+        </div>
+        <div>
+          <label for="bench">Bench</label>
+          <input type="text" id="bench" placeholder="kg">
+        </div>
+        <div>
+          <label for="deadlift">Deadlift</label>
+          <input type="text" id="deadlift" placeholder="kg">
+        </div>
+        <div>
+          <label for="total">Total</label>
+          <input type="text" id="total" placeholder="kg">
+        </div>
+      </div>
+
+      <div class="section-label">Training habits</div>
+
+      <div class="field">
+        <label class="field-label">How many days per week do you currently train?</label>
+        <div class="days-group">
+          <div class="day-pill">
+            <input type="radio" name="days" id="d13" value="1-3" checked>
+            <label for="d13">1–3</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="days" id="d4" value="4">
+            <label for="d4">4</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="days" id="d5" value="5">
+            <label for="d5">5</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="days" id="d6" value="6">
+            <label for="d6">6</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="days" id="d7" value="7">
+            <label for="d7">7</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Do you have a previous injury?</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="injury" value="Yes"> Yes</label>
+          <label class="radio-option"><input type="radio" name="injury" value="No" checked> No</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Would you like to engage one of our Exercise Physiologists?</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="ep" value="Yes"> Yes</label>
+          <label class="radio-option"><input type="radio" name="ep" value="No" checked> No</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="why-perf">What made you seek online coaching from PerforMotion?</label>
+        <textarea id="why-perf" placeholder="Tell us how you found us and what made you reach out..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-back" onclick="prevStep(2)">&larr; Back</button>
+        <button class="btn-next" onclick="nextStep(2)">Next &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Coach selection (original Page 4) -->
+    <div class="step" id="step-3">
+      <div class="step-title">Coach selection</div>
+      <div class="step-desc">Please take your time with this question. Select one first preference and one second preference. Our online coaches are all trained, mentored and supported by Kelly and Steve.</div>
+
+      <div class="coach-note">
+        Please select your preferences carefully. Entries cannot be changed once your application is submitted.
+      </div>
+
+      <div class="field">
+        <table class="coach-table">
+          <thead>
+            <tr>
+              <th style="width:55%">Coach</th>
+              <th>1st preference</th>
+              <th>2nd preference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <span class="coach-name">Kelly Mann</span>
+                <span class="coach-meta">48hr response</span><br>
+                <span class="coach-badge">At capacity — accepting applications</span>
+              </td>
+              <td><input type="radio" name="pref1" value="Kelly Mann"></td>
+              <td><input type="radio" name="pref2" value="Kelly Mann"></td>
+            </tr>
+            <tr>
+              <td>
+                <span class="coach-name">Steven Day</span>
+                <span class="coach-meta">24hr response</span>
+              </td>
+              <td><input type="radio" name="pref1" value="Steven Day"></td>
+              <td><input type="radio" name="pref2" value="Steven Day"></td>
+            </tr>
+            <tr>
+              <td>
+                <span class="coach-name">Bobby Tan</span>
+                <span class="coach-meta">24hr response</span>
+              </td>
+              <td><input type="radio" name="pref1" value="Bobby Tan"></td>
+              <td><input type="radio" name="pref2" value="Bobby Tan"></td>
+            </tr>
+            <tr>
+              <td>
+                <span class="coach-name">David Hoffman</span>
+                <span class="coach-meta">24hr response</span>
+              </td>
+              <td><input type="radio" name="pref1" value="David Hoffman"></td>
+              <td><input type="radio" name="pref2" value="David Hoffman"></td>
+            </tr>
+            <tr>
+              <td>
+                <span class="coach-name">Monica de la Torre Velasco</span>
+                <span class="coach-meta">24hr response</span>
+              </td>
+              <td><input type="radio" name="pref1" value="Monica de la Torre Velasco"></td>
+              <td><input type="radio" name="pref2" value="Monica de la Torre Velasco"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="field">
+        <label for="why-coaches">Outline why you want to work with each of your selected coaches <span class="req">*</span></label>
+        <textarea id="why-coaches" placeholder="Tell us why you chose each coach..."></textarea>
+        <div class="field-error" id="why-coaches-error">Please outline your reasons for selecting each coach.</div>
+      </div>
+
+      <div class="field">
+        <label for="why-fit">Outline why you think you would work well under your choices</label>
+        <textarea id="why-fit" placeholder="What makes you a good fit for these coaches?"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="questions">Questions or comments</label>
+        <textarea id="questions" placeholder="Any questions, concerns, or things that have worked well for you in the past..."></textarea>
+      </div>
+
+      <div class="field">
+        <label for="how-heard">How did you hear about us? <span class="req">*</span></label>
+        <select id="how-heard">
+          <option value="">Select...</option>
+          <option value="Instagram">Instagram</option>
+          <option value="Friends">Friends</option>
+          <option value="Coach">Coach</option>
+          <option value="Podcast">Podcast</option>
+          <option value="Another athlete">Another athlete</option>
+          <option value="Google search">Google search</option>
+          <option value="Facebook">Facebook</option>
+          <option value="Other">Other</option>
+        </select>
+        <div class="field-error" id="how-heard-error">Please let us know how you heard about us.</div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-back" onclick="prevStep(3)">&larr; Back</button>
+        <button class="btn-submit" onclick="submitForm()">Submit enquiry</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Success -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✓</div>
+    <h2>Enquiry received</h2>
+    <p>Thanks for reaching out. We will review your application and be in touch within the response time of your preferred coach.</p>
+  </div>
+
+</div>
+
+<script>
+  function updateProgress(step) {
+    for (let i = 1; i <= 3; i++) {
+      const dot = document.getElementById('dot-' + i);
+      const label = document.getElementById('label-' + i);
+      dot.classList.remove('active', 'done');
+      label.classList.remove('active');
+      if (i < step) { dot.classList.add('done'); dot.innerHTML = '&#10003;'; }
+      else if (i === step) { dot.classList.add('active'); dot.innerHTML = i; label.classList.add('active'); }
+      else { dot.innerHTML = i; }
+    }
+    for (let i = 1; i <= 2; i++) {
+      document.getElementById('line-' + i).classList.toggle('done', i < step);
+    }
+  }
+
+  function showStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + step).classList.add('active');
+    updateProgress(step);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function nextStep(from) {
+    if (from === 1 && !validateStep1()) return;
+    if (from === 2 && !validateStep2()) return;
+    showStep(from + 1);
+  }
+
+  function prevStep(from) { showStep(from - 1); }
+
+  function setError(fieldId, errorId, show) {
+    document.getElementById(fieldId).classList.toggle('error', show);
+    document.getElementById(errorId).classList.toggle('show', show);
+  }
+
+  function validateStep1() {
+    let valid = true;
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    if (!phone) { setError('phone', 'phone-error', true); valid = false; }
+    else setError('phone', 'phone-error', false);
+    if (!email || !email.includes('@')) { setError('email', 'email-error', true); valid = false; }
+    else setError('email', 'email-error', false);
+    return valid;
+  }
+
+  function validateStep2() {
+    const goals = document.getElementById('goals').value.trim();
+    if (!goals) { setError('goals', 'goals-error', true); return false; }
+    setError('goals', 'goals-error', false);
+    return true;
+  }
+
+  function validateStep3() {
+    let valid = true;
+    if (!document.getElementById('why-coaches').value.trim()) {
+      setError('why-coaches', 'why-coaches-error', true); valid = false;
+    } else setError('why-coaches', 'why-coaches-error', false);
+    if (!document.getElementById('how-heard').value) {
+      setError('how-heard', 'how-heard-error', true); valid = false;
+    } else setError('how-heard', 'how-heard-error', false);
+    return valid;
+  }
+
+  function radio(name) {
+    const el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : '';
+  }
+
+  function submitForm() {
+    if (!validateStep3()) return;
+
+    const btn = document.querySelector('.btn-submit');
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+
+    const data = {
+      first_name:    document.getElementById('first-name').value,
+      last_name:     document.getElementById('last-name').value,
+      phone:         document.getElementById('phone').value,
+      email:         document.getElementById('email').value,
+      instagram:     document.getElementById('instagram').value,
+      service:       document.getElementById('service').value,
+      state:         document.getElementById('state').value,
+      country:       document.getElementById('country').value,
+      goals:         document.getElementById('goals').value,
+      coaching:      radio('coaching'),
+      competition:   radio('competition'),
+      weight_class:  document.getElementById('weight-class').value,
+      squat:         document.getElementById('squat').value,
+      bench:         document.getElementById('bench').value,
+      deadlift:      document.getElementById('deadlift').value,
+      total:         document.getElementById('total').value,
+      days_training: radio('days'),
+      injury:        radio('injury'),
+      ep_interest:   radio('ep'),
+      why_perf:      document.getElementById('why-perf').value,
+      coach_pref1:   radio('pref1'),
+      coach_pref2:   radio('pref2'),
+      why_coaches:   document.getElementById('why-coaches').value,
+      why_fit:       document.getElementById('why-fit').value,
+      questions:     document.getElementById('questions').value,
+      how_heard:     document.getElementById('how-heard').value,
+    };
+
+    fetch('https://monumental-syrniki-3b33aa.netlify.app/.netlify/functions/submit-enquiry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(r => {
+      if (r.success) {
+        document.getElementById('form-header').style.display = 'none';
+        document.getElementById('form-body').style.display = 'none';
+        document.getElementById('success-screen').style.display = 'block';
+      } else {
+        btn.textContent = 'Submit enquiry';
+        btn.disabled = false;
+        alert('Something went wrong. Please try again or email us directly at kelly@performotion.net');
+      }
+    })
+    .catch(() => {
+      btn.textContent = 'Submit enquiry';
+      btn.disabled = false;
+      alert('Something went wrong. Please try again or email us directly at kelly@performotion.net');
+    });
+  }
+</script>
+</body>
+</html>
