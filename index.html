@@ -439,6 +439,13 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   background:var(--surface2);transition:background .15s;
 }
 .ghl-stage-row:hover{background:var(--surface3);}
+.ghl-stage-clickable{cursor:pointer;}
+.ghl-stage-clickable:hover{background:var(--teal-glow)!important;border-left:2px solid var(--teal);}
+.ghl-stage-clickable:hover .ghl-stage-count{color:var(--teal);}
+.ghl-stage-active{background:var(--teal-glow)!important;border-left:2px solid var(--teal);}
+.ghl-stage-active .ghl-stage-count{color:var(--teal);}
+.ghl-filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--teal-glow);border:1px solid var(--teal);border-radius:var(--radius-sm);font-size:.82rem;color:var(--teal);font-weight:600;}
+.ghl-filter-bar button{margin-left:auto;font-size:.75rem;background:none;border:1px solid var(--teal);color:var(--teal);border-radius:var(--radius-sm);padding:3px 10px;cursor:pointer;}
 .ghl-stage-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;}
 .ghl-stage-dot.active{background:var(--success);}
 .ghl-stage-dot.amber{background:var(--warning);}
@@ -2550,7 +2557,8 @@ function renderGHL() {
         criticalTotal += critical;
 
         const dotClass = count === 0 ? '' : critical > 0 ? 'red' : stalled > 0 ? 'amber' : 'active';
-        return `<div class="ghl-stage-row">
+        const clickable = hasApi && count > 0;
+        return `<div class="ghl-stage-row${clickable ? ' ghl-stage-clickable' : ''}" ${clickable ? `onclick="filterGHLByStage('${pipe.name}','${stageName}')"` : ''} title="${clickable ? `Show ${count} contact${count!==1?'s':''} in ${stageName}` : ''}">
           <span class="ghl-stage-dot ${dotClass}"></span>
           <span class="ghl-stage-name">${stageName}</span>
           <span class="ghl-stage-count">${hasApi ? count : '—'}</span>
@@ -2582,28 +2590,76 @@ function renderGHL() {
   }
 
   // Recent leads table
-  const tbody = document.getElementById('ghl-contacts-body');
-  if (!tbody) return;
-  const contacts = ghlData?.recentContacts || [];
-  if (!contacts.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">${hasApi ? 'No leads yet.' : 'Pipelines not yet set up in GHL.'}</td></tr>`;
-  } else {
-    tbody.innerHTML = contacts.map(c => {
-      const statusBadge = c.critical
-        ? '<span class="badge badge-watch">Critical</span>'
-        : c.stalled
-        ? '<span class="badge" style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">Stalled</span>'
-        : '<span class="badge badge-good">Active</span>';
-      return `<tr>
-        <td style="font-weight:600">${c.name}</td>
-        <td style="font-size:.8rem;color:var(--text-muted)">${c.pipeline || '—'}</td>
-        <td><span class="badge badge-live">${c.stage}</span></td>
-        <td>${c.source || '—'}</td>
-        <td>${c.addedAt ? new Date(c.addedAt).toLocaleDateString('en-AU') : '—'}</td>
-        <td>${statusBadge}</td>
-      </tr>`;
-    }).join('');
+  ghlActiveFilter = null;
+  renderGHLContactsTable(ghlData?.recentContacts || []);
+}
+
+// ─── GHL STAGE FILTER ─────────────────────────────────────────────
+let ghlActiveFilter = null;
+
+function filterGHLByStage(pipeline, stage) {
+  const isSame = ghlActiveFilter?.pipeline === pipeline && ghlActiveFilter?.stage === stage;
+
+  // Clear all active highlights
+  document.querySelectorAll('.ghl-stage-active').forEach(el => el.classList.remove('ghl-stage-active'));
+
+  if (isSame) {
+    ghlActiveFilter = null;
+    renderGHLContactsTable(ghlData?.recentContacts || []);
+    return;
   }
+
+  ghlActiveFilter = { pipeline, stage };
+
+  // Highlight the tapped row
+  document.querySelectorAll('.ghl-stage-clickable').forEach(el => {
+    if (el.textContent.includes(stage) && el.closest('.ghl-pipe-card')?.querySelector('.ghl-pipe-name')?.textContent === pipeline) {
+      el.classList.add('ghl-stage-active');
+    }
+  });
+
+  const filtered = (ghlData?.recentContacts || []).filter(c =>
+    c.pipeline === pipeline && c.stage === stage
+  );
+  renderGHLContactsTable(filtered, `${pipeline} › ${stage}`);
+
+  // Scroll to the contacts table
+  document.getElementById('ghl-contacts-body')?.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderGHLContactsTable(contacts, filterLabel) {
+  const tbody = document.getElementById('ghl-contacts-body');
+  const card  = tbody?.closest('.card');
+  if (!tbody) return;
+
+  // Update card title
+  const title = card?.querySelector('.card-title');
+  if (title) {
+    title.innerHTML = filterLabel
+      ? `Recent Leads — <span style="color:var(--teal)">${filterLabel}</span> <button onclick="filterGHLByStage(ghlActiveFilter?.pipeline,ghlActiveFilter?.stage)" style="margin-left:8px;font-size:.72rem;background:none;border:1px solid var(--border2);color:var(--text-muted);border-radius:4px;padding:2px 8px;cursor:pointer">Clear ✕</button>`
+      : 'Recent Leads — All Pipelines';
+  }
+
+  if (!contacts.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">${filterLabel ? 'No contacts in this stage.' : 'No leads yet.'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = contacts.map(c => {
+    const statusBadge = c.critical
+      ? '<span class="badge badge-watch">Critical</span>'
+      : c.stalled
+      ? '<span class="badge" style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">Stalled</span>'
+      : '<span class="badge badge-good">Active</span>';
+    return `<tr>
+      <td style="font-weight:600">${c.name}</td>
+      <td style="font-size:.8rem;color:var(--text-muted)">${c.pipeline || '—'}</td>
+      <td><span class="badge badge-live">${c.stage}</span></td>
+      <td>${c.source || '—'}</td>
+      <td>${c.addedAt ? new Date(c.addedAt).toLocaleDateString('en-AU') : '—'}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ─── WEBSITE RENDER ───────────────────────────────────────────────
