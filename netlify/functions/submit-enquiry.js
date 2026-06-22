@@ -6,6 +6,34 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
+const { getStore } = require('@netlify/blobs');
+
+const RATE_LIMIT        = 5;    // max submissions per IP
+const RATE_WINDOW_MS    = 60 * 60 * 1000; // 1 hour
+
+async function checkRateLimit(ip) {
+  try {
+    const store = getStore('enquiry-ratelimit');
+    const key   = `ip_${ip.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const raw   = await store.get(key);
+    const now   = Date.now();
+    const entry = raw ? JSON.parse(raw) : { count: 0, windowStart: now };
+
+    if (now - entry.windowStart > RATE_WINDOW_MS) {
+      entry.count = 0;
+      entry.windowStart = now;
+    }
+
+    if (entry.count >= RATE_LIMIT) return false;
+
+    entry.count += 1;
+    await store.set(key, JSON.stringify(entry));
+    return true;
+  } catch {
+    return true; // allow through if Blobs is unavailable
+  }
+}
+
 const TO_ADDRESSES = ['kelly@performotion.net'];
 
 const NAVY  = '#1B2B5E';
@@ -44,6 +72,12 @@ exports.handler = async (event) => {
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
+  }
+
+  const ip = event.headers['x-nf-client-connection-ip'] || event.headers['x-forwarded-for'] || 'unknown';
+  const allowed = await checkRateLimit(ip);
+  if (!allowed) {
+    return { statusCode: 429, headers, body: JSON.stringify({ success: false, error: 'Too many submissions. Please try again later.' }) };
   }
 
   let data;
