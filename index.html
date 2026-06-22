@@ -3337,13 +3337,18 @@ const FC_DEFAULTS = {
     { name: 'Perf Core',  price: 149, mix: 40 },
     { name: 'Perf Plus',  price: 199, mix: 40 },
     { name: 'Perf Prime', price: 249, mix: 20 },
+    { name: 'PAYG',       price: 0,   mix: 0  },
   ]
 };
 
 function loadFCConfig() {
   try {
     const saved = JSON.parse(localStorage.getItem(FC_KEY)) || {};
-    return { ...FC_DEFAULTS, ...saved, tiers: saved.tiers || FC_DEFAULTS.tiers };
+    const tiers = saved.tiers || FC_DEFAULTS.tiers;
+    // Append any default tiers not yet in saved tiers (e.g. newly added PAYG)
+    const tierNames = tiers.map(t => t.name);
+    FC_DEFAULTS.tiers.forEach(d => { if (!tierNames.includes(d.name)) tiers.push({ ...d }); });
+    return { ...FC_DEFAULTS, ...saved, tiers };
   } catch { return { ...FC_DEFAULTS }; }
 }
 function saveFCConfig(cfg) { localStorage.setItem(FC_KEY, JSON.stringify(cfg)); }
