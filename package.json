@@ -10,6 +10,7 @@
     "dev": "npx serve -l 4321 ."
   },
   "dependencies": {
+    "@netlify/blobs": "^8.1.0",
     "node-fetch": "^3.3.2"
   }
 }
