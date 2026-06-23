@@ -11,6 +11,7 @@
 
 const crypto    = require('crypto');
 const { getStore } = require('@netlify/blobs');
+const { createGhlContact } = require('./lib/ghl');
 
 const MAX_LEADS = 500;
 
@@ -105,11 +106,40 @@ exports.handler = async (event) => {
     const lead = parseMetaPayload(payload);
 
     try {
-      const store  = getStore('leads-store');
-      const leads  = await getLeads(store);
+      const store = getStore('leads-store');
+      const leads = await getLeads(store);
+
+      // Deduplication — skip if same email or phone already exists
+      if (lead.email || lead.phone) {
+        const isDuplicate = leads.some(l =>
+          (lead.email && l.email === lead.email) ||
+          (lead.phone && l.phone === lead.phone)
+        );
+        if (isDuplicate) {
+          console.log('[receive-lead] Duplicate lead, skipping:', lead.email || lead.phone);
+          return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ received: true, duplicate: true }) };
+        }
+      }
+
       leads.unshift(lead);
       if (leads.length > MAX_LEADS) leads.splice(MAX_LEADS);
       await store.set('all-leads', JSON.stringify(leads));
+
+      // Auto-sync to GHL immediately after storing
+      const apiKey     = process.env.GHL_API_KEY;
+      const locationId = process.env.GHL_LOCATION_ID;
+      if (apiKey && locationId) {
+        try {
+          const contactId      = await createGhlContact(lead, apiKey, locationId);
+          leads[0].ghlSynced    = true;
+          leads[0].ghlContactId = contactId;
+          console.log('[receive-lead] Auto-synced to GHL:', contactId);
+        } catch (err) {
+          leads[0].syncError = err.message;
+          console.warn('[receive-lead] Auto-sync to GHL failed (will retry on schedule):', err.message);
+        }
+        await store.set('all-leads', JSON.stringify(leads));
+      }
     } catch (err) {
       console.error('[receive-lead] Blobs write failed:', err.message);
       // Return 500 so Meta retries delivery
