@@ -57,7 +57,7 @@ exports.handler = async () => {
 
     // Fetch project metrics
     const metricsRes = await fetch(
-      `${BASE}/projects/${projectId}/metrics?startDate=${fmt(startDate)}&endDate=${fmt(endDate)}&timezone=Australia%2FBrisbane`,
+      `${BASE}/projects/${projectId}/metrics?startDate=${fmt(startDate)}&endDate=${fmt(endDate)}`,
       { headers }
     );
 
