@@ -11,8 +11,8 @@
  *  { access_token, token_type, expires_in }
  */
 
-const CLIENT_ID = '1009566004951226';
-const GRAPH     = 'https://graph.facebook.com/v19.0';
+const CLIENT_ID = process.env.META_APP_ID || '1548741106832255';
+const GRAPH     = 'https://graph.facebook.com/v21.0';
 
 exports.handler = async (event) => {
   const headers = {
