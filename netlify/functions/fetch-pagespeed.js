@@ -1,5 +1,5 @@
 exports.handler = async function (event, context) {
-  const url = 'https://performotion.com.au';
+  const url = process.env.PSI_URL || 'https://performotion.com.au';
   const categories = 'category=performance';
 
   function gradeScore(score) {

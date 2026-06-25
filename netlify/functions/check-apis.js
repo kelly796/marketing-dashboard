@@ -143,7 +143,7 @@ async function checkGSC(out) {
 // ── HTTP HELPERS ──────────────────────────────────────────────────────────────
 async function metaGet(path, params) {
   const qs  = new URLSearchParams(Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]))).toString();
-  const res = await fetch(`https://graph.facebook.com/v19.0${path}?${qs}`);
+  const res = await fetch(`https://graph.facebook.com/v21.0${path}?${qs}`);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body?.error?.message || `Meta API HTTP ${res.status}`);

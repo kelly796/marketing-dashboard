@@ -326,15 +326,13 @@
     }
   },
   "facebook": {
-    "reach7d": 0,
-    "reach7dPrev": 0,
-    "engagementRate": 0,
-    "engagementRatePrev": 0,
-    "impressions7d": 0,
-    "impressionsPrev": 0,
-    "pageLikes": 1131,
-    "pageLikesPrev": 0,
-    "posts7d": 3,
+    "fanCount": 1131,
+    "followersCount": 1131,
+    "posts30d": 3,
+    "recentPosts": [],
+    "pageViews7d": null,
+    "pageViewsPrev": null,
+    "engagement7d": null,
     "reachTrend": [
       0,
       0,

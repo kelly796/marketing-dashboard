@@ -70,7 +70,7 @@ exports.handler = async (event) => {
     const pageSpeedData = parse(pageSpeedRes, 'PageSpeed');
 
     // Meta returns multiple keys
-    const metaKeys = metaData ? {
+    const metaKeys = (metaData && !metaData._error) ? {
       ...(metaData.instagramHQ     ? { instagramHQ:     metaData.instagramHQ }     : {}),
       ...(metaData.instagramOnline ? { instagramOnline: metaData.instagramOnline } : {}),
       ...(metaData.facebook        ? { facebook:        metaData.facebook }        : {}),
@@ -97,6 +97,7 @@ exports.handler = async (event) => {
       lastUpdated: new Date().toISOString(),
       dataSource:  'Live',
       _cachedAt:   new Date().toISOString(),
+      ...(metaData?._error ? { _metaError: metaData } : {}),
       ...metaKeys,
       ...analyticsKeys,
       ...(gscData       ? { seo:       gscData.seo   } : {}),
@@ -142,8 +143,12 @@ function parse(result, label) {
     }
   } else if (result.status === 'rejected') {
     console.warn(`${label} fetch failed:`, result.reason);
+    return { _error: true, reason: String(result.reason) };
   } else {
-    console.warn(`${label} returned ${result.value?.statusCode}:`, result.value?.body);
+    const status = result.value?.statusCode;
+    const body   = result.value?.body;
+    console.warn(`${label} returned ${status}:`, body);
+    return { _error: true, status, body };
   }
   return null;
 }

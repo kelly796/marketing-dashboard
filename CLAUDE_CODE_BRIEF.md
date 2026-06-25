@@ -32,6 +32,46 @@ We created `data/dashboard-data.json` with real pulled Instagram data (10 posts,
 
 ---
 
+## Session: 22 June 2026
+
+### Features Built
+1. **GHL stage filter** (`index.html`) — Tapping a stage count in the pipeline grid filters the Recent Leads table below to show only contacts in that stage. Tap again or Clear to reset.
+2. **Mobile responsive layout** (`index.html`) — Full mobile support: hamburger menu slides sidebar in as overlay, header and main go full-width, all grids collapse to 1–2 columns, tables scroll horizontally. Breakpoint: ≤768px.
+
+### Security Fixes
+3. **Meta webhook signature verification** (`netlify/functions/receive-lead.js`) — Verifies `X-Hub-Signature-256` header using `META_APP_SECRET`. Returns 500 on Blobs write failure so Meta retries. Removed hardcoded fallback verify token.
+4. **Enquiry form rate limiting** (`netlify/functions/submit-enquiry.js`) — 5 submissions per IP per hour via Netlify Blobs. Returns 429 if exceeded. Fails open if Blobs unavailable.
+
+### Pending Actions (owner)
+- Add `META_APP_SECRET` to Netlify environment variables (Meta Developer Console → App → Settings → Basic → App secret) to activate webhook signature verification
+- Enable Netlify site password (Netlify dashboard → Site configuration → Site protection) to protect `get-leads` and `sync-leads` endpoints which expose lead PII
+- Verify `performotion.net` domain in Resend, then update `submit-enquiry.js` `from` address from `onboarding@resend.dev` to `no-reply@performotion.net`
+- Move `enquiry.html` + `submit-enquiry.js` to their own project (currently lives in dashboard repo — noted for tomorrow)
+
+---
+
+## Session: 22 June 2026 (continued)
+
+### Overview Page Redesign
+Fully redesigned `index.html` overview tab with "what needs attention" as the primary focus:
+
+1. **Briefing bar** — full-width strip at the top: today's date on the left, animated health dot (green/amber/red pulsing) + label on the right. Health status is driven by `renderActionItems`.
+2. **Priority Actions card** — moved to the top of the page, full-width. Action items redesigned with coloured left border (red/amber/green), larger text, and each item is tappable — navigates to the relevant page (Meta Ads, GHL, etc.).
+3. **Key stats strip** — same 6 stat cards (same IDs), moved below actions.
+4. **Business Funnel** — new visual 3-stage flow: Spend → Leads → Pipeline with CPL label. Sits in a 60/40 grid alongside Campaign Snapshot. Stacks vertically on mobile.
+5. **Spend chart + Maxx report** — unchanged, moved below the funnel.
+6. **Member LTV** — unchanged, bottom.
+
+### New JS functions added
+- `renderFunnel(meta)` — renders the 3-stage funnel from `meta.spend7d`, `meta.leads7d`, `meta.costPerLead`, and `ghlData.pipeline.totalContacts`
+- `renderActionItems` updated — now also updates `#health-dot`, `#health-label`, and `#priority-count` badge
+- Briefing date set on page load via `new Date().toLocaleDateString('en-AU', ...)`
+
+### All existing element IDs preserved
+`stat-spend-val`, `stat-cpl-val`, `stat-leads-val`, `stat-pipeline-val`, `stat-sessions-val`, `stat-roas-val`, `chart-spend-overview`, `maxx-report-overview`, `action-items`, `overview-campaigns`, `ltv-tiers`, `ltv-summary`
+
+---
+
 ## Current Problem
 The dashboard is NOT showing real Instagram/Facebook data. Instead it either:
 - Shows MOCK data (fake posts with names like "Why strength training matters after 40")

@@ -6,9 +6,12 @@
  *
  * ─── REQUIRED ENV VARS ───────────────────────────────────────────
  *  WEBHOOK_VERIFY_TOKEN  — Token set in Meta webhook config
+ *  META_APP_SECRET       — App secret from Meta developer console (for signature verification)
  */
 
+const crypto    = require('crypto');
 const { getStore } = require('@netlify/blobs');
+const { createGhlContact } = require('./lib/ghl');
 
 const MAX_LEADS = 500;
 
@@ -19,6 +22,15 @@ async function getLeads(store) {
   } catch {
     return [];
   }
+}
+
+function verifyMetaSignature(body, sigHeader, appSecret) {
+  if (!sigHeader || !sigHeader.startsWith('sha256=')) return false;
+  const received = sigHeader.slice(7); // strip 'sha256='
+  const expected = crypto.createHmac('sha256', appSecret).update(body).digest('hex');
+  // timingSafeEqual requires same-length buffers
+  if (received.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(received, 'hex'), Buffer.from(expected, 'hex'));
 }
 
 function parseMetaPayload(payload) {
@@ -46,9 +58,9 @@ function parseMetaPayload(payload) {
     for (const field of (change.field_data || [])) {
       const name = (field.name || '').toLowerCase();
       const val  = (field.values || [])[0] || '';
-      if (name.includes('email'))                       lead.email = val;
+      if (name.includes('email'))                              lead.email = val;
       else if (name.includes('phone') || name.includes('mobile')) lead.phone = val;
-      else if (name.includes('name'))                   lead.name  = val;
+      else if (name.includes('name'))                          lead.name  = val;
     }
   } catch { /* partial payload — keep defaults */ }
 
@@ -58,8 +70,12 @@ function parseMetaPayload(payload) {
 exports.handler = async (event) => {
   // ── GET: Meta webhook verification ────────────────────────────
   if (event.httpMethod === 'GET') {
+    const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN;
+    if (!verifyToken) {
+      console.error('[receive-lead] WEBHOOK_VERIFY_TOKEN not set');
+      return { statusCode: 500, body: 'Server misconfiguration' };
+    }
     const p = event.queryStringParameters || {};
-    const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN || 'performotion_webhook_2026';
     if (p['hub.mode'] === 'subscribe' && p['hub.verify_token'] === verifyToken) {
       return { statusCode: 200, body: p['hub.challenge'] };
     }
@@ -68,6 +84,18 @@ exports.handler = async (event) => {
 
   // ── POST: receive lead ─────────────────────────────────────────
   if (event.httpMethod === 'POST') {
+    // Verify Meta signature if app secret is configured
+    const appSecret = process.env.META_APP_SECRET;
+    if (appSecret) {
+      const sig = event.headers['x-hub-signature-256'] || '';
+      if (!verifyMetaSignature(event.body || '', sig, appSecret)) {
+        console.warn('[receive-lead] Signature verification failed');
+        return { statusCode: 403, body: 'Invalid signature' };
+      }
+    } else {
+      console.warn('[receive-lead] META_APP_SECRET not set — skipping signature check');
+    }
+
     let payload;
     try {
       payload = JSON.parse(event.body);
@@ -78,13 +106,44 @@ exports.handler = async (event) => {
     const lead = parseMetaPayload(payload);
 
     try {
-      const store  = getStore('leads-store');
-      const leads  = await getLeads(store);
+      const store = getStore('leads-store');
+      const leads = await getLeads(store);
+
+      // Deduplication — skip if same email or phone already exists
+      if (lead.email || lead.phone) {
+        const isDuplicate = leads.some(l =>
+          (lead.email && l.email === lead.email) ||
+          (lead.phone && l.phone === lead.phone)
+        );
+        if (isDuplicate) {
+          console.log('[receive-lead] Duplicate lead, skipping:', lead.email || lead.phone);
+          return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ received: true, duplicate: true }) };
+        }
+      }
+
       leads.unshift(lead);
       if (leads.length > MAX_LEADS) leads.splice(MAX_LEADS);
       await store.set('all-leads', JSON.stringify(leads));
+
+      // Auto-sync to GHL immediately after storing
+      const apiKey     = process.env.GHL_API_KEY;
+      const locationId = process.env.GHL_LOCATION_ID;
+      if (apiKey && locationId) {
+        try {
+          const contactId      = await createGhlContact(lead, apiKey, locationId);
+          leads[0].ghlSynced    = true;
+          leads[0].ghlContactId = contactId;
+          console.log('[receive-lead] Auto-synced to GHL:', contactId);
+        } catch (err) {
+          leads[0].syncError = err.message;
+          console.warn('[receive-lead] Auto-sync to GHL failed (will retry on schedule):', err.message);
+        }
+        await store.set('all-leads', JSON.stringify(leads));
+      }
     } catch (err) {
       console.error('[receive-lead] Blobs write failed:', err.message);
+      // Return 500 so Meta retries delivery
+      return { statusCode: 500, body: JSON.stringify({ error: 'Storage write failed' }) };
     }
 
     return {

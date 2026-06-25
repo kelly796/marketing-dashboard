@@ -10,7 +10,8 @@
  *   schedule = "@every 4h"
  */
 
-const { handler: getData } = require('./get-data');
+const { handler: getData }    = require('./get-data');
+const { handler: syncLeads }  = require('./sync-leads');
 
 exports.handler = async () => {
   console.log('[auto-refresh] Starting scheduled cache refresh at', new Date().toISOString());
@@ -28,9 +29,23 @@ exports.handler = async () => {
     ].filter(Boolean).join(', ');
 
     console.log(`[auto-refresh] Cache refreshed. Sources: ${sources || 'none'}. lastUpdated: ${data.lastUpdated}`);
-    return { statusCode: 200, body: JSON.stringify({ ok: true, sources }) };
+  } else {
+    console.error('[auto-refresh] Refresh failed — get-data returned', result.statusCode, result.body);
   }
 
-  console.error('[auto-refresh] Refresh failed — get-data returned', result.statusCode, result.body);
-  return { statusCode: result.statusCode, body: result.body };
+  // Sync any pending Meta leads to GHL (catches leads that failed auto-sync on receipt)
+  try {
+    const syncResult = await syncLeads({ httpMethod: 'POST', body: '{}' });
+    const { synced = [], failed = [], skipped = [] } = JSON.parse(syncResult.body || '{}');
+    if (synced.length || failed.length) {
+      console.log(`[auto-refresh] Lead sync: ${synced.length} synced, ${failed.length} failed, ${skipped.length} skipped`);
+    }
+  } catch (err) {
+    console.error('[auto-refresh] Lead sync error:', err.message);
+  }
+
+  if (result.statusCode !== 200) {
+    return { statusCode: result.statusCode, body: result.body };
+  }
+  return { statusCode: 200, body: JSON.stringify({ ok: true }) };
 };

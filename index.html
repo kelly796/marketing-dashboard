@@ -48,8 +48,9 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 /* ─── LAYOUT ──────────────────────────────────────────────────── */
 .sidebar{
   position:fixed;top:0;left:0;bottom:0;width:var(--sidebar);
-  background:#070F1B;display:flex;flex-direction:column;z-index:100;
+  background:#070F1B;display:flex;flex-direction:column;z-index:200;
   border-right:1px solid var(--border);overflow-y:auto;
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
 }
 .header{
   position:fixed;top:0;left:var(--sidebar);right:0;height:var(--header);
@@ -61,6 +62,12 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   margin-left:var(--sidebar);margin-top:var(--header);
   padding:28px;min-height:calc(100vh - var(--header));
 }
+/* hamburger — hidden on desktop */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--text);flex-shrink:0;}
+.hamburger svg{display:block;}
+/* sidebar overlay backdrop */
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;}
+.sidebar-backdrop.visible{display:block;}
 
 /* ─── PAGE TRANSITIONS ────────────────────────────────────────── */
 .tab-content{display:none;opacity:0;}
@@ -74,7 +81,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   position:fixed;top:var(--header);left:var(--sidebar);right:0;bottom:0;
   background:var(--bg);transform:translateX(100%);
   transition:transform .25s cubic-bezier(.4,0,.2,1);
-  overflow-y:auto;z-index:50;padding:28px;
+  overflow-y:auto;z-index:50;padding:28px;will-change:transform;
 }
 .subpage.open{transform:translateX(0);}
 
@@ -371,29 +378,43 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .age-table tr:last-child td{border-bottom:none;}
 .age-table .top-row td{color:var(--teal);font-weight:600;}
 
-/* LTV section */
-.ltv-tier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;}
-.ltv-tier-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;}
-.ltv-tier-name{font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:10px;}
-.ltv-field-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:.75rem;}
-.ltv-field-label{color:var(--text-muted);}
-.ltv-field-input{
-  width:70px;background:var(--surface3);border:1px solid var(--border2);border-radius:5px;
-  padding:3px 7px;font-size:.78rem;font-family:var(--fmono);color:var(--text);
-  text-align:right;outline:none;
-}
-.ltv-field-input:focus{border-color:var(--teal);}
-.ltv-computed{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
-  font-size:.82rem;color:var(--teal);font-family:var(--fmono);font-weight:600;}
-.ltv-summary-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:12px;padding:16px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);}
-.ltv-summary-item-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
-  color:var(--text-muted);margin-bottom:4px;}
-.ltv-summary-item-val{font-family:var(--fmono);font-size:1.1rem;font-weight:600;color:var(--text);}
-.ltv-summary-item-val.good{color:var(--success);}
-.ltv-summary-item-val.warn{color:var(--warning);}
-.ltv-summary-item-val.bad{color:var(--danger);}
-.ltv-note{font-size:.73rem;color:var(--text-muted);margin-top:12px;}
+/* Revenue Forecaster */
+.fc-subtitle{font-size:.75rem;color:var(--text-muted);margin-bottom:16px;}
+.fc-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.fc-field{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;}
+.fc-field-label{font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.fc-field-input{width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:.9rem;font-family:var(--fmono);color:var(--text);outline:none;box-sizing:border-box;}
+.fc-field-input:focus{border-color:var(--teal);}
+.fc-results{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:16px;}
+.fc-results table{width:100%;border-collapse:collapse;}
+.fc-results th{font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 14px;background:var(--surface2);text-align:right;}
+.fc-results th:first-child{text-align:left;}
+.fc-results td{padding:10px 14px;font-size:.85rem;border-top:1px solid var(--border);text-align:right;}
+.fc-results td:first-child{text-align:left;color:var(--text-muted);font-size:.8rem;}
+.fc-results td.num{font-family:var(--fmono);color:var(--text);font-weight:600;}
+.fc-roas-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-radius:var(--radius-sm);background:var(--surface2);}
+.fc-roas-num{font-family:var(--fmono);font-size:2rem;font-weight:700;line-height:1;}
+.fc-roas-num.good{color:var(--success);}
+.fc-roas-num.warn{color:var(--warning);}
+.fc-roas-num.bad{color:var(--danger);}
+.fc-roas-label{font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;}
+.fc-roas-sub{font-size:.78rem;color:var(--text-dim);text-align:right;max-width:200px;}
+.fc-blended-display{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
+.fc-blended-label{font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.fc-blended-val{font-family:var(--fmono);font-size:1.2rem;font-weight:700;color:var(--teal);line-height:1;}
+.fc-blended-sub{font-size:.68rem;color:var(--text-muted);margin-top:4px;}
+.fc-tiers{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px;}
+.fc-tiers table{width:100%;border-collapse:collapse;}
+.fc-tiers th{font-size:.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;padding:7px 10px;background:var(--surface2);text-align:right;}
+.fc-tiers th:first-child{text-align:left;}
+.fc-tiers td{padding:7px 10px;border-top:1px solid var(--border);text-align:right;vertical-align:middle;}
+.fc-tiers td:first-child{text-align:left;}
+.fc-tiers tfoot td{font-family:var(--fmono);font-weight:700;color:var(--teal);background:var(--surface2);font-size:.82rem;border-top:2px solid var(--border2);}
+.fc-tiers-input{width:70px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:.82rem;font-family:var(--fmono);color:var(--text);text-align:right;outline:none;box-sizing:border-box;}
+.fc-tiers-input:focus{border-color:var(--teal);}
+.fc-tiers-name{background:transparent;border:none;border-bottom:1px solid transparent;padding:2px 0;font-size:.82rem;color:var(--text);outline:none;width:100%;}
+.fc-tiers-name:focus{border-bottom-color:var(--teal);}
+@media(max-width:768px){.fc-inputs{grid-template-columns:1fr;}}
 .campaign-card-header{
   padding:16px 20px;display:flex;align-items:center;
   justify-content:space-between;border-bottom:1px solid var(--border);
@@ -439,6 +460,13 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   background:var(--surface2);transition:background .15s;
 }
 .ghl-stage-row:hover{background:var(--surface3);}
+.ghl-stage-clickable{cursor:pointer;}
+.ghl-stage-clickable:hover{background:var(--teal-glow)!important;border-left:2px solid var(--teal);}
+.ghl-stage-clickable:hover .ghl-stage-count{color:var(--teal);}
+.ghl-stage-active{background:var(--teal-glow)!important;border-left:2px solid var(--teal);}
+.ghl-stage-active .ghl-stage-count{color:var(--teal);}
+.ghl-filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--teal-glow);border:1px solid var(--teal);border-radius:var(--radius-sm);font-size:.82rem;color:var(--teal);font-weight:600;}
+.ghl-filter-bar button{margin-left:auto;font-size:.75rem;background:none;border:1px solid var(--teal);color:var(--teal);border-radius:var(--radius-sm);padding:3px 10px;cursor:pointer;}
 .ghl-stage-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;}
 .ghl-stage-dot.active{background:var(--success);}
 .ghl-stage-dot.amber{background:var(--warning);}
@@ -574,6 +602,44 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 }
 .toast.show{opacity:1;transform:translateY(0);}
 
+/* ─── BRIEFING BAR ────────────────────────────────────────────── */
+.briefing-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;}
+.briefing-left{display:flex;flex-direction:column;}
+.briefing-date{font-family:var(--fhead);font-size:.95rem;font-weight:700;color:var(--text);}
+.briefing-sub{font-size:.72rem;color:var(--text-muted);margin-top:2px;letter-spacing:.3px;}
+.briefing-health{display:flex;align-items:center;gap:8px;}
+.health-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.health-dot.green{background:var(--success);box-shadow:0 0 6px var(--success);}
+.health-dot.amber{background:var(--warning);box-shadow:0 0 6px var(--warning);}
+.health-dot.red{background:var(--danger);box-shadow:0 0 6px var(--danger);animation:healthPulse 1.5s infinite;}
+@keyframes healthPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.health-label{font-size:.82rem;font-weight:600;color:var(--text-dim);}
+
+/* ─── PRIORITY ACTIONS ─────────────────────────────────────────── */
+.priority-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.priority-count{font-family:var(--fmono);font-size:.72rem;font-weight:700;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);border-radius:20px;padding:2px 10px;}
+.priority-count:empty{display:none;}
+.action-item-v2{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--border2);transition:all .15s;cursor:default;margin-bottom:8px;}
+.action-item-v2:last-child{margin-bottom:0;}
+.action-item-v2.clickable{cursor:pointer;}
+.action-item-v2.clickable:hover{background:var(--surface3);}
+.action-item-v2.red{border-left-color:var(--danger);background:rgba(248,113,113,0.05);}
+.action-item-v2.amber{border-left-color:var(--warning);background:rgba(245,158,11,0.05);}
+.action-item-v2.green{border-left-color:var(--success);}
+.action-item-v2-icon{font-size:1rem;margin-top:1px;flex-shrink:0;width:18px;text-align:center;}
+.action-item-v2-body{flex:1;min-width:0;}
+.action-item-v2-text{font-size:.9rem;color:var(--text);line-height:1.5;font-weight:500;}
+.action-item-v2-meta{font-size:.74rem;color:var(--text-muted);margin-top:3px;}
+.action-item-v2-arrow{font-size:.8rem;color:var(--text-muted);align-self:center;flex-shrink:0;}
+
+/* ─── BUSINESS FUNNEL ──────────────────────────────────────────── */
+.biz-funnel{display:flex;align-items:stretch;margin-top:4px;}
+.funnel-stage{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px 8px;background:var(--surface2);border-radius:var(--radius-sm);}
+.funnel-stage-num{font-family:var(--fmono);font-size:1.5rem;font-weight:700;color:var(--text);line-height:1;}
+.funnel-stage-label{font-size:.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-top:6px;}
+.funnel-stage-sub{font-size:.74rem;color:var(--text-dim);margin-top:4px;}
+.funnel-arrow{display:flex;align-items:center;padding:0 8px;color:var(--text-muted);font-size:1rem;flex-shrink:0;}
+
 /* ─── RESPONSIVE ──────────────────────────────────────────────── */
 @media(max-width:1100px){
   .stat-grid{grid-template-columns:repeat(2,1fr);}
@@ -582,6 +648,47 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   .campaign-grid{grid-template-columns:1fr;}
   .clarity-grid{grid-template-columns:repeat(2,1fr);}
   .card-grid-60-40,.card-grid-2{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  /* sidebar becomes off-canvas overlay */
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  /* header + main go full width */
+  .header{left:0;padding:0 16px;}
+  .main{margin-left:0;padding:16px;}
+  .subpage{left:0;padding:16px;}
+  /* show hamburger */
+  .hamburger{display:flex;align-items:center;}
+  /* collapse all grids to 1 or 2 cols */
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-card{padding:14px;}
+  .stat-value{font-size:1.6rem;}
+  .card-grid-60-40,.card-grid-2{grid-template-columns:1fr;}
+  .campaign-grid{grid-template-columns:1fr;}
+  .clarity-grid{grid-template-columns:repeat(2,1fr);}
+  .skills-grid{grid-template-columns:repeat(2,1fr);}
+  .ghl-pipelines-grid{grid-template-columns:1fr;}
+  .ghl-action-grid{grid-template-columns:repeat(2,1fr);}
+  /* cards */
+  .card{border-radius:10px;}
+  .card-body{padding:14px;}
+  /* section headers stack */
+  .section-header{flex-direction:column;align-items:flex-start;gap:10px;}
+  .section-header > div:last-child{display:flex;flex-wrap:wrap;gap:8px;}
+  /* header elements */
+  .last-updated{display:none;}
+  .page-title{font-size:1rem;}
+  /* hide AI button text */
+  .btn-primary svg{margin:0;}
+  /* funnel bars */
+  .funnel-bar{height:6px;}
+  /* reduce chart heights */
+  canvas{max-height:220px!important;}
+  /* briefing + funnel stack vertically */
+  .briefing-bar{flex-direction:column;align-items:flex-start;gap:10px;}
+  .biz-funnel{flex-direction:column;}
+  .funnel-arrow{transform:rotate(90deg);align-self:center;padding:4px 0;}
 }
 </style>
 </head>
@@ -655,9 +762,15 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   </div>
 </nav>
 
+<!-- ─── SIDEBAR BACKDROP ──────────────────────────────────────────── -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
 <!-- ─── HEADER ───────────────────────────────────────────────────── -->
 <header class="header">
-  <div class="header-left">
+  <div class="header-left" style="display:flex;align-items:center;gap:10px;min-width:0;">
+    <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <span class="page-title" id="page-title">Overview</span>
     <div class="breadcrumb" id="breadcrumb"></div>
   </div>
@@ -683,8 +796,35 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 
 <!-- ════ OVERVIEW ════════════════════════════════════════════════ -->
 <div id="tab-overview" class="tab-content active">
-  <!-- 6 hero stat cards -->
-  <div class="stat-grid" id="overview-stats">
+
+  <!-- Briefing Bar -->
+  <div class="briefing-bar">
+    <div class="briefing-left">
+      <span class="briefing-date" id="briefing-date"></span>
+      <span class="briefing-sub">PerforMotion Command Hub</span>
+    </div>
+    <div class="briefing-health">
+      <span class="health-dot" id="health-dot"></span>
+      <span class="health-label" id="health-label">Loading…</span>
+    </div>
+  </div>
+
+  <!-- Priority Actions -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="priority-card-header">
+      <div class="card-title" style="margin-bottom:0;display:flex;align-items:center;gap:8px">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        What needs attention
+      </div>
+      <span class="priority-count" id="priority-count"></span>
+    </div>
+    <div id="action-items">
+      <div class="loading-state"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- Key Stats -->
+  <div class="stat-grid" id="overview-stats" style="margin-bottom:20px">
     <div class="stat-card clickable" onclick="navigate('meta',document.querySelector('[data-page=meta]'))">
       <div class="stat-label">Meta Spend (7d)</div>
       <div class="stat-value sm" id="stat-spend-val">—</div>
@@ -728,13 +868,27 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       <div class="stat-label">Lead ROAS (7d)</div>
       <div class="stat-value sm" id="stat-roas-val">—</div>
       <div class="stat-footer">
-        <span class="stat-trend neutral" id="stat-roas-trend">Leads × avg LTV ÷ spend</span>
+        <span class="stat-trend neutral" id="stat-roas-trend">Set product price in forecaster</span>
         <span id="stat-roas-badge"></span>
       </div>
     </div>
   </div>
 
-  <!-- Spend chart + Maxx -->
+  <!-- Business Funnel + Campaign Snapshot -->
+  <div class="card-grid-60-40">
+    <div class="card">
+      <div class="card-title">Business Funnel — 7 Days</div>
+      <div class="biz-funnel" id="biz-funnel">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Campaign Snapshot</div>
+      <div class="campaign-grid" id="overview-campaigns" style="margin-bottom:0;grid-template-columns:1fr;gap:10px"></div>
+    </div>
+  </div>
+
+  <!-- Spend Chart + Maxx -->
   <div class="card-grid-60-40">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -761,30 +915,16 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     </div>
   </div>
 
-  <!-- Action Items + Campaign Snapshot -->
-  <div class="card-grid-2">
-    <div class="card">
-      <div class="card-title">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Action Items
-      </div>
-      <div class="action-list" id="action-items">
-        <div class="loading-state"><div class="spinner"></div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Campaign Snapshot</div>
-      <div class="campaign-grid" id="overview-campaigns" style="margin-bottom:0;grid-template-columns:1fr;gap:10px"></div>
-    </div>
+  <!-- Revenue Forecaster -->
+  <div class="card" id="forecaster-section">
+    <div class="card-title">Revenue Forecaster</div>
+    <div class="fc-subtitle">Adjust inputs to project your funnel revenue</div>
+    <div class="fc-inputs" id="fc-inputs"></div>
+    <div id="fc-tiers-wrap"></div>
+    <div class="fc-results" id="fc-results"></div>
+    <div class="fc-roas-bar" id="fc-roas-bar"></div>
   </div>
 
-  <!-- Member Lifetime Value -->
-  <div class="card" id="ltv-section">
-    <div class="card-title">Member Lifetime Value</div>
-    <div class="ltv-tier-grid" id="ltv-tiers"></div>
-    <div class="ltv-summary-row" id="ltv-summary"></div>
-    <div class="ltv-note">Adjust values to match current pricing — saves automatically.</div>
-  </div>
 </div>
 
 <!-- ════ META ADS ═════════════════════════════════════════════════ -->
@@ -1545,6 +1685,18 @@ Chart.register({
   }
 });
 
+// ─── MOBILE SIDEBAR ───────────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar  = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const isOpen   = sidebar.classList.toggle('open');
+  backdrop.classList.toggle('visible', isOpen);
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('visible');
+}
+
 // ─── ROUTER ───────────────────────────────────────────────────────
 function navigate(name, el) {
   closeSubPage(true);
@@ -1563,6 +1715,7 @@ function navigate(name, el) {
   currentPage = name;
   document.getElementById('page-title').textContent = PAGE_TITLES[name] || name;
   updateBreadcrumb();
+  closeSidebar();
   return false;
 }
 function switchTab(name, el) { return navigate(name, el); }
@@ -1745,6 +1898,15 @@ async function loadData(force=false) {
       ]);
       data    = mainRes.status==='fulfilled' ? mainRes.value : {};
       ghlData = ghlRes.status==='fulfilled'  ? ghlRes.value  : null;
+      // Supplement missing Meta/IG keys from static fallback (used when API token is expired)
+      if (!data.instagramHQ || !data.facebook || !data.meta) {
+        try {
+          const fb = await fetch('/data/dashboard-data.json').then(r=>r.json());
+          if (!data.instagramHQ && fb.instagramHQ) data.instagramHQ = fb.instagramHQ;
+          if (!data.facebook    && fb.facebook)    data.facebook    = fb.facebook;
+          if (!data.meta        && fb.meta)         data.meta        = fb.meta;
+        } catch {}
+      }
       if (data && Object.keys(data).length) setCache({ ...data, _ghl: ghlData });
     } catch(e) { console.error('Load error', e); data={}; }
   }
@@ -1768,7 +1930,7 @@ function renderAll() {
   const seo  = dashData?.seo  || null;
   renderOverview(meta, ga4);
   renderMeta(meta);
-  renderLTV();
+  renderForecaster();
   renderCampaignsPage(meta);
   renderWebsite(ga4, seo, dashData?.clarity || null);
   renderAdPerformanceOverview(meta);
@@ -1825,15 +1987,14 @@ function renderOverview(meta, ga4) {
   sessTrend.className = 'stat-trend '+sessT.cls;
   sessTrend.textContent = sessT.arrow+' '+sessT.pct+' vs last month';
 
-  // Lead ROAS = (leads × avg member LTV) / spend — uses the LTV calculator values
-  const ltvTiers   = loadLTVConfig();
-  const avgLTV     = ltvTiers.reduce((s, t) => s + t.monthly * t.months, 0) / ltvTiers.length;
+  // Lead ROAS = (leads × avg client value) / spend
+  const avgLTV     = calcBlendedPrice(loadFCConfig().tiers) || 1500;
   const leadRoas   = (leads > 0 && spend > 0 && avgLTV > 0) ? +((leads * avgLTV) / spend).toFixed(1) : 0;
   const roasEl     = document.getElementById('stat-roas-val');
   const roasTrend  = document.getElementById('stat-roas-trend');
   roasEl.textContent = leadRoas > 0 ? leadRoas.toFixed(1)+'x' : '—';
   roasTrend.className = 'stat-trend neutral';
-  roasTrend.textContent = leadRoas > 0 ? 'Leads × LTV ÷ spend' : 'Leads × avg LTV ÷ spend';
+  roasTrend.textContent = leadRoas > 0 ? 'Leads × client value ÷ spend' : 'Set product price in forecaster';
   document.getElementById('stat-roas-badge').innerHTML = leadRoas >= 15 ? '<span class="badge badge-good">Strong</span>' : leadRoas >= 8 ? '<span class="badge badge-watch">Fair</span>' : leadRoas > 0 ? '<span class="badge badge-act">Low</span>' : '';
 
   // Overview spend chart with projection
@@ -1844,6 +2005,7 @@ function renderOverview(meta, ga4) {
   // Mini campaign snapshot
   renderCampaignCards('overview-campaigns', meta, true);
   renderActionItems(meta);
+  renderFunnel(meta);
 }
 
 // ─── ACTION ITEMS ─────────────────────────────────────────────────
@@ -1851,19 +2013,65 @@ function renderActionItems(meta) {
   const items = [];
   if (meta) {
     if (!meta.leads7d || meta.leads7d===0)
-      items.push({ priority:'red', text:'No leads generated yet. Check landing page form and pixel firing.', source:'Meta Ads' });
+      items.push({ priority:'red', text:'No leads generated yet. Check landing page form and pixel firing.', source:'Meta Ads', page:'meta' });
     if (meta.costPerLead > 350)
-      items.push({ priority:'red', text:'CPL above max threshold ($350). Review creatives and audience.', source:'Meta Ads' });
+      items.push({ priority:'red', text:'CPL above max threshold ($350). Review creatives and audience.', source:'Meta Ads', page:'meta' });
   }
   if (!ghlData || ghlData.placeholder)
-    items.push({ priority:'amber', text:'Connect Go High Level API to see pipeline and run automations.', source:'GHL' });
+    items.push({ priority:'amber', text:'Connect Go High Level API to see pipeline and run automations.', source:'GHL', page:'ghl' });
   if (items.length===0)
-    items.push({ priority:'green', text:'No urgent actions. Keep monitoring CPL as spend increases.', source:'System' });
-  document.getElementById('action-items').innerHTML = items.map(i=>`
-    <div class="action-item">
-      <div class="action-dot ${i.priority}"></div>
-      <div><div class="action-text">${i.text}</div><div class="action-source">${i.source}</div></div>
-    </div>`).join('');
+    items.push({ priority:'green', text:'All clear — no urgent actions. Keep monitoring CPL as spend increases.', source:'System', page:null });
+
+  // Update briefing bar health dot
+  const hasRed   = items.some(i => i.priority === 'red');
+  const hasAmber = items.some(i => i.priority === 'amber');
+  const dot   = document.getElementById('health-dot');
+  const label = document.getElementById('health-label');
+  const count = document.getElementById('priority-count');
+  const urgentCount = items.filter(i => i.priority !== 'green').length;
+  if (dot) dot.className = 'health-dot ' + (hasRed ? 'red' : hasAmber ? 'amber' : 'green');
+  if (label) label.textContent = hasRed ? 'Needs attention' : hasAmber ? 'Monitor closely' : 'All clear';
+  if (count) count.textContent = urgentCount > 0 ? urgentCount : '';
+
+  const iconMap = { red:'⚠', amber:'●', green:'✓' };
+  document.getElementById('action-items').innerHTML = items.map(i => {
+    const clickable = !!i.page;
+    const onclick   = clickable ? `onclick="navigate('${i.page}',document.querySelector('[data-page=${i.page}]'))"` : '';
+    return `<div class="action-item-v2 ${i.priority}${clickable?' clickable':''}" ${onclick}>
+      <span class="action-item-v2-icon">${iconMap[i.priority]}</span>
+      <div class="action-item-v2-body">
+        <div class="action-item-v2-text">${i.text}</div>
+        <div class="action-item-v2-meta">${i.source}${clickable ? ' · tap to view →' : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFunnel(meta) {
+  const el = document.getElementById('biz-funnel');
+  if (!el) return;
+  const spend    = meta?.spend7d ?? 0;
+  const leads    = meta?.leads7d ?? 0;
+  const pipeline = ghlData?.pipeline?.totalContacts ?? null;
+  const cpl      = meta?.costPerLead ?? 0;
+  el.innerHTML = `
+    <div class="funnel-stage">
+      <div class="funnel-stage-num">${fmtCurrency(spend)}</div>
+      <div class="funnel-stage-label">Ad Spend</div>
+      <div class="funnel-stage-sub">7 days · Meta</div>
+    </div>
+    <div class="funnel-arrow">→</div>
+    <div class="funnel-stage">
+      <div class="funnel-stage-num">${leads || '—'}</div>
+      <div class="funnel-stage-label">Leads</div>
+      <div class="funnel-stage-sub">${cpl > 0 ? 'CPL ' + fmtCurrency(cpl) : 'No data yet'}</div>
+    </div>
+    <div class="funnel-arrow">→</div>
+    <div class="funnel-stage">
+      <div class="funnel-stage-num">${pipeline ?? '—'}</div>
+      <div class="funnel-stage-label">Pipeline</div>
+      <div class="funnel-stage-sub">${pipeline != null ? 'GHL contacts' : 'Connect GHL'}</div>
+    </div>`;
 }
 
 // ─── CAMPAIGN CARDS (overview mini) ───────────────────────────────
@@ -2459,9 +2667,9 @@ function renderInstagram(ig) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">No recent posts found</td></tr>';
     return;
   }
-  const typeIcon = t => t === 'VIDEO' || t === 'REEL' ? '🎬' : t === 'CAROUSEL_ALBUM' ? '🖼️' : '📷';
+  const typeIcon = t => { const s = (t||'').toLowerCase(); return s==='reel'||s==='video' ? '🎬' : s==='carousel' ? '🖼️' : '📷'; };
   tbody.innerHTML = posts.map(p => {
-    const date = p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-AU', {day:'numeric',month:'short'}) : '—';
+    const date = (p.date||p.timestamp) ? new Date(p.date||p.timestamp).toLocaleDateString('en-AU', {day:'numeric',month:'short'}) : '—';
     const caption = (p.caption || '').replace(/</g,'&lt;').substring(0, 60) + ((p.caption||'').length > 60 ? '…' : '');
     return `<tr>
       <td style="font-family:var(--fmono);font-size:.8rem">${date}</td>
@@ -2570,7 +2778,8 @@ function renderGHL() {
         criticalTotal += critical;
 
         const dotClass = count === 0 ? '' : critical > 0 ? 'red' : stalled > 0 ? 'amber' : 'active';
-        return `<div class="ghl-stage-row">
+        const clickable = hasApi && count > 0;
+        return `<div class="ghl-stage-row${clickable ? ' ghl-stage-clickable' : ''}" ${clickable ? `onclick="filterGHLByStage('${pipe.name}','${stageName}')"` : ''} title="${clickable ? `Show ${count} contact${count!==1?'s':''} in ${stageName}` : ''}">
           <span class="ghl-stage-dot ${dotClass}"></span>
           <span class="ghl-stage-name">${stageName}</span>
           <span class="ghl-stage-count">${hasApi ? count : '—'}</span>
@@ -2602,28 +2811,76 @@ function renderGHL() {
   }
 
   // Recent leads table
-  const tbody = document.getElementById('ghl-contacts-body');
-  if (!tbody) return;
-  const contacts = ghlData?.recentContacts || [];
-  if (!contacts.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">${hasApi ? 'No leads yet.' : 'Pipelines not yet set up in GHL.'}</td></tr>`;
-  } else {
-    tbody.innerHTML = contacts.map(c => {
-      const statusBadge = c.critical
-        ? '<span class="badge badge-watch">Critical</span>'
-        : c.stalled
-        ? '<span class="badge" style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">Stalled</span>'
-        : '<span class="badge badge-good">Active</span>';
-      return `<tr>
-        <td style="font-weight:600">${c.name}</td>
-        <td style="font-size:.8rem;color:var(--text-muted)">${c.pipeline || '—'}</td>
-        <td><span class="badge badge-live">${c.stage}</span></td>
-        <td>${c.source || '—'}</td>
-        <td>${c.addedAt ? new Date(c.addedAt).toLocaleDateString('en-AU') : '—'}</td>
-        <td>${statusBadge}</td>
-      </tr>`;
-    }).join('');
+  ghlActiveFilter = null;
+  renderGHLContactsTable(ghlData?.recentContacts || []);
+}
+
+// ─── GHL STAGE FILTER ─────────────────────────────────────────────
+let ghlActiveFilter = null;
+
+function filterGHLByStage(pipeline, stage) {
+  const isSame = ghlActiveFilter?.pipeline === pipeline && ghlActiveFilter?.stage === stage;
+
+  // Clear all active highlights
+  document.querySelectorAll('.ghl-stage-active').forEach(el => el.classList.remove('ghl-stage-active'));
+
+  if (isSame) {
+    ghlActiveFilter = null;
+    renderGHLContactsTable(ghlData?.recentContacts || []);
+    return;
   }
+
+  ghlActiveFilter = { pipeline, stage };
+
+  // Highlight the tapped row
+  document.querySelectorAll('.ghl-stage-clickable').forEach(el => {
+    if (el.textContent.includes(stage) && el.closest('.ghl-pipe-card')?.querySelector('.ghl-pipe-name')?.textContent === pipeline) {
+      el.classList.add('ghl-stage-active');
+    }
+  });
+
+  const filtered = (ghlData?.recentContacts || []).filter(c =>
+    c.pipeline === pipeline && c.stage === stage
+  );
+  renderGHLContactsTable(filtered, `${pipeline} › ${stage}`);
+
+  // Scroll to the contacts table
+  document.getElementById('ghl-contacts-body')?.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderGHLContactsTable(contacts, filterLabel) {
+  const tbody = document.getElementById('ghl-contacts-body');
+  const card  = tbody?.closest('.card');
+  if (!tbody) return;
+
+  // Update card title
+  const title = card?.querySelector('.card-title');
+  if (title) {
+    title.innerHTML = filterLabel
+      ? `Recent Leads — <span style="color:var(--teal)">${filterLabel}</span> <button onclick="filterGHLByStage(ghlActiveFilter?.pipeline,ghlActiveFilter?.stage)" style="margin-left:8px;font-size:.72rem;background:none;border:1px solid var(--border2);color:var(--text-muted);border-radius:4px;padding:2px 8px;cursor:pointer">Clear ✕</button>`
+      : 'Recent Leads — All Pipelines';
+  }
+
+  if (!contacts.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">${filterLabel ? 'No contacts in this stage.' : 'No leads yet.'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = contacts.map(c => {
+    const statusBadge = c.critical
+      ? '<span class="badge badge-watch">Critical</span>'
+      : c.stalled
+      ? '<span class="badge" style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">Stalled</span>'
+      : '<span class="badge badge-good">Active</span>';
+    return `<tr>
+      <td style="font-weight:600">${c.name}</td>
+      <td style="font-size:.8rem;color:var(--text-muted)">${c.pipeline || '—'}</td>
+      <td><span class="badge badge-live">${c.stage}</span></td>
+      <td>${c.source || '—'}</td>
+      <td>${c.addedAt ? new Date(c.addedAt).toLocaleDateString('en-AU') : '—'}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ─── WEBSITE RENDER ───────────────────────────────────────────────
@@ -3099,93 +3356,151 @@ function renderAudienceByAge(breakdown) {
     </div>`;
 }
 
-// ─── LIFETIME VALUE ───────────────────────────────────────────────
-const LTV_STORAGE_KEY = 'pm_ltv_v1';
-const LTV_DEFAULTS = [
-  { id:'core',  name:'Perf Core',       monthly:149, months:8  },
-  { id:'plus',  name:'Perf Plus',       monthly:199, months:10 },
-  { id:'prime', name:'Perf Prime II/III', monthly:249, months:14 },
-];
+// ─── REVENUE FORECASTER ───────────────────────────────────────────
+const FC_KEY = 'pm_forecaster_v1';
+const FC_DEFAULTS = {
+  budget: 50,
+  cpl: 0,
+  closeRate: 20,
+  tiers: [
+    { name: 'Perf Core',  price: 149, mix: 40 },
+    { name: 'Perf Plus',  price: 199, mix: 40 },
+    { name: 'Perf Prime', price: 249, mix: 20 },
+    { name: 'PAYG',       price: 0,   mix: 0  },
+  ]
+};
 
-function loadLTVConfig() {
-  try { return JSON.parse(localStorage.getItem(LTV_STORAGE_KEY)) || LTV_DEFAULTS; }
-  catch { return LTV_DEFAULTS; }
+function loadFCConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FC_KEY)) || {};
+    const tiers = saved.tiers || FC_DEFAULTS.tiers;
+    // Append any default tiers not yet in saved tiers (e.g. newly added PAYG)
+    const tierNames = tiers.map(t => t.name);
+    FC_DEFAULTS.tiers.forEach(d => { if (!tierNames.includes(d.name)) tiers.push({ ...d }); });
+    return { ...FC_DEFAULTS, ...saved, tiers };
+  } catch { return { ...FC_DEFAULTS }; }
 }
-function saveLTVConfig(tiers) {
-  localStorage.setItem(LTV_STORAGE_KEY, JSON.stringify(tiers));
+function saveFCConfig(cfg) { localStorage.setItem(FC_KEY, JSON.stringify(cfg)); }
+
+function calcBlendedPrice(tiers) {
+  const totalMix = tiers.reduce((s, t) => s + (t.mix || 0), 0);
+  if (!totalMix) return 0;
+  return tiers.reduce((s, t) => s + (t.price || 0) * ((t.mix || 0) / totalMix), 0);
 }
 
-function renderLTV() {
-  const tiersEl   = document.getElementById('ltv-tiers');
-  const summaryEl = document.getElementById('ltv-summary');
-  if (!tiersEl || !summaryEl) return;
+function renderForecaster() {
+  const cfg     = loadFCConfig();
+  const liveCpl = dashData?.meta?.costPerLead;
+  if (liveCpl && cfg.cpl === 0) cfg.cpl = liveCpl;
 
-  const tiers = loadLTVConfig();
-  const cpl   = dashData?.meta?.costPerLead ?? 0;
+  const inputsEl = document.getElementById('fc-inputs');
+  if (!inputsEl) return;
 
-  tiersEl.innerHTML = tiers.map(t => {
-    const ltv = t.monthly * t.months;
-    return `
-    <div class="ltv-tier-card">
-      <div class="ltv-tier-name">${t.name}</div>
-      <div class="ltv-field-row">
-        <span class="ltv-field-label">Monthly value ($)</span>
-        <input class="ltv-field-input" type="number" min="0" step="1"
-          value="${t.monthly}" data-tier="${t.id}" data-field="monthly"
-          oninput="onLTVInput(this)">
-      </div>
-      <div class="ltv-field-row">
-        <span class="ltv-field-label">Avg months</span>
-        <input class="ltv-field-input" type="number" min="1" step="1"
-          value="${t.months}" data-tier="${t.id}" data-field="months"
-          oninput="onLTVInput(this)">
-      </div>
-      <div class="ltv-computed">LTV: ${fmtCurrency(ltv)}</div>
+  const blended    = calcBlendedPrice(cfg.tiers);
+  const totalMix   = cfg.tiers.reduce((s, t) => s + (t.mix || 0), 0);
+
+  inputsEl.innerHTML = `
+    <div class="fc-field">
+      <div class="fc-field-label">Daily Ad Budget ($)</div>
+      <input class="fc-field-input" type="number" min="0" step="1" value="${cfg.budget}" data-fc="budget" oninput="onFCInput(this)">
+    </div>
+    <div class="fc-field">
+      <div class="fc-field-label">Cost Per Lead ($)</div>
+      <input class="fc-field-input" type="number" min="0" step="0.01" value="${cfg.cpl || ''}" placeholder="${liveCpl ? fmtCurrency(liveCpl) : 'Enter CPL'}" data-fc="cpl" oninput="onFCInput(this)">
+    </div>
+    <div class="fc-field">
+      <div class="fc-field-label">Close Rate (%)</div>
+      <input class="fc-field-input" type="number" min="0" max="100" step="1" value="${cfg.closeRate}" data-fc="closeRate" oninput="onFCInput(this)">
+    </div>
+    <div class="fc-blended-display">
+      <div class="fc-blended-label">Avg Client Value</div>
+      <div class="fc-blended-val" id="fc-blended-val">${blended > 0 ? fmtCurrency(blended) : '—'}</div>
+      <div class="fc-blended-sub">weighted across ${cfg.tiers.length} tiers</div>
     </div>`;
-  }).join('');
 
-  updateLTVSummary(tiers, cpl);
-}
-
-function onLTVInput(input) {
-  const tiers = loadLTVConfig();
-  const tier  = tiers.find(t => t.id === input.dataset.tier);
-  if (!tier) return;
-  tier[input.dataset.field] = Number(input.value) || 0;
-  saveLTVConfig(tiers);
-  // Update just this card's LTV display
-  const card  = input.closest('.ltv-tier-card');
-  const ltv   = tier.monthly * tier.months;
-  card.querySelector('.ltv-computed').textContent = 'LTV: ' + fmtCurrency(ltv);
-  updateLTVSummary(tiers, dashData?.meta?.costPerLead ?? 0);
-}
-
-function updateLTVSummary(tiers, cpl) {
-  const summaryEl = document.getElementById('ltv-summary');
-  if (!summaryEl) return;
-  const avgLTV      = tiers.reduce((s, t) => s + t.monthly * t.months, 0) / tiers.length;
-  const ltvCplRatio = cpl > 0 ? +(avgLTV / cpl).toFixed(1) : null;
-  const breakEvenCpl = +(avgLTV * 0.3).toFixed(0); // spend up to 30% of LTV on acquisition
-
-  const ratioClass = ltvCplRatio >= 5 ? 'good' : ltvCplRatio >= 3 ? 'warn' : 'bad';
-
-  summaryEl.innerHTML = `
-    <div>
-      <div class="ltv-summary-item-label">Avg Blended LTV</div>
-      <div class="ltv-summary-item-val">${fmtCurrency(avgLTV)}</div>
-    </div>
-    <div>
-      <div class="ltv-summary-item-label">Current CPL</div>
-      <div class="ltv-summary-item-val">${cpl > 0 ? fmtCurrency(cpl) : '—'}</div>
-    </div>
-    <div>
-      <div class="ltv-summary-item-label">LTV : CPL Ratio</div>
-      <div class="ltv-summary-item-val ${ltvCplRatio ? ratioClass : ''}">${ltvCplRatio ? ltvCplRatio + 'x' : '—'}</div>
-    </div>
-    <div>
-      <div class="ltv-summary-item-label">Break-even CPL (30%)</div>
-      <div class="ltv-summary-item-val">${fmtCurrency(breakEvenCpl)}</div>
+  const tiersWrap = document.getElementById('fc-tiers-wrap');
+  if (tiersWrap) tiersWrap.innerHTML = `
+    <div class="fc-tiers">
+      <table>
+        <thead><tr><th>Service</th><th>Price ($)</th><th>Mix (%)</th></tr></thead>
+        <tbody>
+          ${cfg.tiers.map((t, i) => `
+          <tr>
+            <td><input class="fc-tiers-name" type="text" value="${t.name}" data-tier="${i}" data-field="name" oninput="onFCTierInput(this)"></td>
+            <td><input class="fc-tiers-input" type="number" min="0" step="1" value="${t.price}" data-tier="${i}" data-field="price" oninput="onFCTierInput(this)"></td>
+            <td><input class="fc-tiers-input" type="number" min="0" max="100" step="1" value="${t.mix}" data-tier="${i}" data-field="mix" oninput="onFCTierInput(this)"></td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr><td>Blended Avg</td><td id="fc-tiers-blended">${blended > 0 ? fmtCurrency(blended) : '—'}</td><td>${totalMix}%</td></tr>
+        </tfoot>
+      </table>
     </div>`;
+
+  updateFCResults(cfg);
+}
+
+function onFCInput(input) {
+  const cfg = loadFCConfig();
+  cfg[input.dataset.fc] = parseFloat(input.value) || 0;
+  saveFCConfig(cfg);
+  updateFCResults(cfg);
+}
+
+function onFCTierInput(input) {
+  const cfg   = loadFCConfig();
+  const idx   = parseInt(input.dataset.tier);
+  const field = input.dataset.field;
+  cfg.tiers[idx][field] = field === 'name' ? input.value : (parseFloat(input.value) || 0);
+  saveFCConfig(cfg);
+  const blended  = calcBlendedPrice(cfg.tiers);
+  const totalMix = cfg.tiers.reduce((s, t) => s + (t.mix || 0), 0);
+  const blendEl  = document.getElementById('fc-blended-val');
+  const footEl   = document.getElementById('fc-tiers-blended');
+  if (blendEl) blendEl.textContent = blended > 0 ? fmtCurrency(blended) : '—';
+  if (footEl)  footEl.textContent  = blended > 0 ? fmtCurrency(blended) : '—';
+  const footRow = footEl?.parentElement;
+  if (footRow) footRow.lastElementChild.textContent = totalMix + '%';
+  updateFCResults(cfg);
+}
+
+function updateFCResults(cfg) {
+  const resultsEl = document.getElementById('fc-results');
+  const roasEl    = document.getElementById('fc-roas-bar');
+  if (!resultsEl) return;
+
+  const price          = calcBlendedPrice(cfg.tiers);
+  const cpl            = cfg.cpl || dashData?.meta?.costPerLead || 0;
+  const monthlySpend   = cfg.budget * 30;
+  const annualSpend    = cfg.budget * 365;
+  const monthlyLeads   = cpl > 0 ? monthlySpend / cpl : 0;
+  const annualLeads    = cpl > 0 ? annualSpend  / cpl : 0;
+  const monthlyClients = monthlyLeads * (cfg.closeRate / 100);
+  const annualClients  = annualLeads  * (cfg.closeRate / 100);
+  const monthlyRev     = monthlyClients * price;
+  const annualRev      = annualClients  * price;
+  const roas           = monthlySpend > 0 ? monthlyRev / monthlySpend : 0;
+
+  resultsEl.innerHTML = `
+    <table>
+      <thead><tr><th>Metric</th><th>Monthly</th><th>Annual</th></tr></thead>
+      <tbody>
+        <tr><td>Ad Spend</td><td class="num">${fmtCurrency(monthlySpend)}</td><td class="num">${fmtCurrency(annualSpend)}</td></tr>
+        <tr><td>Leads</td><td class="num">${Math.round(monthlyLeads)}</td><td class="num">${Math.round(annualLeads)}</td></tr>
+        <tr><td>New Clients</td><td class="num">${Math.round(monthlyClients)}</td><td class="num">${Math.round(annualClients)}</td></tr>
+        <tr><td>Revenue</td><td class="num">${fmtCurrency(monthlyRev)}</td><td class="num">${fmtCurrency(annualRev)}</td></tr>
+      </tbody>
+    </table>`;
+
+  if (roasEl) {
+    const roasClass = roas >= 10 ? 'good' : roas >= 4 ? 'warn' : 'bad';
+    roasEl.innerHTML = `
+      <div>
+        <div class="fc-roas-num ${roasClass}">${roas > 0 ? roas.toFixed(1)+'x' : '—'}</div>
+        <div class="fc-roas-label">Projected ROAS</div>
+      </div>
+      <div class="fc-roas-sub">${roas > 0 ? 'For every $1 spent you return $'+roas.toFixed(2) : 'Enter CPL and budget to calculate'}</div>`;
+  }
 }
 
 // ─── UTILITIES ────────────────────────────────────────────────────
@@ -3473,6 +3788,8 @@ function renderAIChecklist(audit, pagespeed) {
 
 // ─── INIT ─────────────────────────────────────────────────────────
 loadData();
+document.getElementById('briefing-date').textContent =
+  new Date().toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
 // ─── META LEADS ───────────────────────────────────────────────────
 
