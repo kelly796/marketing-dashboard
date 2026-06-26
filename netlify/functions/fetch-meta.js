@@ -135,7 +135,7 @@ exports.handler = async () => {
       }).catch(() => null) : null,
       // Creative performance — top ads with spend + leads
       adAccountId ? metaGet(`/act_${adAccountId}/ads`, {
-        fields: 'name,status,creative{name,thumbnail_url},insights.date_preset(last_7d){spend,impressions,clicks,ctr,actions,conversions}',
+        fields: 'name,status,creative{name,thumbnail_url},insights.date_preset(last_7d){spend,impressions,clicks,ctr,reach,actions,conversions}',
         effective_status: JSON.stringify(['ACTIVE', 'PAUSED']),
         limit: 10,
         access_token: token,
@@ -150,7 +150,7 @@ exports.handler = async () => {
       // Per-ad age + gender breakdown
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
         level: 'ad',
-        fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,actions,conversions',
+        fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,reach,actions,conversions',
         breakdowns: 'age,gender',
         date_preset: 'last_7d',
         access_token: token,
@@ -507,10 +507,11 @@ function buildCreatives(adsData, perAdBreakdown) {
   for (const row of (perAdBreakdown?.data || [])) {
     const id = row.ad_id;
     if (!id) continue;
-    if (!audienceByAdId[id]) audienceByAdId[id] = { spend: 0, genderSpend: {}, ageData: {} };
+    if (!audienceByAdId[id]) audienceByAdId[id] = { spend: 0, genderSpend: {}, genderReach: {}, ageData: {} };
     const s     = Number(row.spend       || 0);
     const impr  = Number(row.impressions || 0);
     const clks  = Number(row.clicks      || 0);
+    const rch   = Number(row.reach       || 0);
     // Use the same broad offsite_conversion.* match as buildAudienceBreakdown so
     // custom conversions (e.g. form_success) are captured regardless of their exact action_type suffix.
     const leads = (row.actions || []).reduce((s, a) => {
@@ -523,6 +524,7 @@ function buildCreatives(adsData, perAdBreakdown) {
 
     const g = row.gender || 'unknown';
     audienceByAdId[id].genderSpend[g] = (audienceByAdId[id].genderSpend[g] || 0) + s;
+    audienceByAdId[id].genderReach[g] = (audienceByAdId[id].genderReach[g] || 0) + rch;
 
     const a = row.age || 'unknown';
     if (!audienceByAdId[id].ageData[a]) audienceByAdId[id].ageData[a] = { spend: 0, impressions: 0, clicks: 0, leads: 0 };
@@ -532,12 +534,17 @@ function buildCreatives(adsData, perAdBreakdown) {
     audienceByAdId[id].ageData[a].leads       += leads;
   }
 
-  function toGenderBuckets(spendMap, total, n = 3) {
-    if (!total) return [];
+  function toGenderBuckets(spendMap, reachMap, spendTotal, n = 3) {
+    if (!spendTotal) return [];
+    const reachTotal = Object.values(reachMap || {}).reduce((s, v) => s + v, 0);
     return Object.entries(spendMap)
       .sort((a, b) => b[1] - a[1])
       .slice(0, n)
-      .map(([label, spend]) => ({ label, pct: Math.round((spend / total) * 100) }));
+      .map(([label, spend]) => ({
+        label,
+        spendPct: Math.round((spend / spendTotal) * 100),
+        reachPct: reachTotal > 0 ? Math.round(((reachMap[label] || 0) / reachTotal) * 100) : 0,
+      }));
   }
 
   function toAgeBuckets(ageData, totalSpend) {
@@ -566,7 +573,7 @@ function buildCreatives(adsData, perAdBreakdown) {
 
       const aud      = audienceByAdId[ad.id] || null;
       const audTotal = aud?.spend || 0;
-      const gender   = aud ? toGenderBuckets(aud.genderSpend, audTotal, 3) : [];
+      const gender   = aud ? toGenderBuckets(aud.genderSpend, aud.genderReach, audTotal, 3) : [];
       const age      = aud ? toAgeBuckets(aud.ageData, audTotal) : [];
 
       // Use highest of: actions, conversions field, or per-ad age breakdown sum
@@ -575,10 +582,11 @@ function buildCreatives(adsData, perAdBreakdown) {
       const leadsFromBreakdown = aud ? Object.values(aud.ageData).reduce((s, b) => s + (b.leads || 0), 0) : 0;
       const leads = Math.max(leadsFromInsights, leadsFromConvField, leadsFromBreakdown);
       const cpl   = leads > 0 ? +(spend / leads).toFixed(2) : 0;
-      const ctr   = +(Number(ins.ctr || 0)).toFixed(2);
+      const ctr         = +(Number(ins.ctr || 0)).toFixed(2);
       const impressions = Number(ins.impressions || 0);
+      const reach       = Number(ins.reach || 0);
 
-      return { id: ad.id, name: ad.name, brand, spend, leads, cpl, ctr, impressions, gender, age };
+      return { id: ad.id, name: ad.name, brand, spend, leads, cpl, ctr, impressions, reach, gender, age };
     })
     .filter(c => c.spend > 0)
     .sort((a, b) => b.spend - a.spend)

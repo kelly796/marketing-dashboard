@@ -2481,26 +2481,35 @@ function renderAdCards(meta) {
         <td>${b.cpl > 0 ? fmtCurrency(b.cpl) : '—'}</td>
       </tr>`).join('');
 
-    const genderChips = [
-      female ? `F ${female.pct}%` : null,
-      male   ? `M ${male.pct}%`   : null,
-    ].filter(Boolean);
+    const hasGenderReach = (female?.reachPct > 0) || (male?.reachPct > 0);
+    const genderRows = [female, male].filter(Boolean).map(g => `
+      <tr>
+        <td style="text-transform:capitalize">${g.label}</td>
+        <td>${g.spendPct ?? g.pct ?? 0}%</td>
+        <td>${hasGenderReach ? (g.reachPct || 0)+'%' : '—'}</td>
+      </tr>`).join('');
 
     const safeName = (c.name||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
     return `
     <div class="ad-card" data-adname="${safeName}" onclick="openAdDetail(this.dataset.adname)">
       <div class="ad-card-name">${c.name}</div>
-      <div class="ad-card-metrics">
+      <div class="ad-card-metrics" style="grid-template-columns:repeat(3,1fr)">
         <div><div class="ad-card-metric-label">Spend</div><div class="ad-card-metric-val">${fmtCurrency(c.spend)}</div></div>
+        <div><div class="ad-card-metric-label">Reach</div><div class="ad-card-metric-val">${c.reach > 0 ? fmtNum(c.reach) : '—'}</div></div>
         <div><div class="ad-card-metric-label">CTR</div><div class="ad-card-metric-val">${fmtPct(c.ctr)}</div></div>
         <div><div class="ad-card-metric-label">Leads</div><div class="ad-card-metric-val">${c.leads}</div></div>
         <div><div class="ad-card-metric-label">CPL</div><div class="ad-card-metric-val">${c.cpl>0?fmtCurrency(c.cpl):'—'}</div></div>
       </div>
+      ${genderRows ? `
+      <div class="ad-card-age-section" style="margin-bottom:8px">
+        <div class="ad-card-age-heading">Gender breakdown</div>
+        <table class="ad-card-age-table">
+          <thead><tr><th>Gender</th><th>Spend %</th><th>Reach %</th></tr></thead>
+          <tbody>${genderRows}</tbody>
+        </table>
+      </div>` : ''}
       <div class="ad-card-age-section">
-        <div class="ad-card-age-heading">
-          Age breakdown
-          ${genderChips.length ? `<span class="ad-card-age-gender">${genderChips.map(ch=>`<span class="ad-card-aud-chip">${ch}</span>`).join('')}</span>` : ''}
-        </div>
+        <div class="ad-card-age-heading">Age breakdown</div>
         ${ageRows ? `
         <table class="ad-card-age-table">
           <thead><tr><th>Age</th><th>Spend</th><th>CTR</th><th>CPL</th></tr></thead>
