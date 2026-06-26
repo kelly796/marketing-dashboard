@@ -399,6 +399,9 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .rev-input:focus{border-color:var(--teal);}
 .rev-input.wide{width:90px;}
 .rev-tag-payg{font-size:.62rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:rgba(103,167,172,.1);color:var(--teal);margin-left:6px;vertical-align:middle;}
+.rev-level-badge{font-size:.63rem;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:3px;letter-spacing:.04em;display:inline-block;}
+.rev-level-badge.snr{background:rgba(103,167,172,.15);color:var(--teal);}
+.rev-level-badge.jnr{background:rgba(183,197,210,.1);color:var(--text-muted);}
 .rev-empty-line{text-align:center;padding:28px;color:var(--text-muted);font-size:.85rem;}
 /* Summary KPI override — use teal accent stripe on rev KPIs */
 #rev-summary-grid .stat-card::after{background:linear-gradient(90deg,var(--teal) 0%,transparent 100%);}
@@ -3838,10 +3841,10 @@ const LTV_DEFAULTS = {
       name: 'Exercise Physiology',
       updatedAt: null,
       tiers: [
-        { name:'Perf Core',  price:149, clients:0, retention:6,  payg:false },
-        { name:'Perf Plus',  price:199, clients:0, retention:12, payg:false },
-        { name:'Perf Prime', price:249, clients:0, retention:18, payg:false },
-        { name:'PAYG',       price:90,  clients:0, retention:0,  payg:true  },
+        { name:'Perf Core',  payg:false, retention:6,  rates:[{ level:'Senior', price:149, clients:0 }, { level:'Junior', price:129, clients:0 }] },
+        { name:'Perf Plus',  payg:false, retention:12, rates:[{ level:'Senior', price:199, clients:0 }, { level:'Junior', price:169, clients:0 }] },
+        { name:'Perf Prime', payg:false, retention:18, rates:[{ level:'Senior', price:249, clients:0 }, { level:'Junior', price:199, clients:0 }] },
+        { name:'PAYG',       payg:true,  retention:0,  rates:[{ level:'Senior', price:90,  clients:0 }, { level:'Junior', price:70,  clients:0 }] },
       ]
     }
   ]
@@ -3861,14 +3864,16 @@ function saveLTV(data) {
 function _ltvCalc(line) {
   let mrr = 0, clients = 0, weightedLTV = 0, recurringClients = 0;
   (line.tiers || []).forEach(t => {
-    const c = t.clients || 0;
-    const p = t.price   || 0;
-    mrr     += c * p;
-    clients += c;
-    if (!t.payg && t.retention > 0) {
-      weightedLTV    += c * p * t.retention;
-      recurringClients += c;
-    }
+    (t.rates || []).forEach(r => {
+      const c = r.clients || 0;
+      const p = r.price   || 0;
+      mrr     += c * p;
+      clients += c;
+      if (!t.payg && t.retention > 0) {
+        weightedLTV      += c * p * t.retention;
+        recurringClients += c;
+      }
+    });
   });
   const blendedLTV = recurringClients > 0 ? weightedLTV / recurringClients : 0;
   return { mrr, clients, blendedLTV, arr: mrr * 12 };
@@ -3886,8 +3891,10 @@ function renderRevenue() {
     totalClients += c.clients;
     (line.tiers||[]).forEach(t => {
       if (!t.payg && t.retention > 0) {
-        totalWeightedLTV += (t.clients||0) * (t.price||0) * t.retention;
-        totalRecurring   += (t.clients||0);
+        (t.rates||[]).forEach(r => {
+          totalWeightedLTV += (r.clients||0) * (r.price||0) * t.retention;
+          totalRecurring   += (r.clients||0);
+        });
       }
     });
   });
@@ -3936,16 +3943,21 @@ function _revLineHTML(line, li) {
     : 'Not yet updated';
 
   const rows = (line.tiers || []).map((t, ti) => {
-    const tierMRR = (t.clients||0) * (t.price||0);
-    const ltv     = !t.payg && t.retention > 0 ? (t.price||0) * t.retention : null;
-    return `<tr>
-      <td>${t.name}${t.payg ? '<span class="rev-tag-payg">PAYG</span>' : ''}</td>
-      <td class="num">${t.clients || 0}</td>
-      <td class="num">${fmtCurrency(t.price)}<span style="color:var(--text-muted);font-size:.75em">${t.payg ? '/session' : '/mo'}</span></td>
-      <td class="num">${t.retention > 0 ? t.retention + ' mo' : '—'}</td>
-      <td class="num">${ltv ? fmtCurrency(ltv) : '—'}</td>
-      <td class="num" style="color:var(--teal)">${tierMRR > 0 ? fmtCurrency(tierMRR) : '—'}</td>
-    </tr>`;
+    const numRates = (t.rates || []).length;
+    return (t.rates || []).map((rate, ri) => {
+      const rateMRR = (rate.clients||0) * (rate.price||0);
+      const ltv     = !t.payg && t.retention > 0 ? (rate.price||0) * t.retention : null;
+      const isFirst = ri === 0;
+      return `<tr>
+        ${isFirst ? `<td rowspan="${numRates}">${t.name}${t.payg ? '<span class="rev-tag-payg">PAYG</span>' : ''}</td>` : ''}
+        <td><span class="rev-level-badge ${rate.level === 'Senior' ? 'snr' : 'jnr'}">${rate.level}</span></td>
+        <td class="num">${rate.clients || 0}</td>
+        <td class="num">${fmtCurrency(rate.price)}<span style="color:var(--text-muted);font-size:.75em">${t.payg ? '/session' : '/mo'}</span></td>
+        ${isFirst ? `<td class="num" rowspan="${numRates}">${t.retention > 0 ? t.retention + ' mo' : '—'}</td>` : ''}
+        <td class="num">${ltv ? fmtCurrency(ltv) : '—'}</td>
+        <td class="num" style="color:var(--teal)">${rateMRR > 0 ? fmtCurrency(rateMRR) : '—'}</td>
+      </tr>`;
+    }).join('');
   }).join('');
 
   return `<div class="rev-line-card">
@@ -3968,6 +3980,7 @@ function _revLineHTML(line, li) {
       <table class="rev-table">
         <thead><tr>
           <th>Tier</th>
+          <th>Level</th>
           <th class="num">Clients</th>
           <th class="num">Rate</th>
           <th class="num">Retention</th>
@@ -3976,7 +3989,7 @@ function _revLineHTML(line, li) {
         </tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr>
-          <td>Total</td>
+          <td colspan="2">Total</td>
           <td class="num">${clients}</td>
           <td class="num" colspan="3"></td>
           <td class="num">${mrr > 0 ? fmtCurrency(mrr) : '—'}</td>
@@ -3991,18 +4004,24 @@ function editRevenueLine(li) {
   const line = data.productLines[li];
   if (!line) return;
 
-  const { mrr, clients, blendedLTV } = _ltvCalc(line);
+  const editRows = (line.tiers || []).map((t, ti) => {
+    const numRates = (t.rates || []).length;
+    return (t.rates || []).map((rate, ri) => {
+      const isFirst = ri === 0;
+      const initLTV = !t.payg && t.retention > 0 ? fmtCurrency((rate.price||0) * (t.retention||0)) : '—';
+      const initRev = (rate.clients||0) * (rate.price||0) > 0 ? fmtCurrency((rate.clients||0) * (rate.price||0)) : '—';
+      return `<tr>
+        ${isFirst ? `<td rowspan="${numRates}">${t.name}${t.payg ? '<span class="rev-tag-payg">PAYG</span>' : ''}</td>` : ''}
+        <td><span class="rev-level-badge ${rate.level === 'Senior' ? 'snr' : 'jnr'}">${rate.level}</span></td>
+        <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${rate.clients||0}" id="rev-${li}-${ti}-${ri}-clients" oninput="previewLTVRow(${li},${ti},${ri})"></td>
+        <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${rate.price||0}" id="rev-${li}-${ti}-${ri}-price" oninput="previewLTVRow(${li},${ti},${ri})"></td>
+        ${isFirst ? `<td class="num" rowspan="${numRates}">${t.payg ? '—' : `<input class="rev-input" type="number" min="0" step="1" value="${t.retention||0}" id="rev-${li}-${ti}-retention" oninput="previewTierRetention(${li},${ti},${numRates})">`}</td>` : ''}
+        <td class="num" id="rev-${li}-${ti}-${ri}-ltv" style="color:var(--text-muted)">${initLTV}</td>
+        <td class="num" id="rev-${li}-${ti}-${ri}-rev" style="color:var(--teal)">${initRev}</td>
+      </tr>`;
+    }).join('');
+  }).join('');
 
-  const editRows = (line.tiers || []).map((t, ti) => `<tr>
-    <td>${t.name}${t.payg ? '<span class="rev-tag-payg">PAYG</span>' : ''}</td>
-    <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${t.clients||0}" id="rev-${li}-${ti}-clients" oninput="previewLTVRow(${li},${ti})"></td>
-    <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${t.price||0}" id="rev-${li}-${ti}-price" oninput="previewLTVRow(${li},${ti})"></td>
-    <td class="num">${t.payg ? '—' : `<input class="rev-input" type="number" min="0" step="1" value="${t.retention||0}" id="rev-${li}-${ti}-retention">`}</td>
-    <td class="num" id="rev-${li}-${ti}-ltv" style="color:var(--text-muted)">${!t.payg && t.retention > 0 ? fmtCurrency((t.price||0)*(t.retention||0)) : '—'}</td>
-    <td class="num" id="rev-${li}-${ti}-rev" style="color:var(--teal)">${(t.clients||0)*(t.price||0) > 0 ? fmtCurrency((t.clients||0)*(t.price||0)) : '—'}</td>
-  </tr>`).join('');
-
-  // Replace the card with edit version
   const cards = document.querySelectorAll('.rev-line-card');
   if (!cards[li]) return;
   cards[li].innerHTML = `
@@ -4019,7 +4038,7 @@ function editRevenueLine(li) {
     <div class="table-wrap">
       <table class="rev-table">
         <thead><tr>
-          <th>Tier</th><th class="num">Clients</th><th class="num">Rate ($)</th>
+          <th>Tier</th><th>Level</th><th class="num">Clients</th><th class="num">Rate ($)</th>
           <th class="num">Retention (mo)</th><th class="num">LTV</th><th class="num">Monthly Rev</th>
         </tr></thead>
         <tbody>${editRows}</tbody>
@@ -4027,14 +4046,18 @@ function editRevenueLine(li) {
     </div>`;
 }
 
-function previewLTVRow(li, ti) {
-  const c = parseFloat(document.getElementById(`rev-${li}-${ti}-clients`)?.value) || 0;
-  const p = parseFloat(document.getElementById(`rev-${li}-${ti}-price`)?.value)   || 0;
+function previewLTVRow(li, ti, ri) {
+  const c = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-clients`)?.value) || 0;
+  const p = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-price`)?.value)   || 0;
   const r = parseFloat(document.getElementById(`rev-${li}-${ti}-retention`)?.value) || 0;
-  const ltvEl = document.getElementById(`rev-${li}-${ti}-ltv`);
-  const revEl = document.getElementById(`rev-${li}-${ti}-rev`);
+  const ltvEl = document.getElementById(`rev-${li}-${ti}-${ri}-ltv`);
+  const revEl = document.getElementById(`rev-${li}-${ti}-${ri}-rev`);
   if (ltvEl) ltvEl.textContent = r > 0 ? fmtCurrency(p * r) : '—';
   if (revEl) revEl.textContent = c * p > 0 ? fmtCurrency(c * p) : '—';
+}
+
+function previewTierRetention(li, ti, numRates) {
+  for (let ri = 0; ri < numRates; ri++) previewLTVRow(li, ti, ri);
 }
 
 function saveRevenueLine(li) {
@@ -4042,14 +4065,16 @@ function saveRevenueLine(li) {
   const line = data.productLines[li];
   if (!line) return;
   (line.tiers || []).forEach((t, ti) => {
-    const c = parseFloat(document.getElementById(`rev-${li}-${ti}-clients`)?.value);
-    const p = parseFloat(document.getElementById(`rev-${li}-${ti}-price`)?.value);
     const r = parseFloat(document.getElementById(`rev-${li}-${ti}-retention`)?.value);
-    if (!isNaN(c)) t.clients   = c;
-    if (!isNaN(p)) t.price     = p;
-    if (!isNaN(r) && !t.payg)  t.retention = r;
+    if (!isNaN(r) && !t.payg) t.retention = r;
+    (t.rates || []).forEach((rate, ri) => {
+      const c = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-clients`)?.value);
+      const p = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-price`)?.value);
+      if (!isNaN(c)) rate.clients = c;
+      if (!isNaN(p)) rate.price   = p;
+    });
   });
-  line.updatedAt = new Date().toISOString().slice(0, 7); // "2026-06"
+  line.updatedAt = new Date().toISOString().slice(0, 7);
   saveLTV(data);
   renderRevenue();
 }
@@ -4070,9 +4095,9 @@ function addRevenueProductLine() {
     name: name.trim(),
     updatedAt: null,
     tiers: [
-      { name:'Tier 1', price:0, clients:0, retention:6,  payg:false },
-      { name:'Tier 2', price:0, clients:0, retention:12, payg:false },
-      { name:'PAYG',   price:0, clients:0, retention:0,  payg:true  },
+      { name:'Tier 1', payg:false, retention:6,  rates:[{ level:'Senior', price:0, clients:0 }, { level:'Junior', price:0, clients:0 }] },
+      { name:'Tier 2', payg:false, retention:12, rates:[{ level:'Senior', price:0, clients:0 }, { level:'Junior', price:0, clients:0 }] },
+      { name:'PAYG',   payg:true,  retention:0,  rates:[{ level:'Senior', price:0, clients:0 }, { level:'Junior', price:0, clients:0 }] },
     ]
   });
   saveLTV(data);
