@@ -3833,7 +3833,7 @@ function truncate(str, max) {
 }
 
 // ─── CLIENT REVENUE / LTV ─────────────────────────────────────────
-const LTV_KEY = 'pm_ltv_v1';
+const LTV_KEY = 'pm_ltv_v2';
 const LTV_DEFAULTS = {
   productLines: [
     {
@@ -3841,10 +3841,10 @@ const LTV_DEFAULTS = {
       name: 'Exercise Physiology',
       updatedAt: null,
       tiers: [
-        { name:'Perf Core',  payg:false, retention:6,  rates:[{ level:'Senior', price:149, clients:0 }, { level:'Junior', price:129, clients:0 }] },
-        { name:'Perf Plus',  payg:false, retention:12, rates:[{ level:'Senior', price:199, clients:0 }, { level:'Junior', price:169, clients:0 }] },
-        { name:'Perf Prime', payg:false, retention:18, rates:[{ level:'Senior', price:249, clients:0 }, { level:'Junior', price:199, clients:0 }] },
-        { name:'PAYG',       payg:true,  retention:0,  rates:[{ level:'Senior', price:90,  clients:0 }, { level:'Junior', price:70,  clients:0 }] },
+        { name:'Perf Core',  payg:false, rates:[{ level:'Senior', price:149, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }, { level:'Junior', price:129, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }] },
+        { name:'Perf Plus',  payg:false, rates:[{ level:'Senior', price:199, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }, { level:'Junior', price:169, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }] },
+        { name:'Perf Prime', payg:false, rates:[{ level:'Senior', price:249, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }, { level:'Junior', price:199, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }] },
+        { name:'PAYG',       payg:true,  rates:[{ level:'Senior', price:90,  clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }, { level:'Junior', price:70,  clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }] },
       ]
     }
   ]
@@ -3862,21 +3862,20 @@ function saveLTV(data) {
 }
 
 function _ltvCalc(line) {
-  let mrr = 0, clients = 0, weightedLTV = 0, recurringClients = 0;
+  let mrr = 0, clients = 0, totalRevenue = 0, totalClients = 0, lostThisMonth = 0;
   (line.tiers || []).forEach(t => {
     (t.rates || []).forEach(r => {
-      const c = r.clients || 0;
-      const p = r.price   || 0;
-      mrr     += c * p;
-      clients += c;
-      if (!t.payg && t.retention > 0) {
-        weightedLTV      += c * p * t.retention;
-        recurringClients += c;
-      }
+      mrr           += (r.clients||0) * (r.price||0);
+      clients       += r.clients||0;
+      totalRevenue  += r.totalRevenue||0;
+      totalClients  += r.totalClients||0;
+      lostThisMonth += r.lostThisMonth||0;
     });
   });
-  const blendedLTV = recurringClients > 0 ? weightedLTV / recurringClients : 0;
-  return { mrr, clients, blendedLTV, arr: mrr * 12 };
+  const blendedLTV = totalClients > 0 ? totalRevenue / totalClients : 0;
+  const churnRate  = clients > 0 ? lostThisMonth / clients : 0;
+  const avgLifespan = churnRate > 0 ? (1 / churnRate).toFixed(1) : null;
+  return { mrr, clients, blendedLTV, arr: mrr * 12, churnRate, avgLifespan, lostThisMonth };
 }
 
 function renderRevenue() {
@@ -3884,27 +3883,28 @@ function renderRevenue() {
   const lines = data.productLines || [];
 
   // Global summary
-  let totalMRR = 0, totalClients = 0, totalWeightedLTV = 0, totalRecurring = 0;
+  let totalMRR = 0, totalClients = 0, totalRevenue = 0, totalClientsEver = 0, totalLost = 0;
   lines.forEach(line => {
     const c = _ltvCalc(line);
-    totalMRR     += c.mrr;
+    totalMRR   += c.mrr;
     totalClients += c.clients;
     (line.tiers||[]).forEach(t => {
-      if (!t.payg && t.retention > 0) {
-        (t.rates||[]).forEach(r => {
-          totalWeightedLTV += (r.clients||0) * (r.price||0) * t.retention;
-          totalRecurring   += (r.clients||0);
-        });
-      }
+      (t.rates||[]).forEach(r => {
+        totalRevenue     += r.totalRevenue||0;
+        totalClientsEver += r.totalClients||0;
+        totalLost        += r.lostThisMonth||0;
+      });
     });
   });
-  const blendedLTV = totalRecurring > 0 ? totalWeightedLTV / totalRecurring : 0;
-  const metaLeads  = dashData?.meta?.leads7d || 0;
-  const revPerLead = metaLeads > 0 && totalMRR > 0 ? totalMRR / metaLeads : 0;
+  const blendedLTV = totalClientsEver > 0 ? totalRevenue / totalClientsEver : 0;
+  const churnRate  = totalClients > 0 ? totalLost / totalClients : 0;
+  const churnColor = churnRate === 0 ? 'var(--text-muted)' : churnRate < 0.05 ? 'var(--success)' : churnRate < 0.15 ? 'var(--warning)' : 'var(--danger)';
 
   // Summary KPIs
   const sg = document.getElementById('rev-summary-grid');
-  if (sg) sg.innerHTML = `
+  if (sg) {
+    sg.style.gridTemplateColumns = 'repeat(5,1fr)';
+    sg.innerHTML = `
     <div class="stat-card">
       <div class="stat-label">Active Clients</div>
       <div class="stat-value sm">${totalClients || '—'}</div>
@@ -3923,8 +3923,14 @@ function renderRevenue() {
     <div class="stat-card">
       <div class="stat-label">Blended Client LTV</div>
       <div class="stat-value sm">${blendedLTV > 0 ? fmtCurrency(blendedLTV) : '—'}</div>
-      <div class="stat-footer"><span class="stat-trend neutral">${revPerLead > 0 ? fmtCurrency(revPerLead)+' revenue/lead (7d)' : 'price × avg retention'}</span></div>
+      <div class="stat-footer"><span class="stat-trend neutral">total revenue ÷ total clients</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Monthly Churn</div>
+      <div class="stat-value sm" style="color:${churnColor}">${churnRate > 0 ? (churnRate*100).toFixed(1)+'%' : '—'}</div>
+      <div class="stat-footer"><span class="stat-trend neutral">${totalLost > 0 ? totalLost+' client'+(totalLost!==1?'s':'')+' lost this month' : 'no losses recorded'}</span></div>
     </div>`;
+  }
 
   // Product line cards
   const linesEl = document.getElementById('rev-lines');
@@ -3945,16 +3951,18 @@ function _revLineHTML(line, li) {
   const rows = (line.tiers || []).map((t, ti) => {
     const numRates = (t.rates || []).length;
     return (t.rates || []).map((rate, ri) => {
-      const rateMRR = (rate.clients||0) * (rate.price||0);
-      const ltv     = !t.payg && t.retention > 0 ? (rate.price||0) * t.retention : null;
-      const isFirst = ri === 0;
+      const rateMRR   = (rate.clients||0) * (rate.price||0);
+      const rateLTV   = (rate.totalClients||0) > 0 ? rate.totalRevenue / rate.totalClients : null;
+      const rateChurn = (rate.clients||0) > 0 ? (rate.lostThisMonth||0) / rate.clients : null;
+      const churnClr  = rateChurn === null ? '' : rateChurn < 0.05 ? 'color:var(--success)' : rateChurn < 0.15 ? 'color:var(--warning)' : 'color:var(--danger)';
+      const isFirst   = ri === 0;
       return `<tr>
         ${isFirst ? `<td rowspan="${numRates}">${t.name}${t.payg ? '<span class="rev-tag-payg">PAYG</span>' : ''}</td>` : ''}
         <td><span class="rev-level-badge ${rate.level === 'Senior' ? 'snr' : 'jnr'}">${rate.level}</span></td>
         <td class="num">${rate.clients || 0}</td>
         <td class="num">${fmtCurrency(rate.price)}<span style="color:var(--text-muted);font-size:.75em">${t.payg ? '/session' : '/mo'}</span></td>
-        ${isFirst ? `<td class="num" rowspan="${numRates}">${t.retention > 0 ? t.retention + ' mo' : '—'}</td>` : ''}
-        <td class="num">${ltv ? fmtCurrency(ltv) : '—'}</td>
+        <td class="num">${rateLTV ? fmtCurrency(rateLTV) : '—'}</td>
+        <td class="num" style="${churnClr}">${rateChurn !== null ? (rateChurn*100).toFixed(1)+'%' : '—'}</td>
         <td class="num" style="color:var(--teal)">${rateMRR > 0 ? fmtCurrency(rateMRR) : '—'}</td>
       </tr>`;
     }).join('');
@@ -3983,8 +3991,8 @@ function _revLineHTML(line, li) {
           <th>Level</th>
           <th class="num">Clients</th>
           <th class="num">Rate</th>
-          <th class="num">Retention</th>
           <th class="num">LTV</th>
+          <th class="num">Churn</th>
           <th class="num">Monthly Rev</th>
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -4008,16 +4016,14 @@ function editRevenueLine(li) {
     const numRates = (t.rates || []).length;
     return (t.rates || []).map((rate, ri) => {
       const isFirst = ri === 0;
-      const initLTV = !t.payg && t.retention > 0 ? fmtCurrency((rate.price||0) * (t.retention||0)) : '—';
-      const initRev = (rate.clients||0) * (rate.price||0) > 0 ? fmtCurrency((rate.clients||0) * (rate.price||0)) : '—';
       return `<tr>
         ${isFirst ? `<td rowspan="${numRates}">${t.name}${t.payg ? '<span class="rev-tag-payg">PAYG</span>' : ''}</td>` : ''}
         <td><span class="rev-level-badge ${rate.level === 'Senior' ? 'snr' : 'jnr'}">${rate.level}</span></td>
-        <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${rate.clients||0}" id="rev-${li}-${ti}-${ri}-clients" oninput="previewLTVRow(${li},${ti},${ri})"></td>
-        <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${rate.price||0}" id="rev-${li}-${ti}-${ri}-price" oninput="previewLTVRow(${li},${ti},${ri})"></td>
-        ${isFirst ? `<td class="num" rowspan="${numRates}">${t.payg ? '—' : `<input class="rev-input" type="number" min="0" step="1" value="${t.retention||0}" id="rev-${li}-${ti}-retention" oninput="previewTierRetention(${li},${ti},${numRates})">`}</td>` : ''}
-        <td class="num" id="rev-${li}-${ti}-${ri}-ltv" style="color:var(--text-muted)">${initLTV}</td>
-        <td class="num" id="rev-${li}-${ti}-${ri}-rev" style="color:var(--teal)">${initRev}</td>
+        <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${rate.clients||0}" id="rev-${li}-${ti}-${ri}-clients"></td>
+        <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${rate.price||0}" id="rev-${li}-${ti}-${ri}-price"></td>
+        <td class="num"><input class="rev-input" style="width:90px" type="number" min="0" step="1" value="${rate.totalRevenue||0}" id="rev-${li}-${ti}-${ri}-totalRevenue"></td>
+        <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${rate.totalClients||0}" id="rev-${li}-${ti}-${ri}-totalClients"></td>
+        <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${rate.lostThisMonth||0}" id="rev-${li}-${ti}-${ri}-lostThisMonth"></td>
       </tr>`;
     }).join('');
   }).join('');
@@ -4038,40 +4044,33 @@ function editRevenueLine(li) {
     <div class="table-wrap">
       <table class="rev-table">
         <thead><tr>
-          <th>Tier</th><th>Level</th><th class="num">Clients</th><th class="num">Rate ($)</th>
-          <th class="num">Retention (mo)</th><th class="num">LTV</th><th class="num">Monthly Rev</th>
+          <th>Tier</th><th>Level</th><th class="num">Active</th><th class="num">Rate ($)</th>
+          <th class="num">Cumul. Revenue ($)</th><th class="num">Cumul. Clients</th><th class="num">Lost/mo</th>
         </tr></thead>
         <tbody>${editRows}</tbody>
       </table>
     </div>`;
 }
 
-function previewLTVRow(li, ti, ri) {
-  const c = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-clients`)?.value) || 0;
-  const p = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-price`)?.value)   || 0;
-  const r = parseFloat(document.getElementById(`rev-${li}-${ti}-retention`)?.value) || 0;
-  const ltvEl = document.getElementById(`rev-${li}-${ti}-${ri}-ltv`);
-  const revEl = document.getElementById(`rev-${li}-${ti}-${ri}-rev`);
-  if (ltvEl) ltvEl.textContent = r > 0 ? fmtCurrency(p * r) : '—';
-  if (revEl) revEl.textContent = c * p > 0 ? fmtCurrency(c * p) : '—';
-}
-
-function previewTierRetention(li, ti, numRates) {
-  for (let ri = 0; ri < numRates; ri++) previewLTVRow(li, ti, ri);
-}
+function previewLTVRow() {} // no-op — calculated fields shown on save
+function previewTierRetention() {}
 
 function saveRevenueLine(li) {
   const data = loadLTV();
   const line = data.productLines[li];
   if (!line) return;
   (line.tiers || []).forEach((t, ti) => {
-    const r = parseFloat(document.getElementById(`rev-${li}-${ti}-retention`)?.value);
-    if (!isNaN(r) && !t.payg) t.retention = r;
     (t.rates || []).forEach((rate, ri) => {
-      const c = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-clients`)?.value);
-      const p = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-price`)?.value);
-      if (!isNaN(c)) rate.clients = c;
-      if (!isNaN(p)) rate.price   = p;
+      const c  = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-clients`)?.value);
+      const p  = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-price`)?.value);
+      const tr = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-totalRevenue`)?.value);
+      const tc = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-totalClients`)?.value);
+      const l  = parseFloat(document.getElementById(`rev-${li}-${ti}-${ri}-lostThisMonth`)?.value);
+      if (!isNaN(c))  rate.clients       = c;
+      if (!isNaN(p))  rate.price         = p;
+      if (!isNaN(tr)) rate.totalRevenue  = tr;
+      if (!isNaN(tc)) rate.totalClients  = tc;
+      if (!isNaN(l))  rate.lostThisMonth = l;
     });
   });
   line.updatedAt = new Date().toISOString().slice(0, 7);
@@ -4095,9 +4094,9 @@ function addRevenueProductLine() {
     name: name.trim(),
     updatedAt: null,
     tiers: [
-      { name:'Tier 1', payg:false, retention:6,  rates:[{ level:'Senior', price:0, clients:0 }, { level:'Junior', price:0, clients:0 }] },
-      { name:'Tier 2', payg:false, retention:12, rates:[{ level:'Senior', price:0, clients:0 }, { level:'Junior', price:0, clients:0 }] },
-      { name:'PAYG',   payg:true,  retention:0,  rates:[{ level:'Senior', price:0, clients:0 }, { level:'Junior', price:0, clients:0 }] },
+      { name:'Tier 1', payg:false, rates:[{ level:'Senior', price:0, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }, { level:'Junior', price:0, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }] },
+      { name:'Tier 2', payg:false, rates:[{ level:'Senior', price:0, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }, { level:'Junior', price:0, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }] },
+      { name:'PAYG',   payg:true,  rates:[{ level:'Senior', price:0, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }, { level:'Junior', price:0, clients:0, totalRevenue:0, totalClients:0, lostThisMonth:0 }] },
     ]
   });
   saveLTV(data);
