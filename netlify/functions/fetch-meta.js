@@ -135,7 +135,7 @@ exports.handler = async () => {
       }).catch(() => null) : null,
       // Creative performance — top ads with spend + leads
       adAccountId ? metaGet(`/act_${adAccountId}/ads`, {
-        fields: 'name,status,creative{name,thumbnail_url},insights.date_preset(last_7d){spend,impressions,clicks,ctr,reach,actions,conversions}',
+        fields: 'name,status,creative{name,thumbnail_url},insights.date_preset(last_7d){spend,impressions,clicks,ctr,inline_link_click_ctr,reach,actions,conversions}',
         effective_status: JSON.stringify(['ACTIVE', 'PAUSED']),
         limit: 10,
         access_token: token,
@@ -542,6 +542,7 @@ function buildCreatives(adsData, perAdBreakdown) {
       .slice(0, n)
       .map(([label, spend]) => ({
         label,
+        pct:      Math.round((spend / spendTotal) * 100),
         spendPct: Math.round((spend / spendTotal) * 100),
         reachPct: reachTotal > 0 ? Math.round(((reachMap[label] || 0) / reachTotal) * 100) : 0,
       }));
@@ -582,7 +583,7 @@ function buildCreatives(adsData, perAdBreakdown) {
       const leadsFromBreakdown = aud ? Object.values(aud.ageData).reduce((s, b) => s + (b.leads || 0), 0) : 0;
       const leads = Math.max(leadsFromInsights, leadsFromConvField, leadsFromBreakdown);
       const cpl   = leads > 0 ? +(spend / leads).toFixed(2) : 0;
-      const ctr         = +(Number(ins.ctr || 0)).toFixed(2);
+      const ctr         = +(Number(ins.inline_link_click_ctr || ins.ctr || 0)).toFixed(2);
       const impressions = Number(ins.impressions || 0);
       const reach       = Number(ins.reach || 0);
 
