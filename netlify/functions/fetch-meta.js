@@ -147,12 +147,15 @@ exports.handler = async () => {
         time_increment: '1',
         access_token: token,
       }).catch(() => null) : null,
-      // Per-ad age + gender breakdown
+      // Per-ad age + gender breakdown — limit must be high enough to cover
+      // all ads × age groups × genders (10 ads × 6 ages × 2 genders = 120 rows;
+      // Meta's default page size is 25, which would silently truncate results)
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
         level: 'ad',
         fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,reach,actions,conversions',
         breakdowns: 'age,gender',
         date_preset: 'last_7d',
+        limit: 200,
         access_token: token,
       }).catch(() => null) : null,
     ]);

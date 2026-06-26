@@ -2823,9 +2823,11 @@ function renderAgeDonut(canvasId, legendId, ageData, colors) {
   const legendEl = document.getElementById(legendId);
   if (!ctx) return;
   if (!ageData || !ageData.length) {
+    ctx.style.display = 'none';
     if (legendEl) legendEl.innerHTML = '<div style="color:var(--text-muted);font-size:.75rem">No age data yet</div>';
     return;
   }
+  ctx.style.display = '';
   const labels = ageData.map(b => b.label);
   const data   = ageData.map(b => b.pct || 0);
   const total  = data.reduce((s,v)=>s+v,0);
