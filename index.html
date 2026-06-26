@@ -2502,7 +2502,7 @@ function renderAdCards(meta) {
       </div>
       ${genderRows ? `
       <div class="ad-card-age-section" style="margin-bottom:8px">
-        <div class="ad-card-age-heading">Gender breakdown</div>
+        <div class="ad-card-age-heading">Gender breakdown${c.isEstimate ? ' <span style="font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0">(acct avg)</span>' : ''}</div>
         <table class="ad-card-age-table">
           <thead><tr><th>Gender</th><th>Spend %</th><th>Reach %</th></tr></thead>
           <tbody>${genderRows}</tbody>
@@ -2823,9 +2823,11 @@ function renderAgeDonut(canvasId, legendId, ageData, colors) {
   const legendEl = document.getElementById(legendId);
   if (!ctx) return;
   if (!ageData || !ageData.length) {
+    ctx.style.display = 'none';
     if (legendEl) legendEl.innerHTML = '<div style="color:var(--text-muted);font-size:.75rem">No age data yet</div>';
     return;
   }
+  ctx.style.display = '';
   const labels = ageData.map(b => b.label);
   const data   = ageData.map(b => b.pct || 0);
   const total  = data.reduce((s,v)=>s+v,0);
