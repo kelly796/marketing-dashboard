@@ -619,18 +619,61 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .priority-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .priority-count{font-family:var(--fmono);font-size:.72rem;font-weight:700;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);border-radius:20px;padding:2px 10px;}
 .priority-count:empty{display:none;}
-.action-item-v2{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--border2);transition:all .15s;cursor:default;margin-bottom:8px;}
+.action-item-v2{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--border2);transition:opacity .2s,max-height .22s,padding .22s,margin .22s;cursor:default;margin-bottom:8px;overflow:hidden;}
 .action-item-v2:last-child{margin-bottom:0;}
 .action-item-v2.clickable{cursor:pointer;}
 .action-item-v2.clickable:hover{background:var(--surface3);}
 .action-item-v2.red{border-left-color:var(--danger);background:rgba(248,113,113,0.05);}
 .action-item-v2.amber{border-left-color:var(--warning);background:rgba(245,158,11,0.05);}
-.action-item-v2.green{border-left-color:var(--success);}
-.action-item-v2-icon{font-size:1rem;margin-top:1px;flex-shrink:0;width:18px;text-align:center;}
+.action-item-v2.win{border-left-color:var(--success);background:rgba(45,212,184,0.04);}
+.action-item-v2-icon{font-size:.9rem;margin-top:2px;flex-shrink:0;width:16px;text-align:center;}
 .action-item-v2-body{flex:1;min-width:0;}
-.action-item-v2-text{font-size:.9rem;color:var(--text);line-height:1.5;font-weight:500;}
-.action-item-v2-meta{font-size:.74rem;color:var(--text-muted);margin-top:3px;}
+.action-item-v2-text{font-size:.875rem;color:var(--text);line-height:1.5;font-weight:500;}
+.action-item-v2-meta{font-size:.72rem;color:var(--text-muted);margin-top:3px;}
 .action-item-v2-arrow{font-size:.8rem;color:var(--text-muted);align-self:center;flex-shrink:0;}
+/* Checkbox */
+.ai-check{flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;cursor:pointer;}
+.ai-check input[type=checkbox]{display:none;}
+.ai-checkmark{
+  width:17px;height:17px;border-radius:4px;
+  border:1.5px solid var(--border2);
+  background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.ai-checkmark svg{opacity:0;transition:opacity .12s;}
+.ai-check:hover .ai-checkmark{border-color:var(--teal);}
+.ai-check input:checked + .ai-checkmark{background:var(--teal);border-color:var(--teal);}
+.ai-check input:checked + .ai-checkmark svg{opacity:1;}
+/* Section sub-headers */
+.action-section-label{
+  font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-muted);margin:14px 0 8px;
+  display:flex;align-items:center;gap:8px;
+}
+.action-section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.action-section-label:first-child{margin-top:0;}
+/* Focus block */
+.focus-block{
+  background:rgba(103,167,172,.06);border:1px solid rgba(103,167,172,.18);
+  border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;
+}
+.focus-block-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;
+}
+.focus-block-title{
+  font-family:var(--fhead);font-size:.82rem;font-weight:800;color:var(--teal);
+  letter-spacing:.01em;display:flex;align-items:center;gap:6px;
+}
+.focus-block-date{font-size:.7rem;color:var(--text-muted);}
+.focus-complete{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;background:rgba(45,212,184,.07);border-radius:var(--radius-sm);
+  color:var(--success);font-size:.85rem;font-weight:600;
+}
+/* Wins block */
+.wins-block{margin-top:14px;}
+.wins-block-empty{display:none;}
 
 /* ─── BUSINESS FUNNEL ──────────────────────────────────────────── */
 .biz-funnel{display:flex;align-items:stretch;margin-top:4px;}
@@ -814,12 +857,31 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     <div class="priority-card-header">
       <div class="card-title" style="margin-bottom:0;display:flex;align-items:center;gap:8px">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        What needs attention
+        Daily Command
       </div>
       <span class="priority-count" id="priority-count"></span>
     </div>
-    <div id="action-items">
-      <div class="loading-state"><div class="spinner"></div></div>
+
+    <!-- Today's Focus block -->
+    <div class="focus-block" id="focus-block">
+      <div class="focus-block-header">
+        <div class="focus-block-title">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Today's Focus
+        </div>
+        <span class="focus-block-date" id="focus-date"></span>
+      </div>
+      <div id="focus-items"><div class="loading-state"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- All alerts -->
+    <div class="action-section-label">All alerts <span id="action-remaining" style="font-family:var(--fmono);font-size:.65rem;color:var(--text-muted);font-weight:600;letter-spacing:0;text-transform:none"></span></div>
+    <div id="action-items"><div class="loading-state"><div class="spinner"></div></div></div>
+
+    <!-- Wins -->
+    <div class="wins-block" id="wins-block" style="display:none">
+      <div class="action-section-label">This week's wins</div>
+      <div id="wins-items"></div>
     </div>
   </div>
 
@@ -2004,47 +2066,237 @@ function renderOverview(meta, ga4) {
 
   // Mini campaign snapshot
   renderCampaignCards('overview-campaigns', meta, true);
-  renderActionItems(meta);
+  renderActionItems();
   renderFunnel(meta);
 }
 
-// ─── ACTION ITEMS ─────────────────────────────────────────────────
-function renderActionItems(meta) {
-  const items = [];
-  if (meta) {
-    if (!meta.leads7d || meta.leads7d===0)
-      items.push({ priority:'red', text:'No leads generated yet. Check landing page form and pixel firing.', source:'Meta Ads', page:'meta' });
-    if (meta.costPerLead > 350)
-      items.push({ priority:'red', text:'CPL above max threshold ($350). Review creatives and audience.', source:'Meta Ads', page:'meta' });
-  }
-  if (!ghlData || ghlData.placeholder)
-    items.push({ priority:'amber', text:'Connect Go High Level API to see pipeline and run automations.', source:'GHL', page:'ghl' });
-  if (items.length===0)
-    items.push({ priority:'green', text:'All clear — no urgent actions. Keep monitoring CPL as spend increases.', source:'System', page:null });
+// ─── DAILY DISMISS — localStorage keyed by date ───────────────────
+const _DISMISS_LS = 'pm_daily_dismiss';
+function _todayKey() { return new Date().toISOString().slice(0,10); }
+function _getDismissed() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(_DISMISS_LS) || '{}');
+    const today = _todayKey();
+    // prune old dates, keep only today
+    const pruned = {};
+    if (raw[today]) pruned[today] = raw[today];
+    localStorage.setItem(_DISMISS_LS, JSON.stringify(pruned));
+    return pruned[today] || [];
+  } catch { return []; }
+}
+function _addDismissed(key) {
+  try {
+    const today = _todayKey();
+    const raw = JSON.parse(localStorage.getItem(_DISMISS_LS) || '{}');
+    const arr = raw[today] || [];
+    if (!arr.includes(key)) arr.push(key);
+    localStorage.setItem(_DISMISS_LS, JSON.stringify({ [today]: arr }));
+  } catch {}
+}
+function dismissActionItem(key) {
+  _addDismissed(key);
+  // Collapse all elements with this key
+  document.querySelectorAll(`[data-action-key="${key}"]`).forEach(el => {
+    const h = el.offsetHeight;
+    el.style.maxHeight = h + 'px';
+    el.style.opacity = '1';
+    requestAnimationFrame(() => {
+      el.style.transition = 'opacity .18s, max-height .22s ease, padding .22s, margin .22s';
+      el.style.opacity = '0';
+      el.style.maxHeight = '0';
+      el.style.padding = '0';
+      el.style.marginBottom = '0';
+    });
+    setTimeout(() => { el.remove(); _refreshActionState(); }, 240);
+  });
+}
 
-  // Update briefing bar health dot
-  const hasRed   = items.some(i => i.priority === 'red');
-  const hasAmber = items.some(i => i.priority === 'amber');
+// ─── BUILD ACTION + WIN RULES ──────────────────────────────────────
+function _buildRules() {
+  const meta = dashData?.meta || null;
+  const ga4  = dashData?.ga4  || null;
+  const ig   = dashData?.instagramHQ || null;
+  const seo  = dashData?.seo  || null;
+  const actions = [], wins = [];
+
+  // ── META ADS ──
+  if (meta) {
+    const hasSpend = (meta.spend7d || 0) > 0;
+    if (!meta.leads7d || meta.leads7d === 0)
+      actions.push({ key:'meta-no-leads', priority:'red', text: hasSpend ? 'Spending on ads but no leads recorded — check landing page form and pixel.' : 'No leads generated yet. Check landing page form and pixel firing.', source:'Meta Ads', page:'meta' });
+
+    if (meta.costPerLead > 350)
+      actions.push({ key:'meta-cpl-high', priority:'red', text:`CPL at ${fmtCurrency(meta.costPerLead)} — above $350 threshold. Review creatives and audience.`, source:'Meta Ads', page:'meta' });
+    else if (meta.costPerLead > 0 && meta.costPerLeadPrev > 0 && meta.costPerLead > meta.costPerLeadPrev * 1.3)
+      actions.push({ key:'meta-cpl-rising', priority:'amber', text:`CPL up ${Math.round((meta.costPerLead/meta.costPerLeadPrev-1)*100)}% week-on-week — monitor creative fatigue.`, source:'Meta Ads', page:'meta' });
+
+    if ((meta.leads7d||0) > 0 && (meta.leadsPrev||0) > 0 && meta.leads7d > meta.leadsPrev)
+      wins.push({ key:'meta-leads-up', text:`Leads up ${Math.round((meta.leads7d/meta.leadsPrev-1)*100)}% vs last week — ${meta.leads7d} leads generated.`, source:'Meta Ads', page:'meta' });
+
+    if (meta.costPerLead > 0 && meta.costPerLeadPrev > 0 && meta.costPerLead < meta.costPerLeadPrev * 0.9)
+      wins.push({ key:'meta-cpl-down', text:`CPL improved ${Math.round((1-meta.costPerLead/meta.costPerLeadPrev)*100)}% vs last week — strong creative efficiency.`, source:'Meta Ads', page:'meta' });
+  }
+
+  // ── WEBSITE / GA4 ──
+  if (ga4) {
+    if ((ga4.sessions||0) > 0 && (ga4.sessionsPrev||0) > 0 && ga4.sessions < ga4.sessionsPrev * 0.8)
+      actions.push({ key:'web-sessions-down', priority:'amber', text:`Website sessions down ${Math.round((1-ga4.sessions/ga4.sessionsPrev)*100)}% vs last period.`, source:'Website', page:'website' });
+
+    if ((ga4.bounceRate||0) > 70)
+      actions.push({ key:'web-bounce-high', priority:'amber', text:`Bounce rate at ${(ga4.bounceRate).toFixed(0)}% — above 70%. Review landing page experience.`, source:'Website', page:'website' });
+
+    if ((ga4.sessions||0) > 500 && !(ga4.conversions > 0))
+      actions.push({ key:'web-no-conv', priority:'amber', text:`${fmtNum(ga4.sessions)} sessions but no conversions recorded — check GA4 goal setup.`, source:'Website', page:'website' });
+
+    if ((ga4.sessions||0) > 0 && (ga4.sessionsPrev||0) > 0 && ga4.sessions > ga4.sessionsPrev * 1.1)
+      wins.push({ key:'web-sessions-up', text:`Website sessions up ${Math.round((ga4.sessions/ga4.sessionsPrev-1)*100)}% vs last period.`, source:'Website', page:'website' });
+
+    if ((ga4.conversions||0) > 0)
+      wins.push({ key:'web-conversions', text:`${ga4.conversions} conversion${ga4.conversions>1?'s':''} recorded this period.`, source:'Website', page:'website' });
+  }
+
+  // ── INSTAGRAM ──
+  if (ig) {
+    if ((ig.reach7d||0) > 0 && (ig.reach7dPrev||0) > 0 && ig.reach7d < ig.reach7dPrev * 0.7)
+      actions.push({ key:'ig-reach-down', priority:'amber', text:`Instagram reach dropped ${Math.round((1-ig.reach7d/ig.reach7dPrev)*100)}% this week — try posting Reels or varying content type.`, source:'Instagram', page:'instagram' });
+
+    if ((ig.engagementRate||0) > 0 && ig.engagementRate < 1)
+      actions.push({ key:'ig-eng-low', priority:'amber', text:`Engagement rate at ${ig.engagementRate.toFixed(1)}% — below 1%. Consider interactive content or Reels.`, source:'Instagram', page:'instagram' });
+
+    if ((ig.reach7d||0) > 0 && (ig.reach7dPrev||0) > 0 && ig.reach7d > ig.reach7dPrev * 1.1)
+      wins.push({ key:'ig-reach-up', text:`Instagram reach up ${Math.round((ig.reach7d/ig.reach7dPrev-1)*100)}% this week.`, source:'Instagram', page:'instagram' });
+
+    if ((ig.engagementRate||0) >= 4)
+      wins.push({ key:'ig-eng-high', text:`Engagement rate at ${ig.engagementRate.toFixed(1)}% — above 4%, strong audience connection.`, source:'Instagram', page:'instagram' });
+
+    if ((ig.followers||0) > 0 && (ig.followersPrev||0) > 0 && ig.followers > ig.followersPrev)
+      wins.push({ key:'ig-followers-up', text:`Gained ${ig.followers - ig.followersPrev} new followers this week.`, source:'Instagram', page:'instagram' });
+  }
+
+  // ── SEO ──
+  if (seo) {
+    const kws = seo.keywords || [];
+    const avgPos = kws.length ? kws.reduce((s,k) => s + (k.current||0), 0) / kws.length : null;
+    const totalClicks = seo.totalClicks || kws.reduce((s,k) => s + (k.clicks||0), 0);
+
+    if (avgPos && avgPos > 15)
+      actions.push({ key:'seo-pos-low', priority:'amber', text:`Average keyword position at #${Math.round(avgPos)} — limited page 1 visibility.`, source:'SEO', page:'seo' });
+
+    if (!totalClicks || totalClicks === 0)
+      actions.push({ key:'seo-no-clicks', priority:'amber', text:'No organic clicks recorded — check Search Console connection.', source:'SEO', page:'seo' });
+
+    if (avgPos && avgPos <= 5)
+      wins.push({ key:'seo-pos-great', text:`Avg keyword position #${Math.round(avgPos)} — strong page 1 presence.`, source:'SEO', page:'seo' });
+
+    if (totalClicks >= 100)
+      wins.push({ key:'seo-clicks-good', text:`${fmtNum(totalClicks)} organic clicks this month.`, source:'SEO', page:'seo' });
+  }
+
+  // ── GHL ──
+  if (!ghlData || ghlData.placeholder)
+    actions.push({ key:'ghl-not-connected', priority:'amber', text:'Connect Go High Level to see pipeline data and run automations.', source:'GHL', page:'ghl' });
+
+  return { actions, wins };
+}
+
+// ─── RENDER HELPERS ────────────────────────────────────────────────
+function _actionHTML(item, isWin) {
+  const cls   = isWin ? 'win' : item.priority;
+  const icon  = isWin ? '✓' : (item.priority==='red' ? '⚠' : '●');
+  const nav   = item.page ? `onclick="navigate('${item.page}',document.querySelector('[data-page=${item.page}]'))"` : '';
+  const navHint = item.page ? ' · tap to view →' : '';
+  const checkboxHTML = isWin ? '' : `
+    <label class="ai-check" onclick="event.stopPropagation();dismissActionItem('${item.key}')">
+      <input type="checkbox">
+      <span class="ai-checkmark">
+        <svg width="9" height="9" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </span>
+    </label>`;
+  return `<div class="action-item-v2 ${cls}${item.page?' clickable':''}" data-action-key="${item.key}" ${nav}>
+    ${checkboxHTML}
+    <span class="action-item-v2-icon" style="color:${isWin?'var(--success)':item.priority==='red'?'var(--danger)':'var(--warning)'}">${icon}</span>
+    <div class="action-item-v2-body">
+      <div class="action-item-v2-text">${item.text}</div>
+      <div class="action-item-v2-meta">${item.source}${navHint}</div>
+    </div>
+  </div>`;
+}
+
+function _refreshActionState() {
+  // Called after a dismiss to update counts and focus block
+  renderActionItems();
+}
+
+// ─── MAIN RENDER ──────────────────────────────────────────────────
+function renderActionItems() {
+  const { actions, wins } = _buildRules();
+  const dismissed = _getDismissed();
+  const undismissed = actions.filter(i => !dismissed.includes(i.key));
+  const undismissedWins = wins.filter(i => !dismissed.includes(i.key));
+
+  // Sort: red first, then amber
+  const sorted = [...undismissed].sort((a,b) => (a.priority==='red'?0:1)-(b.priority==='red'?0:1));
+  const focus  = sorted.slice(0, 3);
+
+  // Health dot
+  const hasRed   = undismissed.some(i => i.priority==='red');
+  const hasAmber = undismissed.some(i => i.priority==='amber');
   const dot   = document.getElementById('health-dot');
   const label = document.getElementById('health-label');
   const count = document.getElementById('priority-count');
-  const urgentCount = items.filter(i => i.priority !== 'green').length;
-  if (dot) dot.className = 'health-dot ' + (hasRed ? 'red' : hasAmber ? 'amber' : 'green');
-  if (label) label.textContent = hasRed ? 'Needs attention' : hasAmber ? 'Monitor closely' : 'All clear';
-  if (count) count.textContent = urgentCount > 0 ? urgentCount : '';
+  if (dot)   dot.className = 'health-dot ' + (hasRed?'red':hasAmber?'amber':'green');
+  if (label) label.textContent = hasRed?'Needs attention':hasAmber?'Monitor closely':'All clear';
+  if (count) count.textContent = undismissed.length > 0 ? undismissed.length : '';
 
-  const iconMap = { red:'⚠', amber:'●', green:'✓' };
-  document.getElementById('action-items').innerHTML = items.map(i => {
-    const clickable = !!i.page;
-    const onclick   = clickable ? `onclick="navigate('${i.page}',document.querySelector('[data-page=${i.page}]'))"` : '';
-    return `<div class="action-item-v2 ${i.priority}${clickable?' clickable':''}" ${onclick}>
-      <span class="action-item-v2-icon">${iconMap[i.priority]}</span>
-      <div class="action-item-v2-body">
-        <div class="action-item-v2-text">${i.text}</div>
-        <div class="action-item-v2-meta">${i.source}${clickable ? ' · tap to view →' : ''}</div>
-      </div>
-    </div>`;
-  }).join('');
+  // Focus date
+  const dateEl = document.getElementById('focus-date');
+  if (dateEl) {
+    const d = new Date();
+    dateEl.textContent = d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+  }
+
+  // Today's Focus block
+  const focusEl = document.getElementById('focus-items');
+  if (focusEl) {
+    if (focus.length === 0) {
+      focusEl.innerHTML = `<div class="focus-complete">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Focus complete — nothing urgent today.
+      </div>`;
+    } else {
+      focusEl.innerHTML = focus.map(i => _actionHTML(i, false)).join('');
+    }
+  }
+
+  // All alerts
+  const alertsEl = document.getElementById('action-items');
+  const remaining = document.getElementById('action-remaining');
+  if (alertsEl) {
+    if (undismissed.length === 0) {
+      alertsEl.innerHTML = `<div class="action-item-v2 win" style="cursor:default">
+        <span class="action-item-v2-icon" style="color:var(--success)">✓</span>
+        <div class="action-item-v2-body">
+          <div class="action-item-v2-text">All clear — no active alerts.</div>
+          <div class="action-item-v2-meta">Keep monitoring CPL as spend increases.</div>
+        </div>
+      </div>`;
+    } else {
+      alertsEl.innerHTML = undismissed.map(i => _actionHTML(i, false)).join('');
+    }
+  }
+  if (remaining) remaining.textContent = undismissed.length > 0 ? undismissed.length + ' active' : '';
+
+  // Wins
+  const winsBlock = document.getElementById('wins-block');
+  const winsEl    = document.getElementById('wins-items');
+  if (winsBlock && winsEl) {
+    if (undismissedWins.length > 0) {
+      winsBlock.style.display = '';
+      winsEl.innerHTML = undismissedWins.map(i => _actionHTML(i, true)).join('');
+    } else {
+      winsBlock.style.display = 'none';
+    }
+  }
 }
 
 function renderFunnel(meta) {
