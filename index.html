@@ -378,6 +378,31 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .age-table tr:last-child td{border-bottom:none;}
 .age-table .top-row td{color:var(--teal);font-weight:600;}
 
+/* ─── CLIENT REVENUE TAB ──────────────────────────────────────── */
+.rev-line-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;}
+.rev-line-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+.rev-line-name{font-family:var(--fhead);font-size:1rem;font-weight:800;color:var(--text);}
+.rev-line-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.rev-line-mrr{font-family:var(--fmono);font-size:1rem;font-weight:700;color:var(--teal);}
+.rev-line-updated{font-size:.7rem;color:var(--text-muted);}
+.rev-line-actions{display:flex;gap:8px;}
+.rev-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+.rev-table th{text-align:left;padding:8px 10px;font-size:.67rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid var(--border);white-space:nowrap;}
+.rev-table th.num{text-align:right;}
+.rev-table td{padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;color:var(--text);}
+.rev-table td.num{text-align:right;font-family:var(--fmono);}
+.rev-table tr:last-child td{border-bottom:none;}
+.rev-table tfoot td{font-family:var(--fmono);font-weight:700;color:var(--teal);background:var(--surface2);border-top:1.5px solid var(--border2);padding:10px 10px;}
+.rev-table tfoot td.num{text-align:right;}
+.rev-table tfoot td:first-child{font-family:var(--fbody);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);}
+.rev-input{width:72px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:.82rem;font-family:var(--fmono);color:var(--text);text-align:right;outline:none;}
+.rev-input:focus{border-color:var(--teal);}
+.rev-input.wide{width:90px;}
+.rev-tag-payg{font-size:.62rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:rgba(103,167,172,.1);color:var(--teal);margin-left:6px;vertical-align:middle;}
+.rev-empty-line{text-align:center;padding:28px;color:var(--text-muted);font-size:.85rem;}
+/* Summary KPI override — use teal accent stripe on rev KPIs */
+#rev-summary-grid .stat-card::after{background:linear-gradient(90deg,var(--teal) 0%,transparent 100%);}
+
 /* Revenue Forecaster */
 .fc-subtitle{font-size:.75rem;color:var(--text-muted);margin-bottom:16px;}
 .fc-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
@@ -787,6 +812,12 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     <li><a data-page="seo" onclick="navigate('seo',this);return false;">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
       SEO &amp; AI Visibility
+    </a></li>
+
+    <div class="sidebar-section-label">Revenue</div>
+    <li><a data-page="revenue" onclick="navigate('revenue',this);return false;">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Client Revenue
     </a></li>
 
     <div class="sidebar-section-label">Tools</div>
@@ -1680,6 +1711,26 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
   </div>
 </div>
 
+<!-- ════ CLIENT REVENUE ═══════════════════════════════════════════ -->
+<div id="tab-revenue" class="tab-content">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Client Revenue</div>
+      <div class="section-subtitle">Monthly snapshot — update each product line when you pull your reports</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="addRevenueProductLine()">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Product Line
+    </button>
+  </div>
+
+  <!-- Summary KPIs -->
+  <div class="stat-grid-4" id="rev-summary-grid" style="margin-bottom:24px"></div>
+
+  <!-- Product line cards -->
+  <div id="rev-lines"></div>
+</div>
+
 </main>
 
 <!-- ─── SUB-PAGES ────────────────────────────────────────────────── -->
@@ -1712,7 +1763,7 @@ const CACHE_TTL      = 1 * 60 * 60 * 1000; // 1h — server-side Blobs cache han
 const MAXX_URL       = '/.netlify/functions/maxx-report';
 const MAXX_CACHE_KEY = 'pm_maxx_v2';
 const MAXX_CACHE_TTL = 24 * 60 * 60 * 1000;
-const PAGE_TITLES = { overview:'Overview', meta:'Meta Ads', campaigns:'Campaigns', leads:'Meta Leads', ghl:'Go High Level', website:'Website', seo:'SEO & AI Visibility', skills:'Skill Launcher', ai:'AI Insights' };
+const PAGE_TITLES = { overview:'Overview', meta:'Meta Ads', campaigns:'Campaigns', leads:'Meta Leads', ghl:'Go High Level', website:'Website', seo:'SEO & AI Visibility', skills:'Skill Launcher', ai:'AI Insights', revenue:'Client Revenue' };
 
 // ─── STATE ────────────────────────────────────────────────────────
 let dashData = null;
@@ -2001,6 +2052,7 @@ function renderAll() {
   renderGHL();
   renderInstagram(dashData?.instagramHQ || null);
   renderFacebook(dashData?.facebook || null);
+  renderRevenue();
   const ts = dashData?.lastUpdated
     ? new Date(dashData.lastUpdated).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
     : 'Just now';
@@ -3775,6 +3827,256 @@ function distributeMock(total, n) {
 }
 function truncate(str, max) {
   return str&&str.length>max ? str.slice(0,max)+'…' : str;
+}
+
+// ─── CLIENT REVENUE / LTV ─────────────────────────────────────────
+const LTV_KEY = 'pm_ltv_v1';
+const LTV_DEFAULTS = {
+  productLines: [
+    {
+      id: 'ep',
+      name: 'Exercise Physiology',
+      updatedAt: null,
+      tiers: [
+        { name:'Perf Core',  price:149, clients:0, retention:6,  payg:false },
+        { name:'Perf Plus',  price:199, clients:0, retention:12, payg:false },
+        { name:'Perf Prime', price:249, clients:0, retention:18, payg:false },
+        { name:'PAYG',       price:90,  clients:0, retention:0,  payg:true  },
+      ]
+    }
+  ]
+};
+
+function loadLTV() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LTV_KEY));
+    if (!saved || !saved.productLines) return JSON.parse(JSON.stringify(LTV_DEFAULTS));
+    return saved;
+  } catch { return JSON.parse(JSON.stringify(LTV_DEFAULTS)); }
+}
+function saveLTV(data) {
+  localStorage.setItem(LTV_KEY, JSON.stringify(data));
+}
+
+function _ltvCalc(line) {
+  let mrr = 0, clients = 0, weightedLTV = 0, recurringClients = 0;
+  (line.tiers || []).forEach(t => {
+    const c = t.clients || 0;
+    const p = t.price   || 0;
+    mrr     += c * p;
+    clients += c;
+    if (!t.payg && t.retention > 0) {
+      weightedLTV    += c * p * t.retention;
+      recurringClients += c;
+    }
+  });
+  const blendedLTV = recurringClients > 0 ? weightedLTV / recurringClients : 0;
+  return { mrr, clients, blendedLTV, arr: mrr * 12 };
+}
+
+function renderRevenue() {
+  const data = loadLTV();
+  const lines = data.productLines || [];
+
+  // Global summary
+  let totalMRR = 0, totalClients = 0, totalWeightedLTV = 0, totalRecurring = 0;
+  lines.forEach(line => {
+    const c = _ltvCalc(line);
+    totalMRR     += c.mrr;
+    totalClients += c.clients;
+    (line.tiers||[]).forEach(t => {
+      if (!t.payg && t.retention > 0) {
+        totalWeightedLTV += (t.clients||0) * (t.price||0) * t.retention;
+        totalRecurring   += (t.clients||0);
+      }
+    });
+  });
+  const blendedLTV = totalRecurring > 0 ? totalWeightedLTV / totalRecurring : 0;
+  const metaLeads  = dashData?.meta?.leads7d || 0;
+  const revPerLead = metaLeads > 0 && totalMRR > 0 ? totalMRR / metaLeads : 0;
+
+  // Summary KPIs
+  const sg = document.getElementById('rev-summary-grid');
+  if (sg) sg.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Active Clients</div>
+      <div class="stat-value sm">${totalClients || '—'}</div>
+      <div class="stat-footer"><span class="stat-trend neutral">across ${lines.length} product line${lines.length!==1?'s':''}</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Monthly Recurring Revenue</div>
+      <div class="stat-value sm">${totalMRR > 0 ? fmtCurrency(totalMRR) : '—'}</div>
+      <div class="stat-footer"><span class="stat-trend neutral">from active clients</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Annual Run Rate</div>
+      <div class="stat-value sm">${totalMRR > 0 ? fmtCurrency(totalMRR * 12) : '—'}</div>
+      <div class="stat-footer"><span class="stat-trend neutral">MRR × 12</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Blended Client LTV</div>
+      <div class="stat-value sm">${blendedLTV > 0 ? fmtCurrency(blendedLTV) : '—'}</div>
+      <div class="stat-footer"><span class="stat-trend neutral">${revPerLead > 0 ? fmtCurrency(revPerLead)+' revenue/lead (7d)' : 'price × avg retention'}</span></div>
+    </div>`;
+
+  // Product line cards
+  const linesEl = document.getElementById('rev-lines');
+  if (!linesEl) return;
+  if (lines.length === 0) {
+    linesEl.innerHTML = `<div class="card rev-empty-line">No product lines yet — click "Add Product Line" to get started.</div>`;
+    return;
+  }
+  linesEl.innerHTML = lines.map((line, li) => _revLineHTML(line, li)).join('');
+}
+
+function _revLineHTML(line, li) {
+  const { mrr, clients, blendedLTV } = _ltvCalc(line);
+  const updatedLabel = line.updatedAt
+    ? 'Updated ' + new Date(line.updatedAt + '-01').toLocaleDateString('en-AU', { month:'short', year:'numeric' })
+    : 'Not yet updated';
+
+  const rows = (line.tiers || []).map((t, ti) => {
+    const tierMRR = (t.clients||0) * (t.price||0);
+    const ltv     = !t.payg && t.retention > 0 ? (t.price||0) * t.retention : null;
+    return `<tr>
+      <td>${t.name}${t.payg ? '<span class="rev-tag-payg">PAYG</span>' : ''}</td>
+      <td class="num">${t.clients || 0}</td>
+      <td class="num">${fmtCurrency(t.price)}<span style="color:var(--text-muted);font-size:.75em">${t.payg ? '/session' : '/mo'}</span></td>
+      <td class="num">${t.retention > 0 ? t.retention + ' mo' : '—'}</td>
+      <td class="num">${ltv ? fmtCurrency(ltv) : '—'}</td>
+      <td class="num" style="color:var(--teal)">${tierMRR > 0 ? fmtCurrency(tierMRR) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="rev-line-card">
+    <div class="rev-line-header">
+      <div>
+        <div class="rev-line-name">${line.name}</div>
+        <div class="rev-line-updated">${updatedLabel}</div>
+      </div>
+      <div class="rev-line-meta">
+        <span class="rev-line-mrr">${mrr > 0 ? fmtCurrency(mrr) + '/mo' : 'No data yet'}</span>
+        ${blendedLTV > 0 ? `<span style="font-size:.75rem;color:var(--text-muted)">LTV ${fmtCurrency(blendedLTV)}</span>` : ''}
+        <span class="badge badge-live">${clients} client${clients!==1?'s':''}</span>
+      </div>
+      <div class="rev-line-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editRevenueLine(${li})">Update this month</button>
+        ${li > 0 ? `<button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteRevenueLine(${li})">Remove</button>` : ''}
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="rev-table">
+        <thead><tr>
+          <th>Tier</th>
+          <th class="num">Clients</th>
+          <th class="num">Rate</th>
+          <th class="num">Retention</th>
+          <th class="num">LTV</th>
+          <th class="num">Monthly Rev</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr>
+          <td>Total</td>
+          <td class="num">${clients}</td>
+          <td class="num" colspan="3"></td>
+          <td class="num">${mrr > 0 ? fmtCurrency(mrr) : '—'}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>`;
+}
+
+function editRevenueLine(li) {
+  const data = loadLTV();
+  const line = data.productLines[li];
+  if (!line) return;
+
+  const { mrr, clients, blendedLTV } = _ltvCalc(line);
+
+  const editRows = (line.tiers || []).map((t, ti) => `<tr>
+    <td>${t.name}${t.payg ? '<span class="rev-tag-payg">PAYG</span>' : ''}</td>
+    <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${t.clients||0}" id="rev-${li}-${ti}-clients" oninput="previewLTVRow(${li},${ti})"></td>
+    <td class="num"><input class="rev-input" type="number" min="0" step="1" value="${t.price||0}" id="rev-${li}-${ti}-price" oninput="previewLTVRow(${li},${ti})"></td>
+    <td class="num">${t.payg ? '—' : `<input class="rev-input" type="number" min="0" step="1" value="${t.retention||0}" id="rev-${li}-${ti}-retention">`}</td>
+    <td class="num" id="rev-${li}-${ti}-ltv" style="color:var(--text-muted)">${!t.payg && t.retention > 0 ? fmtCurrency((t.price||0)*(t.retention||0)) : '—'}</td>
+    <td class="num" id="rev-${li}-${ti}-rev" style="color:var(--teal)">${(t.clients||0)*(t.price||0) > 0 ? fmtCurrency((t.clients||0)*(t.price||0)) : '—'}</td>
+  </tr>`).join('');
+
+  // Replace the card with edit version
+  const cards = document.querySelectorAll('.rev-line-card');
+  if (!cards[li]) return;
+  cards[li].innerHTML = `
+    <div class="rev-line-header">
+      <div>
+        <div class="rev-line-name">${line.name}</div>
+        <div class="rev-line-updated" style="color:var(--teal)">Editing — enter current client counts</div>
+      </div>
+      <div class="rev-line-actions">
+        <button class="btn btn-primary btn-sm" onclick="saveRevenueLine(${li})">Save</button>
+        <button class="btn btn-secondary btn-sm" onclick="renderRevenue()">Cancel</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="rev-table">
+        <thead><tr>
+          <th>Tier</th><th class="num">Clients</th><th class="num">Rate ($)</th>
+          <th class="num">Retention (mo)</th><th class="num">LTV</th><th class="num">Monthly Rev</th>
+        </tr></thead>
+        <tbody>${editRows}</tbody>
+      </table>
+    </div>`;
+}
+
+function previewLTVRow(li, ti) {
+  const c = parseFloat(document.getElementById(`rev-${li}-${ti}-clients`)?.value) || 0;
+  const p = parseFloat(document.getElementById(`rev-${li}-${ti}-price`)?.value)   || 0;
+  const r = parseFloat(document.getElementById(`rev-${li}-${ti}-retention`)?.value) || 0;
+  const ltvEl = document.getElementById(`rev-${li}-${ti}-ltv`);
+  const revEl = document.getElementById(`rev-${li}-${ti}-rev`);
+  if (ltvEl) ltvEl.textContent = r > 0 ? fmtCurrency(p * r) : '—';
+  if (revEl) revEl.textContent = c * p > 0 ? fmtCurrency(c * p) : '—';
+}
+
+function saveRevenueLine(li) {
+  const data = loadLTV();
+  const line = data.productLines[li];
+  if (!line) return;
+  (line.tiers || []).forEach((t, ti) => {
+    const c = parseFloat(document.getElementById(`rev-${li}-${ti}-clients`)?.value);
+    const p = parseFloat(document.getElementById(`rev-${li}-${ti}-price`)?.value);
+    const r = parseFloat(document.getElementById(`rev-${li}-${ti}-retention`)?.value);
+    if (!isNaN(c)) t.clients   = c;
+    if (!isNaN(p)) t.price     = p;
+    if (!isNaN(r) && !t.payg)  t.retention = r;
+  });
+  line.updatedAt = new Date().toISOString().slice(0, 7); // "2026-06"
+  saveLTV(data);
+  renderRevenue();
+}
+
+function deleteRevenueLine(li) {
+  const data = loadLTV();
+  data.productLines.splice(li, 1);
+  saveLTV(data);
+  renderRevenue();
+}
+
+function addRevenueProductLine() {
+  const data = loadLTV();
+  const name = prompt('Product line name (e.g. Gym Memberships):');
+  if (!name || !name.trim()) return;
+  data.productLines.push({
+    id: 'line_' + Date.now(),
+    name: name.trim(),
+    updatedAt: null,
+    tiers: [
+      { name:'Tier 1', price:0, clients:0, retention:6,  payg:false },
+      { name:'Tier 2', price:0, clients:0, retention:12, payg:false },
+      { name:'PAYG',   price:0, clients:0, retention:0,  payg:true  },
+    ]
+  });
+  saveLTV(data);
+  renderRevenue();
 }
 
 // ─── SEO & AI VISIBILITY ──────────────────────────────────────────
