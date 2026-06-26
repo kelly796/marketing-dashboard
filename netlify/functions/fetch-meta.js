@@ -147,12 +147,15 @@ exports.handler = async () => {
         time_increment: '1',
         access_token: token,
       }).catch(() => null) : null,
-      // Per-ad age + gender breakdown
+      // Per-ad age + gender breakdown — limit must be high enough to cover
+      // all ads × age groups × genders (10 ads × 6 ages × 2 genders = 120 rows;
+      // Meta's default page size is 25, which would silently truncate results)
       adAccountId ? metaGet(`/act_${adAccountId}/insights`, {
         level: 'ad',
         fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,reach,actions,conversions',
         breakdowns: 'age,gender',
         date_preset: 'last_7d',
+        limit: 200,
         access_token: token,
       }).catch(() => null) : null,
     ]);
@@ -406,25 +409,8 @@ function buildMetaAdsData(insights7d, insights7dPrev, campaignsData, audienceDat
     }
   }
 
-  // Build account-level gender fallback for ads that lack per-ad breakdown data
-  const genderSpendMap = {};
-  for (const row of (audienceData?.data || [])) {
-    const g = row.gender || 'unknown';
-    genderSpendMap[g] = (genderSpendMap[g] || 0) + Number(row.spend || 0);
-  }
-  const genderFallbackTotal = Object.values(genderSpendMap).reduce((s, v) => s + v, 0);
-  const fallbackGender = genderFallbackTotal > 0
-    ? ['female', 'male'].filter(g => genderSpendMap[g]).map(g => ({
-        label:      g,
-        pct:        Math.round((genderSpendMap[g] / genderFallbackTotal) * 100),
-        spendPct:   Math.round((genderSpendMap[g] / genderFallbackTotal) * 100),
-        reachPct:   0,
-        isEstimate: true,
-      }))
-    : [];
-
   // Creative performance — top ads by spend, enriched with per-ad audience
-  const creatives = buildCreatives(adsData, perAdBreakdown, fallbackGender, audienceBreakdown);
+  const creatives = buildCreatives(adsData, perAdBreakdown);
 
   return {
     spend7d,
@@ -507,7 +493,7 @@ function buildAudienceBreakdown(audienceData) {
 }
 
 // ─── CREATIVE PERFORMANCE BUILDER ────────────────────────────────────────────
-function buildCreatives(adsData, perAdBreakdown, fallbackGender = [], fallbackAge = []) {
+function buildCreatives(adsData, perAdBreakdown) {
   const ads = adsData?.data || [];
   if (!ads.length) return [];
 
@@ -589,11 +575,10 @@ function buildCreatives(adsData, perAdBreakdown, fallbackGender = [], fallbackAg
       const spend = +(Number(ins.spend || 0)).toFixed(2);
       const brand = /online|coaching|rehab|network|classroom/i.test(ad.name) ? 'Online' : 'HQ';
 
-      const aud        = audienceByAdId[ad.id] || null;
-      const audTotal   = aud?.spend || 0;
-      const gender     = aud ? toGenderBuckets(aud.genderSpend, aud.genderReach, audTotal, 3) : fallbackGender;
-      const age        = aud ? toAgeBuckets(aud.ageData, audTotal) : fallbackAge;
-      const isEstimate = !aud && (fallbackGender.length > 0 || fallbackAge.length > 0);
+      const aud      = audienceByAdId[ad.id] || null;
+      const audTotal = aud?.spend || 0;
+      const gender   = aud ? toGenderBuckets(aud.genderSpend, aud.genderReach, audTotal, 3) : [];
+      const age      = aud ? toAgeBuckets(aud.ageData, audTotal) : [];
 
       // Use highest of: actions, conversions field, or per-ad age breakdown sum
       const leadsFromInsights  = getAct(ins.actions, 'lead', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'onsite_conversion.lead_grouped');
@@ -605,7 +590,7 @@ function buildCreatives(adsData, perAdBreakdown, fallbackGender = [], fallbackAg
       const impressions = Number(ins.impressions || 0);
       const reach       = Number(ins.reach || 0);
 
-      return { id: ad.id, name: ad.name, brand, spend, leads, cpl, ctr, impressions, reach, gender, age, isEstimate };
+      return { id: ad.id, name: ad.name, brand, spend, leads, cpl, ctr, impressions, reach, gender, age };
     })
     .filter(c => c.spend > 0)
     .sort((a, b) => b.spend - a.spend)
