@@ -34,21 +34,22 @@ async function validateChallengeToken(token) {
   }
 }
 
-async function validateTurnstile(turnstileToken, ip) {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
+async function validateRecaptcha(recaptchaToken, ip) {
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
   if (!secret) return true; // skip if not yet configured
-  if (!turnstileToken) return false;
+  if (!recaptchaToken) return false;
   try {
-    const body = new URLSearchParams({ secret, response: turnstileToken });
+    const body = new URLSearchParams({ secret, response: recaptchaToken });
     if (ip) body.append('remoteip', ip);
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       body,
     });
     const json = await res.json();
-    return json.success === true;
+    // v3 returns a score 0.0–1.0; >= 0.5 is considered human
+    return json.success === true && (json.score === undefined || json.score >= 0.5);
   } catch {
-    return true; // fail open if Cloudflare is unreachable
+    return true; // fail open if Google is unreachable
   }
 }
 
@@ -135,10 +136,10 @@ exports.handler = async (event) => {
     return { statusCode: 403, headers, body: JSON.stringify({ success: false, error: 'Invalid or expired session. Please reload the page and try again.' }) };
   }
 
-  // Turnstile: Cloudflare's bot-detection layer
-  const turnstileOk = await validateTurnstile(data.turnstile_token, ip);
-  if (!turnstileOk) {
-    console.warn('Turnstile rejected for IP:', ip);
+  // reCAPTCHA v3: Google's bot-detection layer (score-based, invisible)
+  const recaptchaOk = await validateRecaptcha(data.recaptcha_token, ip);
+  if (!recaptchaOk) {
+    console.warn('reCAPTCHA rejected for IP:', ip);
     return { statusCode: 403, headers, body: JSON.stringify({ success: false, error: 'Verification failed. Please reload and try again.' }) };
   }
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Online Client Enquiry — PerforMotion</title>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="https://www.google.com/recaptcha/api.js?render=6Let-jktAAAAAEwM_SxNQknSrF6sb1AriUoGipfm" async defer></script>
 <style>
   :root {
     --navy: #1B2B5E;
@@ -674,15 +674,11 @@
         <div class="field-error" id="how-heard-error">Please let us know how you heard about us.</div>
       </div>
 
-      <div style="margin:20px 0 8px">
-        <div class="cf-turnstile"
-          data-sitekey="REPLACE_WITH_YOUR_TURNSTILE_SITE_KEY"
-          data-callback="onTurnstileVerified"
-          data-expired-callback="onTurnstileExpired"
-          data-error-callback="onTurnstileError">
-        </div>
-        <div id="turnstile-error" style="display:none;font-size:12px;color:var(--error);margin-top:6px">Verification failed — please try again.</div>
-      </div>
+      <p style="font-size:11px;color:var(--muted);margin:20px 0 8px">
+        This site is protected by reCAPTCHA and the Google
+        <a href="https://policies.google.com/privacy" style="color:var(--teal)">Privacy Policy</a> and
+        <a href="https://policies.google.com/terms" style="color:var(--teal)">Terms of Service</a> apply.
+      </p>
 
       <div class="form-actions">
         <button class="btn-back" onclick="prevStep(3)">&larr; Back</button>
@@ -704,7 +700,7 @@
 <script>
   // Bot protection state
   let challengeToken = null;
-  let turnstileToken = null;
+  const RECAPTCHA_SITE_KEY = '6Let-jktAAAAAEwM_SxNQknSrF6sb1AriUoGipfm';
 
   // Fetch a server-issued challenge token on page load.
   // The server records when it was issued; submissions arriving too quickly
@@ -720,10 +716,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', initForm);
-
-  function onTurnstileVerified(token) { turnstileToken = token; }
-  function onTurnstileExpired()       { turnstileToken = null; }
-  function onTurnstileError()         { document.getElementById('turnstile-error').style.display = 'block'; }
 
   function updateProgress(step) {
     for (let i = 1; i <= 3; i++) {
@@ -820,17 +812,24 @@
     return el ? el.value : '';
   }
 
-  function submitForm() {
+  async function submitForm() {
     if (!validateStep3()) return;
 
-    if (!turnstileToken) {
-      alert('Please complete the verification above before submitting.');
+    const btn = document.querySelector('.btn-submit');
+    btn.textContent = 'Verifying...';
+    btn.disabled = true;
+
+    let recaptchaToken;
+    try {
+      recaptchaToken = await grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'enquiry' });
+    } catch (e) {
+      btn.textContent = 'Submit enquiry';
+      btn.disabled = false;
+      alert('Verification failed. Please try again.');
       return;
     }
 
-    const btn = document.querySelector('.btn-submit');
     btn.textContent = 'Submitting...';
-    btn.disabled = true;
 
     const data = {
       first_name:      document.getElementById('first-name').value,
@@ -859,7 +858,7 @@
       questions:       document.getElementById('questions').value,
       how_heard:       document.getElementById('how-heard').value,
       challenge_token: challengeToken,
-      turnstile_token: turnstileToken,
+      recaptcha_token: recaptchaToken,
     };
 
     fetch('/api/submit-enquiry', {
