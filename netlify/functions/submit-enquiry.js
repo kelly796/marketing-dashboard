@@ -8,8 +8,49 @@
 
 const { getStore } = require('@netlify/blobs');
 
-const RATE_LIMIT        = 5;    // max submissions per IP
-const RATE_WINDOW_MS    = 60 * 60 * 1000; // 1 hour
+const RATE_LIMIT     = 3;               // max submissions per IP
+const RATE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours (was 1 hour / 5 — tightened)
+
+const MIN_AGE_MS = 10 * 1000;          // token must be at least 10s old (humans take longer than bots)
+const TOKEN_TTL_MS = 30 * 60 * 1000;  // token expires after 30 minutes
+
+async function validateChallengeToken(token) {
+  // Reject anything that doesn't look like our 64-char hex token
+  if (!token || !/^[a-f0-9]{64}$/.test(token)) return false;
+  try {
+    const store = getStore('enquiry-tokens');
+    const raw = await store.get(token);
+    if (!raw) return false;
+    const entry = JSON.parse(raw);
+    if (entry.used) return false;
+    const age = Date.now() - entry.issuedAt;
+    if (age < MIN_AGE_MS || age > TOKEN_TTL_MS) return false;
+    // Burn the token immediately — single use only
+    await store.set(token, JSON.stringify({ ...entry, used: true }));
+    return true;
+  } catch {
+    // Fail open if Blobs is unavailable so real users aren't blocked
+    return true;
+  }
+}
+
+async function validateTurnstile(turnstileToken, ip) {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) return true; // skip if not yet configured
+  if (!turnstileToken) return false;
+  try {
+    const body = new URLSearchParams({ secret, response: turnstileToken });
+    if (ip) body.append('remoteip', ip);
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body,
+    });
+    const json = await res.json();
+    return json.success === true;
+  } catch {
+    return true; // fail open if Cloudflare is unreachable
+  }
+}
 
 async function checkRateLimit(ip) {
   try {
@@ -85,6 +126,20 @@ exports.handler = async (event) => {
     data = JSON.parse(event.body);
   } catch {
     return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: 'Invalid JSON' }) };
+  }
+
+  // Challenge token: proves the request originated from our page and enough time elapsed
+  const tokenOk = await validateChallengeToken(data.challenge_token);
+  if (!tokenOk) {
+    console.warn('Challenge token rejected for IP:', ip);
+    return { statusCode: 403, headers, body: JSON.stringify({ success: false, error: 'Invalid or expired session. Please reload the page and try again.' }) };
+  }
+
+  // Turnstile: Cloudflare's bot-detection layer
+  const turnstileOk = await validateTurnstile(data.turnstile_token, ip);
+  if (!turnstileOk) {
+    console.warn('Turnstile rejected for IP:', ip);
+    return { statusCode: 403, headers, body: JSON.stringify({ success: false, error: 'Verification failed. Please reload and try again.' }) };
   }
 
   const phone = (data.phone || '').trim();

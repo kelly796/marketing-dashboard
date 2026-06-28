@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Online Client Enquiry — PerforMotion</title>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
   :root {
     --navy: #1B2B5E;
@@ -673,6 +674,16 @@
         <div class="field-error" id="how-heard-error">Please let us know how you heard about us.</div>
       </div>
 
+      <div style="margin:20px 0 8px">
+        <div class="cf-turnstile"
+          data-sitekey="REPLACE_WITH_YOUR_TURNSTILE_SITE_KEY"
+          data-callback="onTurnstileVerified"
+          data-expired-callback="onTurnstileExpired"
+          data-error-callback="onTurnstileError">
+        </div>
+        <div id="turnstile-error" style="display:none;font-size:12px;color:var(--error);margin-top:6px">Verification failed — please try again.</div>
+      </div>
+
       <div class="form-actions">
         <button class="btn-back" onclick="prevStep(3)">&larr; Back</button>
         <button class="btn-submit" onclick="submitForm()">Submit enquiry</button>
@@ -691,6 +702,29 @@
 </div>
 
 <script>
+  // Bot protection state
+  let challengeToken = null;
+  let turnstileToken = null;
+
+  // Fetch a server-issued challenge token on page load.
+  // The server records when it was issued; submissions arriving too quickly
+  // (bots) or without a valid unused token are rejected server-side.
+  async function initForm() {
+    try {
+      const res = await fetch('/api/init-enquiry', { method: 'POST' });
+      const json = await res.json();
+      if (json.token) challengeToken = json.token;
+    } catch (e) {
+      console.warn('Could not fetch challenge token:', e);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', initForm);
+
+  function onTurnstileVerified(token) { turnstileToken = token; }
+  function onTurnstileExpired()       { turnstileToken = null; }
+  function onTurnstileError()         { document.getElementById('turnstile-error').style.display = 'block'; }
+
   function updateProgress(step) {
     for (let i = 1; i <= 3; i++) {
       const dot = document.getElementById('dot-' + i);
@@ -789,39 +823,46 @@
   function submitForm() {
     if (!validateStep3()) return;
 
+    if (!turnstileToken) {
+      alert('Please complete the verification above before submitting.');
+      return;
+    }
+
     const btn = document.querySelector('.btn-submit');
     btn.textContent = 'Submitting...';
     btn.disabled = true;
 
     const data = {
-      first_name:    document.getElementById('first-name').value,
-      last_name:     document.getElementById('last-name').value,
-      phone:         document.getElementById('phone').value,
-      email:         document.getElementById('email').value,
-      instagram:     document.getElementById('instagram').value,
-      service:       document.getElementById('service').value,
-      goals:         document.getElementById('goals').value,
-      coaching:      radio('coaching'),
-      competed:      radio('competed'),
-      competition:   radio('competition'),
-      weight_class:  document.getElementById('weight-class').value,
-      squat:         document.getElementById('squat').value,
-      bench:         document.getElementById('bench').value,
-      deadlift:      document.getElementById('deadlift').value,
-      total:         document.getElementById('total').value,
-      days_training: radio('days'),
-      injury:        radio('injury'),
-      ep_interest:   radio('ep'),
-      why_perf:      document.getElementById('why-perf').value,
-      coach_pref1:   radio('pref1'),
-      coach_pref2:   radio('pref2'),
-      why_coaches:   document.getElementById('why-coaches').value,
-      why_fit:       document.getElementById('why-fit').value,
-      questions:     document.getElementById('questions').value,
-      how_heard:     document.getElementById('how-heard').value,
+      first_name:      document.getElementById('first-name').value,
+      last_name:       document.getElementById('last-name').value,
+      phone:           document.getElementById('phone').value,
+      email:           document.getElementById('email').value,
+      instagram:       document.getElementById('instagram').value,
+      service:         document.getElementById('service').value,
+      goals:           document.getElementById('goals').value,
+      coaching:        radio('coaching'),
+      competed:        radio('competed'),
+      competition:     radio('competition'),
+      weight_class:    document.getElementById('weight-class').value,
+      squat:           document.getElementById('squat').value,
+      bench:           document.getElementById('bench').value,
+      deadlift:        document.getElementById('deadlift').value,
+      total:           document.getElementById('total').value,
+      days_training:   radio('days'),
+      injury:          radio('injury'),
+      ep_interest:     radio('ep'),
+      why_perf:        document.getElementById('why-perf').value,
+      coach_pref1:     radio('pref1'),
+      coach_pref2:     radio('pref2'),
+      why_coaches:     document.getElementById('why-coaches').value,
+      why_fit:         document.getElementById('why-fit').value,
+      questions:       document.getElementById('questions').value,
+      how_heard:       document.getElementById('how-heard').value,
+      challenge_token: challengeToken,
+      turnstile_token: turnstileToken,
     };
 
-    fetch('https://monumental-syrniki-3b33aa.netlify.app/.netlify/functions/submit-enquiry', {
+    fetch('/api/submit-enquiry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
