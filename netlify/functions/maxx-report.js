@@ -2,8 +2,10 @@
  * Maxx — Daily Keep / Kill / Scale Report
  *
  * Fetches live Meta Ads data and calls Claude to produce Maxx's daily
- * decision report. The frontend caches the result for 24 hours in
- * localStorage so Claude is only called once per day.
+ * decision report. Past reports persist in Netlify Blobs (maxx-memory
+ * store) so each new report can reference what Maxx said last time
+ * instead of starting cold. The frontend also caches the result for
+ * 24 hours in localStorage so Claude is only called once per day.
  *
  * Required env vars:
  *   META_ACCESS_TOKEN
@@ -11,9 +13,14 @@
  *   ANTHROPIC_API_KEY
  */
 
-const GRAPH = 'https://graph.facebook.com/v19.0';
+const { getStore } = require('@netlify/blobs');
 
-exports.handler = async () => {
+const GRAPH = 'https://graph.facebook.com/v19.0';
+const MEMORY_STORE = 'maxx-memory';
+const MEMORY_KEY = 'history';
+const MAX_HISTORY = 30;
+
+exports.handler = async (event) => {
   const token       = process.env.META_ACCESS_TOKEN;
   const adAccountId = (process.env.META_AD_ACCOUNT_ID || '').replace(/^act_/, '');
   const apiKey      = process.env.ANTHROPIC_API_KEY;
@@ -26,6 +33,9 @@ exports.handler = async () => {
   }
 
   try {
+    const memoryStore = getStore(MEMORY_STORE);
+    const rawHistory  = await memoryStore.get(MEMORY_KEY);
+    const history     = rawHistory ? JSON.parse(rawHistory) : [];
     // leads param passed by the frontend (already has the correct breakdown-aware value)
     const leadsOverride = parseInt(event?.queryStringParameters?.leads || '0', 10);
 
@@ -73,7 +83,19 @@ exports.handler = async () => {
 
     const today = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Brisbane', dateStyle: 'full', timeStyle: 'short' });
 
+    const recentHistory = history.slice(-5);
+    const historyBlock = recentHistory.length
+      ? recentHistory.map(h =>
+          `${h.date}: ${h.summary}\n${(h.decisions || []).map(d => `  - "${d.ad}": ${d.decision} — ${d.reason}`).join('\n')}`
+        ).join('\n\n')
+      : 'No prior reports yet — this is the first one.';
+
     const prompt = `You are Maxx, PerforMotion's Meta media buyer AI. PerforMotion HQ is a Brisbane Exercise Physiology clinic targeting 40+ adults with chronic pain and fatigue. Goal: booked initial consultations via Meta lead form ads. CPL target is $120. Today in Brisbane: ${today}.
+
+YOUR PAST REPORTS — last ${recentHistory.length} day(s), oldest first:
+${historyBlock}
+
+Reference this history where relevant — e.g. if you said WATCH on an ad before, say whether that call held up. If spend/CTR moved a lot since last time, call it out. Don't repeat the same insight two days running without noting what changed.
 
 LIVE AD PERFORMANCE — last 7 days:
 ${adLines}
@@ -146,6 +168,11 @@ Return ONLY valid JSON — no markdown, no code fences, no explanation. Use exac
       if (ad) d.metrics = { spend: ad.spend, ctr: ad.ctr, leads: ad.leads, cpl: ad.cpl };
       return d;
     });
+
+    // Persist this report so tomorrow's run has continuity
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const updatedHistory = [...history.filter(h => h.date !== todayKey), { date: todayKey, ...report }].slice(-MAX_HISTORY);
+    await memoryStore.set(MEMORY_KEY, JSON.stringify(updatedHistory));
 
     return {
       statusCode: 200,
