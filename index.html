@@ -269,31 +269,6 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 .placeholder-title{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:6px;}
 .placeholder-text{font-size:.875rem;color:var(--text-muted);line-height:1.6;max-width:400px;margin:0 auto 16px;}
 
-/* ─── MAXX REPORT ─────────────────────────────────────────────── */
-.maxx-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.maxx-avatar{
-  width:34px;height:34px;border-radius:50%;
-  background:var(--teal);color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.8rem;font-weight:800;flex-shrink:0;font-family:var(--fhead);
-}
-.maxx-name{font-size:.92rem;font-weight:700;color:var(--text);}
-.maxx-time{font-size:.78rem;color:var(--text-muted);}
-.maxx-summary{
-  background:var(--surface2);border-radius:var(--radius-sm);
-  padding:14px 16px;font-size:.9rem;line-height:1.75;color:var(--text);margin-bottom:14px;
-}
-.maxx-decisions{display:flex;flex-direction:column;gap:8px;}
-.maxx-decision-row{
-  display:flex;align-items:flex-start;gap:12px;
-  padding:12px 14px;border-radius:var(--radius-sm);background:var(--surface2);
-}
-.maxx-decision-info{flex:1;min-width:0;}
-.maxx-decision-ad{font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.maxx-decision-reason{font-size:.83rem;color:var(--text-muted);line-height:1.5;}
-.maxx-decision-metrics{display:flex;gap:12px;font-size:.78rem;color:var(--text-muted);margin-top:5px;font-family:var(--fmono);}
-.maxx-decision-metrics span strong{color:var(--text);}
-
 /* ─── AD PERFORMANCE 30-DAY ─────────────────────────────────────── */
 .adperf-kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
 .adperf-kpi{flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;}
@@ -984,7 +959,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
     </div>
   </div>
 
-  <!-- Spend Chart + Maxx -->
+  <!-- Spend Chart + Ad Performance Overview -->
   <div class="card-grid-60-40">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -1006,7 +981,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
         Ad Performance — Last 7 Days
       </div>
       <div id="maxx-report-overview">
-        <div class="loading-state"><div class="spinner"></div>Loading Maxx report…</div>
+        <div class="loading-state"><div class="spinner"></div>Loading…</div>
       </div>
     </div>
   </div>
@@ -1069,7 +1044,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       Active Ads — Performance
     </div>
     <div id="maxx-decisions-full">
-      <div class="loading-state"><div class="spinner"></div>Loading Maxx report…</div>
+      <div class="loading-state"><div class="spinner"></div>Loading…</div>
     </div>
   </div>
 
@@ -1607,7 +1582,7 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 
   <div class="card" style="margin-bottom:20px">
     <div style="font-size:.8rem;color:var(--text-muted);line-height:1.6">
-      Analysis looks at: Meta spend + CTR + leads · GA4 traffic · Clarity drop-off · Maxx report · PerforMotion brand context
+      Analysis looks at: Meta spend + CTR + leads · GA4 traffic · Clarity drop-off · PerforMotion brand context
     </div>
   </div>
 
@@ -1763,14 +1738,10 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
 // ─── CONSTANTS ────────────────────────────────────────────────────
 const CACHE_KEY      = 'pm_hub_v5';
 const CACHE_TTL      = 1 * 60 * 60 * 1000; // 1h — server-side Blobs cache handles freshness
-const MAXX_URL       = '/.netlify/functions/maxx-report';
-const MAXX_CACHE_KEY = 'pm_maxx_v2';
-const MAXX_CACHE_TTL = 24 * 60 * 60 * 1000;
 const PAGE_TITLES = { overview:'Overview', meta:'Meta Ads', campaigns:'Campaigns', leads:'Meta Leads', ghl:'Go High Level', website:'Website', seo:'SEO & AI Visibility', skills:'Skill Launcher', ai:'AI Insights', revenue:'Client Revenue' };
 
 // ─── STATE ────────────────────────────────────────────────────────
 let dashData = null;
-let maxxData = null;
 let ghlData  = null;
 let currentPage = 'overview';
 let activeSubPage = null;
@@ -2560,48 +2531,7 @@ function renderCampaignsPage(meta) {
   }
 }
 
-// ─── MAXX REPORT ──────────────────────────────────────────────────
-async function loadMaxxReport(forceRefresh) {
-  // Check 24h cache
-  if (!forceRefresh) {
-    try {
-      const cached = JSON.parse(localStorage.getItem(MAXX_CACHE_KEY) || 'null');
-      if (cached && cached.data && (Date.now() - cached.ts) < MAXX_CACHE_TTL) {
-        return cached.data;
-      }
-    } catch {}
-  }
-  // Fetch fresh from function — pass leads7d so Maxx uses the same source of truth
-  try {
-    const leadsOverride = dashData?.meta?.leads7d ?? 0;
-    const res = await fetch(MAXX_URL + '?t=' + Date.now() + '&leads=' + leadsOverride);
-    if (!res.ok) return maxxData || null;
-    const data = await res.json();
-    if (data && !data.error) {
-      localStorage.setItem(MAXX_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
-      return data;
-    }
-  } catch {}
-  return maxxData || null;
-}
-
-async function refreshMaxxReport() {
-  const overviewEl  = document.getElementById('maxx-report-overview');
-  const fullEl      = document.getElementById('maxx-decisions-full');
-  const loadingHTML = `<div class="loading-state"><div class="spinner"></div>Maxx is analysing today's data…</div>`;
-  if (overviewEl) overviewEl.innerHTML = loadingHTML;
-  if (fullEl)     fullEl.innerHTML     = loadingHTML;
-  maxxData = await loadMaxxReport(true);
-  renderMaxxReport();
-}
-
-function maxxTimestamp() {
-  if (!maxxData?.generatedAt) return '';
-  return new Date(maxxData.generatedAt).toLocaleString('en-AU', {
-    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-  });
-}
-
+// ─── AD PERFORMANCE ───────────────────────────────────────────────
 function renderAdPerformanceOverview(meta) {
   const el = document.getElementById('maxx-report-overview');
   if (!el) return;
@@ -3472,7 +3402,7 @@ async function runAIInsights() {
   document.getElementById('ai-run-btn').disabled = true;
   try {
     const meta = dashData?.meta;
-    const context = { spend7d:meta?.spend7d, leads7d:meta?.leads7d, costPerLead:meta?.costPerLead, ctr:meta?.ctr, campaigns:meta?.campaigns, creatives:meta?.creatives, maxx:maxxData, ga4Sessions:dashData?.ga4?.sessions, ghl:ghlData?.pipeline };
+    const context = { spend7d:meta?.spend7d, leads7d:meta?.leads7d, costPerLead:meta?.costPerLead, ctr:meta?.ctr, campaigns:meta?.campaigns, creatives:meta?.creatives, ga4Sessions:dashData?.ga4?.sessions, ghl:ghlData?.pipeline };
     const res = await fetch('/.netlify/functions/ai-insights', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ prompt:`You are PerforMotion's marketing AI. Analyse this data and provide 5 specific, actionable recommendations in PerforMotion's brand voice (warm, expert, direct). Each must reference specific numbers. Format: TITLE | IMPACT | DETAIL.\n\nData: ${JSON.stringify(context)}`, context })
@@ -3504,12 +3434,11 @@ function renderAIResults(text) {
 // ─── SUB-PAGE: AD DETAIL ──────────────────────────────────────────
 function openAdDetail(adName) {
   const creative = (dashData?.meta?.creatives||[]).find(c=>c.name===adName) || { name:adName };
-  const maxxDec  = (maxxData?.decisions||[]).find(d=>d.ad&&adName.toLowerCase().includes(d.ad.toLowerCase().split(' ')[0]));
-  const spend = creative.spend ?? maxxDec?.metrics?.spend ?? 0;
-  const ctr   = creative.ctr   ?? maxxDec?.metrics?.ctr   ?? 0;
-  const leads = creative.leads ?? maxxDec?.metrics?.leads ?? 0;
-  const cpl   = creative.cpl   ?? maxxDec?.metrics?.cpl   ?? 0;
-  const dec   = maxxDec?.decision || (leads>0?'KEEP':'WATCH');
+  const spend = creative.spend ?? 0;
+  const ctr   = creative.ctr   ?? 0;
+  const leads = creative.leads ?? 0;
+  const cpl   = creative.cpl   ?? 0;
+  const dec   = leads>0?'KEEP':'WATCH';
 
   const ageRows = (creative.age||[]).map((b, i) => `
     <tr class="${i===0?'top-row':''}">
@@ -3558,12 +3487,6 @@ function openAdDetail(adName) {
     <div class="card" style="margin-top:16px">
       <div class="card-title">Gender Split</div>
       ${genderRows}
-    </div>` : ''}
-
-    ${maxxDec ? `
-    <div class="card" style="margin-top:16px">
-      <div class="card-title">Maxx — Recommendation</div>
-      <div style="font-size:.9rem;color:var(--text-dim);line-height:1.75">${maxxDec.reason}</div>
     </div>` : ''}
 
     <div class="card" style="margin-top:16px">
