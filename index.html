@@ -1696,11 +1696,18 @@ html,body{height:100%;font-family:var(--fbody);font-size:16px;background:var(--b
       <div class="section-title">Client Revenue</div>
       <div class="section-subtitle">Monthly snapshot — update each product line when you pull your reports</div>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="addRevenueProductLine()">
-      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add Product Line
-    </button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" id="rev-sync-btn" onclick="syncRevenueFromGymMaster()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Sync from GymMaster
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="addRevenueProductLine()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Product Line
+      </button>
+    </div>
   </div>
+  <div id="rev-sync-status" style="font-size:.78rem;color:var(--text-muted);margin:-14px 0 18px"></div>
 
   <!-- Summary KPIs -->
   <div class="stat-grid-4" id="rev-summary-grid" style="margin-bottom:24px"></div>
@@ -3794,6 +3801,14 @@ function renderRevenue() {
   const data = loadLTV();
   const lines = data.productLines || [];
 
+  const statusEl = document.getElementById('rev-sync-status');
+  if (statusEl) {
+    const syncedAt = localStorage.getItem('pm_revenue_gm_synced_at');
+    statusEl.textContent = syncedAt
+      ? `Perf Core/Plus/Prime last synced from GymMaster ${new Date(syncedAt).toLocaleString('en-AU')}. PAYG and Senior/Junior split stay manual.`
+      : 'Perf Core/Plus/Prime can be synced live from GymMaster — PAYG and Senior/Junior split stay manual.';
+  }
+
   // Global summary
   let totalMRR = 0, totalActive = 0, totalStartMRR = 0, totalLostMRR = 0;
   let totalRevenue = 0, totalClientsEver = 0;
@@ -4018,6 +4033,79 @@ function addRevenueProductLine() {
   });
   saveLTV(data);
   renderRevenue();
+}
+
+// Pulls real active-client counts + real lifetime billing per EP tier
+// (Perf Core/Plus/Prime) from GymMaster and writes them into the matching
+// tier(s) across all product lines. Known limits (see fetch-client-revenue.js):
+// GymMaster doesn't track Senior/Junior split (whole tier lands on the
+// Senior row, Junior zeroed out to avoid double-counting), doesn't cover
+// PAYG (Halaxy has no equivalent "active client" concept), and LTV only
+// reflects currently-active members' lifetime spend (a churned member's
+// history isn't in GymMaster's current-members report at all, so this
+// under-states true lifetime LTV, never over-states it).
+async function syncRevenueFromGymMaster() {
+  const btn = document.getElementById('rev-sync-btn');
+  const statusEl = document.getElementById('rev-sync-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+
+  try {
+    const res = await fetch('/api/fetch-client-revenue');
+    const result = await res.json();
+
+    if (result.placeholder) {
+      showToast(result.message || 'GymMaster not connected yet.');
+      return;
+    }
+    if (result.error) {
+      showToast('Sync failed: ' + result.error);
+      return;
+    }
+
+    const data = loadLTV();
+    let matchedAny = false;
+    (data.productLines || []).forEach(line => {
+      (line.tiers || []).forEach(t => {
+        const live = result.tiers[t.name];
+        if (!live) return;
+        matchedAny = true;
+        (t.rates || []).forEach((rate, ri) => {
+          if (ri === 0) {
+            rate.clientsStart = live.clients;
+            rate.totalClients = live.clients;
+            rate.totalRevenue = live.revenue;
+          } else {
+            rate.clientsStart = 0;
+            rate.totalClients = 0;
+            rate.totalRevenue = 0;
+          }
+        });
+      });
+      if ((line.tiers || []).some(t => result.tiers[t.name])) {
+        line.updatedAt = new Date().toISOString().slice(0, 7);
+      }
+    });
+
+    if (!matchedAny) {
+      showToast('No matching tiers (Perf Core/Plus/Prime) found in your product lines.');
+      return;
+    }
+
+    saveLTV(data);
+    localStorage.setItem('pm_revenue_gm_synced_at', result.syncedAt);
+    renderRevenue();
+    showToast('Synced real GymMaster data — Senior row per tier, Junior zeroed (see note below).');
+  } catch (e) {
+    showToast('Sync failed: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Sync from GymMaster'; }
+    if (statusEl) {
+      const syncedAt = localStorage.getItem('pm_revenue_gm_synced_at');
+      statusEl.textContent = syncedAt
+        ? `Perf Core/Plus/Prime last synced from GymMaster ${new Date(syncedAt).toLocaleString('en-AU')}. PAYG and Senior/Junior split stay manual — see tooltip.`
+        : 'Perf Core/Plus/Prime can be synced live from GymMaster — PAYG and Senior/Junior split stay manual.';
+    }
+  }
 }
 
 // ─── SEO & AI VISIBILITY ──────────────────────────────────────────
