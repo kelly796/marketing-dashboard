@@ -5,29 +5,25 @@
  * Returns placeholder data when CLARITY_API_KEY is not set.
  *
  * ─── REQUIRED ENV VARS ───────────────────────────────────────────
- *  CLARITY_API_KEY    — API token from Clarity → Settings → Access tokens
- *  CLARITY_PROJECT_ID — Project ID from the Clarity URL (x0ihxl738b)
+ *  CLARITY_API_KEY    — API token from Clarity → Settings → Data Export
  *
- * ─── SETUP ───────────────────────────────────────────────────────
- *  1. clarity.microsoft.com → your project → Settings → Access tokens
- *  2. Generate token → copy → Netlify env as CLARITY_API_KEY
- *  3. Set CLARITY_PROJECT_ID = x0ihxl738b
- *  4. Deploy — this function switches from placeholder to live data
+ * ─── REAL API, confirmed live 2026-07-26 ─────────────────────────
+ *  GET https://www.clarity.ms/export-data/api/v1/project-live-insights
+ *  Docs: https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-data-export-api
+ *  - No project ID in the URL — the token itself is project-scoped.
+ *  - numOfDays only supports 1, 2, or 3 (last 24/48/72h) — no arbitrary date range.
+ *  - HARD CAP: 10 requests/project/day. Do not call this more than once a day
+ *    from any automation — the old code called an endpoint that doesn't exist
+ *    at all (clarity.microsoft.com/api/v1/...), which is why this always 400'd
+ *    regardless of credentials. Confirmed via a real call against the live key.
+ *  - Response is an array of { metricName, information: [...] } blocks, not a
+ *    single metrics object — shape below reflects the real payload.
  */
 
-const BASE = 'https://clarity.microsoft.com/api/v1';
+const BASE = 'https://www.clarity.ms/export-data/api/v1/project-live-insights';
 
 exports.handler = async () => {
-  const apiKey    = process.env.CLARITY_API_KEY;
-  const projectId = process.env.CLARITY_PROJECT_ID;
-
-  if (!projectId) {
-    return {
-      statusCode: 503,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'CLARITY_PROJECT_ID not set' }),
-    };
-  }
+  const apiKey = process.env.CLARITY_API_KEY;
 
   // ── PLACEHOLDER — no API key configured ──────────────────────────
   if (!apiKey) {
@@ -44,59 +40,48 @@ exports.handler = async () => {
 
   // ── LIVE DATA ─────────────────────────────────────────────────────
   try {
-    const headers = {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    };
+    const res = await fetch(`${BASE}?numOfDays=3`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
 
-    // Date range — last 7 days
-    const endDate   = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 7);
-    const fmt = d => d.toISOString().split('T')[0];
-
-    // Fetch project metrics
-    const metricsRes = await fetch(
-      `${BASE}/projects/${projectId}/metrics?startDate=${fmt(startDate)}&endDate=${fmt(endDate)}`,
-      { headers }
-    );
-
-    if (!metricsRes.ok) {
-      const err = await metricsRes.text();
-      console.error('Clarity metrics error:', metricsRes.status, err);
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Clarity API error:', res.status, err);
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           placeholder: false,
-          error: `Clarity API returned ${metricsRes.status}`,
+          error: `Clarity API returned ${res.status}`,
           metrics: null,
         }),
       };
     }
 
-    const data = await metricsRes.json();
+    const data = await res.json(); // array of { metricName, information: [...] }
+    const byName = {};
+    for (const block of data) byName[block.metricName] = block.information || [];
+    const first = name => (byName[name] && byName[name][0]) || {};
+    const num = v => (v === undefined || v === null ? null : Number(v));
 
-    // Normalise the response — Clarity API shape varies by version
-    const m = data?.metrics || data?.data || data || {};
-
+    const traffic = first('Traffic');
     const metrics = {
-      sessions:        m.sessionCount  ?? m.sessions        ?? null,
-      pageViews:       m.pageViewCount ?? m.pageViews        ?? null,
-      rageClicks:      m.rageClickCount ?? m.rageClicks      ?? null,
-      deadClicks:      m.deadClickCount ?? m.deadClicks      ?? null,
-      excessiveScroll: m.excessiveScrollCount ?? m.excessiveScroll ?? null,
-      scrollDepth:     m.avgScrollDepth ?? m.scrollDepth     ?? null,
-      engagementTime:  m.avgEngagementTime ?? m.engagementTime ?? null,
-      botSessions:     m.botSessionCount ?? null,
+      sessions:        num(traffic.totalSessionCount),
+      botSessions:     num(traffic.totalBotSessionCount),
+      pageViews:       null, // not exposed as a project-wide total by this API
+      rageClicks:      num(first('RageClickCount').subTotal),
+      deadClicks:      num(first('DeadClickCount').subTotal),
+      excessiveScroll: num(first('ExcessiveScroll').subTotal),
+      scrollDepth:     num(first('ScrollDepth').averageScrollDepth),
+      engagementTime:  num(first('EngagementTime').activeTime),
     };
 
-    // Top pages by rage clicks (if available)
-    const topPages = (data?.topPages || data?.pages || []).slice(0, 5).map(p => ({
-      url:        p.url || p.page || '—',
-      sessions:   p.sessionCount ?? p.sessions ?? 0,
-      rageClicks: p.rageClickCount ?? p.rageClicks ?? 0,
-      scrollDepth: p.avgScrollDepth ?? p.scrollDepth ?? null,
+    // PopularPages is the one metric that's naturally per-page already.
+    const topPages = (byName['PopularPages'] || []).slice(0, 5).map(p => ({
+      url:         p.url || '—',
+      sessions:    num(p.visitsCount) ?? 0,
+      rageClicks:  null, // would need a second Url-dimensioned call — not worth the quota
+      scrollDepth: null,
     }));
 
     return {
