@@ -88,7 +88,11 @@ exports.handler = async () => {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ placeholder: true, message: 'Add GYMMASTER_API_KEY to Netlify env vars to enable live sync.', tiers: null }),
+      body: JSON.stringify({
+        placeholder: true,
+        message: 'GymMaster credential not readable — this site\'s Netlify Blobs isn\'t auto-configuring context ("environment has not been configured"), a pre-existing bug that also silently breaks get-data.js\'s whole 4-hour cache (confirmed 2026-07-26). Needs that fixed first, not just this function.',
+        tiers: null,
+      }),
     };
   }
 
