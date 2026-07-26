@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 // Confirmed 2026-07-26: this was calling PageSpeed Insights with NO API key,
 // which uses Google's shared anonymous quota (very low, easily 429'd — not a
 // credentials problem, there simply are no credentials). Get a free key at
@@ -66,3 +67,5 @@ export const handler = async function (event, context) {
     };
   }
 };
+
+export default withLambda(handler);

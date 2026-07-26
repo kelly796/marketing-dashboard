@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Get Dashboard Data
  *
@@ -177,3 +178,5 @@ function normaliseWPAnalytics(wp) {
     period:          wp.period          || {},
   };
 }
+
+export default withLambda(handler);

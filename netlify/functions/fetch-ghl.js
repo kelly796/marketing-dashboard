@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Fetch Go High Level Data — multi-pipeline version
  *
@@ -169,3 +170,5 @@ export const handler = async () => {
     };
   }
 };
+
+export default withLambda(handler);

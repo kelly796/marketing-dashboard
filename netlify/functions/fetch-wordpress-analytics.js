@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Fetch Independent Analytics Data from WordPress
  *
@@ -72,3 +73,5 @@ export const handler = async () => {
     };
   }
 };
+
+export default withLambda(handler);

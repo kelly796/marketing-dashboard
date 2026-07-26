@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * PerforMotion — Online Client Enquiry form handler
  *
@@ -212,3 +213,5 @@ export const handler = async (event) => {
     return { statusCode: 500, headers, body: JSON.stringify({ success: false, error: 'Mail failed' }) };
   }
 };
+
+export default withLambda(handler);

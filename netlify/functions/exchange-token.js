@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Exchange a Meta short-lived token for a long-lived token (60 days).
  *
@@ -84,3 +85,5 @@ export const handler = async (event) => {
     };
   }
 };
+
+export default withLambda(handler);

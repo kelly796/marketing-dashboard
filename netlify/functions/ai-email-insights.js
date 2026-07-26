@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 export const handler = async function (event, context) {
   if (event.httpMethod !== 'POST') {
     return {
@@ -133,3 +134,5 @@ Return ONLY this JSON structure with exactly 3 items in sequenceImprovements, su
     };
   }
 };
+
+export default withLambda(handler);

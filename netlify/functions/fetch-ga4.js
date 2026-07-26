@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Fetch Google Analytics 4 Data
  *
@@ -303,3 +304,5 @@ async function runReport(base, token, body) {
   }
   return res.json();
 }
+
+export default withLambda(handler);

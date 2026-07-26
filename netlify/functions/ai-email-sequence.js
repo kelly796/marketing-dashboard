@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * AI Email Sequence Generator
  *
@@ -119,3 +120,5 @@ Generate the polished email. For the HTML, use this template structure:
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
+
+export default withLambda(handler);

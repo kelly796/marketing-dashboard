@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * API Diagnostics — GET /.netlify/functions/check-apis
  *
@@ -151,3 +152,4 @@ async function metaGet(path, params) {
   return res.json();
 }
 
+export default withLambda(handler);

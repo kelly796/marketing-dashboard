@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * AI SEO + AEO Enhanced Analysis
  * POST /.netlify/functions/ai-seo-enhanced
@@ -135,3 +136,5 @@ Include 3-4 items per section. Be specific to THIS site's actual data.`;
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
+
+export default withLambda(handler);

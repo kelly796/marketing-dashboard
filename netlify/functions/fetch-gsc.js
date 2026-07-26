@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Fetch Google Search Console Data
  *
@@ -215,3 +216,5 @@ function daysAgo(n) {
 function fmtDate(d) {
   return d.toISOString().slice(0, 10);
 }
+
+export default withLambda(handler);

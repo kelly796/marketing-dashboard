@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 export const handler = async function (event, context) {
   if (event.httpMethod !== 'POST') {
     return {
@@ -96,3 +97,5 @@ Return ONLY this JSON structure with 3 improvements:
     };
   }
 };
+
+export default withLambda(handler);

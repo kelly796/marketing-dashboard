@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * AI SEO Audit
  * POST /.netlify/functions/ai-seo
@@ -86,3 +87,5 @@ Provide a practical SEO audit. Respond with ONLY valid JSON:
 
 Include 3 quickWins, 3 opportunities, and 3 contentGaps. Score should be 0-100 based on the data quality and performance.`;
 }
+
+export default withLambda(handler);

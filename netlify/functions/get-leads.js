@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Get Leads — returns all stored Meta Lead Ads webhook leads
  *
@@ -28,3 +29,5 @@ export const handler = async () => {
     };
   }
 };
+
+export default withLambda(handler);

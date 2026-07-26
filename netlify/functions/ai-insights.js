@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * AI Marketing Insights
  * POST /.netlify/functions/ai-insights
@@ -75,3 +76,5 @@ Respond with ONLY valid JSON, no commentary:
   "actions": ["specific action to take this week", "specific action", "specific action"]
 }`;
 }
+
+export default withLambda(handler);

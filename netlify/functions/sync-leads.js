@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Sync Leads to GHL — pushes pending Meta leads into GoHighLevel as contacts
  *
@@ -73,3 +74,5 @@ export const handler = async (event) => {
     body: JSON.stringify(results),
   };
 };
+
+export default withLambda(handler);

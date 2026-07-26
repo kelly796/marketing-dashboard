@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Fetch Meta (Facebook / Instagram / Meta Ads) Data
  *
@@ -733,3 +734,5 @@ function mergeWindsor(igData, windsorData) {
     reachTrend:      windsorData.reachTrend?.some(v => v > 0) ? windsorData.reachTrend : igData.reachTrend,
   };
 }
+
+export default withLambda(handler);

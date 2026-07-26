@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Auto Refresh — Netlify Scheduled Function
  *
@@ -49,3 +50,5 @@ export const handler = async () => {
   }
   return { statusCode: 200, body: JSON.stringify({ ok: true }) };
 };
+
+export default withLambda(handler);

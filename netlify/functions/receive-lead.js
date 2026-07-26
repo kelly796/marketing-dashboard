@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Receive Lead — Meta Lead Ads Webhook
  *
@@ -155,3 +156,5 @@ export const handler = async (event) => {
 
   return { statusCode: 405, body: 'Method Not Allowed' };
 };
+
+export default withLambda(handler);

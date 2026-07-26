@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Crawls performotion.com.au via sitemap.xml to discover all published pages,
  * then audits each one for technical SEO issues.
@@ -223,3 +224,5 @@ function buildSummary(pages) {
     warnings:          good.reduce((s, p) => s + p.issues.filter(i => i.severity === 'warning').length, 0),
   };
 }
+
+export default withLambda(handler);

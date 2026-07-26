@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Fetch real Client Revenue data from GymMaster (Exercise Physiology
  * memberships: Perf Core / Perf Plus / Perf Prime).
@@ -159,3 +160,5 @@ export const handler = async () => {
     };
   }
 };
+
+export default withLambda(handler);

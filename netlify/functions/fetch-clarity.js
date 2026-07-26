@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * Fetch Microsoft Clarity Data
  *
@@ -102,3 +103,5 @@ export const handler = async () => {
     };
   }
 };
+
+export default withLambda(handler);

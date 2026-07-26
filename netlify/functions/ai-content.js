@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * AI Content Ideas
  * POST /.netlify/functions/ai-content
@@ -89,3 +90,5 @@ Generate 5 content ideas that build on what's working. Use Australian English. R
 
 Format must be one of: reel, carousel, post`;
 }
+
+export default withLambda(handler);

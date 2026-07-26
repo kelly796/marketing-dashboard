@@ -1,3 +1,4 @@
+import { withLambda } from '@netlify/aws-lambda-compat';
 /**
  * ActiveCampaign + WordPress Sync Function
  *
@@ -286,3 +287,5 @@ function slugify(str) {
  *   return rest_ensure_response(['saved' => true, 'stats' => $stats]);
  * }
  */
+
+export default withLambda(handler);
