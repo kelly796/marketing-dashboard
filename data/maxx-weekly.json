@@ -1,0 +1,77 @@
+{
+  "generatedAt": "2026-07-10T00:00:00.000Z",
+  "decisions": [
+    {
+      "ad": "Broll 1",
+      "decision": "WATCH",
+      "reason": "223.89 spend, 2.63% CTR, 53 pixel leads — but 49 of them sit in one bot-flagged segment. Real lead count is closer to 2-4. Do not scale on the raw $4.22 CPL.",
+      "metrics": { "spend": 223.89, "ctr": 2.63, "leads": 53, "cpl": 4.22 }
+    },
+    {
+      "ad": "Chronic Conditions",
+      "decision": "WATCH",
+      "reason": "$99.69 spend and a healthy 3.62% CTR, but zero leads so far — clicks are converting to nothing yet.",
+      "metrics": { "spend": 99.69, "ctr": 3.62, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Back Pain1",
+      "decision": "WATCH",
+      "reason": "Weakest CTR of the substantial-spend ads (1.91%) with zero leads on $36.31 spend — candidate for a creative refresh if it doesn't move next week.",
+      "metrics": { "spend": 36.31, "ctr": 1.91, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Back Pain 2 Josh",
+      "decision": "WATCH",
+      "reason": "3.46% CTR on $38.07 spend, no leads yet.",
+      "metrics": { "spend": 38.07, "ctr": 3.46, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Back Pain2 Josh",
+      "decision": "WATCH",
+      "reason": "4.70% CTR on $23.36 spend, no leads yet — CTR alone doesn't clear WATCH without a real lead behind it.",
+      "metrics": { "spend": 23.36, "ctr": 4.70, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Still - Bec",
+      "decision": "KEEP",
+      "reason": "Only ad with a clean, unflagged lead this week — $22.25 CPL on $22.25 spend, well under the $120 target.",
+      "metrics": { "spend": 22.25, "ctr": 4.79, "leads": 1, "cpl": 22.25 }
+    },
+    {
+      "ad": "Pain in the gym",
+      "decision": "WATCH",
+      "reason": "2.78% CTR, no leads yet, low volume ($7.22 spend) — too early to call.",
+      "metrics": { "spend": 7.22, "ctr": 2.78, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Still - Patrice",
+      "decision": "WATCH",
+      "reason": "1.86% CTR, no leads on $7.89 spend.",
+      "metrics": { "spend": 7.89, "ctr": 1.86, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Still - Josh",
+      "decision": "WATCH",
+      "reason": "2.44% CTR, no leads on $3.70 spend — low volume.",
+      "metrics": { "spend": 3.70, "ctr": 2.44, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Optimise",
+      "decision": "WATCH",
+      "reason": "0% CTR on $4.20 spend, no clicks at all yet.",
+      "metrics": { "spend": 4.20, "ctr": 0.00, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Back Pain",
+      "decision": "WATCH",
+      "reason": "Best CTR in the account this week (8.64%) but under $6 total spend — too little data to call, watch closely next week.",
+      "metrics": { "spend": 5.48, "ctr": 8.64, "leads": 0, "cpl": 0 }
+    },
+    {
+      "ad": "Busy professional",
+      "decision": "WATCH",
+      "reason": "6.90% CTR but under $2 spend and no leads — not enough volume yet.",
+      "metrics": { "spend": 1.92, "ctr": 6.90, "leads": 0, "cpl": 0 }
+    }
+  ]
+}

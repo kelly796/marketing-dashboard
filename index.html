@@ -1877,6 +1877,24 @@ function adBadge(decision) {
   return '<span class="badge badge-watch-ad">WATCH</span>';
 }
 
+// ─── MAXX WEEKLY DECISIONS (static, updated by Maxx every Friday) ─
+let maxxWeekly = null;
+async function loadMaxxWeekly() {
+  try {
+    const res = await fetch('/data/maxx-weekly.json');
+    if (!res.ok) return;
+    maxxWeekly = await res.json();
+    renderMeta(dashData?.meta || null);
+  } catch (e) { console.warn('maxx-weekly fetch failed', e); }
+}
+function maxxDecisionFor(adName) {
+  if (!adName) return null;
+  const match = (maxxWeekly?.decisions || []).find(d =>
+    d.ad && adName.toLowerCase().includes(d.ad.toLowerCase().split(' ')[0])
+  );
+  return match || null;
+}
+
 // ─── CACHE ────────────────────────────────────────────────────────
 function getCache() {
   try {
@@ -2463,7 +2481,10 @@ function renderAdCards(meta) {
     const safeName = (c.name||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
     return `
     <div class="ad-card" data-adname="${safeName}" onclick="openAdDetail(this.dataset.adname)">
-      <div class="ad-card-name">${c.name}</div>
+      <div class="ad-card-name" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${c.name}</span>
+        ${maxxDecisionFor(c.name) ? adBadge(maxxDecisionFor(c.name).decision) : ''}
+      </div>
       <div class="ad-card-metrics" style="grid-template-columns:repeat(3,1fr)">
         <div><div class="ad-card-metric-label">Spend</div><div class="ad-card-metric-val">${fmtCurrency(c.spend)}</div></div>
         <div><div class="ad-card-metric-label">Reach</div><div class="ad-card-metric-val">${c.reach > 0 ? fmtNum(c.reach) : '—'}</div></div>
@@ -2830,32 +2851,15 @@ function buildOverallGender(creatives) {
 }
 
 // ─── GHL — hardcoded pipeline structure (connects to live GHL data by name match)
-const GHL_PIPELINES = [
-  {
-    key: 'hq-ep',
-    name: 'HQ EP',
-    subtitle: 'Exercise Physiology',
-    stages: ['New Lead','Called','No Answer','Picked Up — Thinking','Picked Up — Booked','Consult Done — PAYG','Consult Done — Membership','Lost — Nurture'],
-  },
-  {
-    key: 'gym',
-    name: 'Gym',
-    subtitle: 'Membership',
-    stages: ['New Lead','Call Made','No Answer','Tour Booked','Member','Lost'],
-  },
-  {
-    key: 'online',
-    name: 'Online Coaching',
-    subtitle: 'Remote clients',
-    stages: ['New Lead','Call Booked','Call Had','Member','Lost'],
-  },
-  {
-    key: 'education',
-    name: 'Education',
-    subtitle: 'Biomechanics course',
-    stages: ['New Lead','Free Course','Nurturing','Paid Course','Lost'],
-  },
-];
+// NOTE: pipeline names/stages are NOT hardcoded here on purpose (fixed
+// 2026-07-26). A previous hardcoded list ("HQ EP" with stages like "Called",
+// "No Answer") drifted completely out of sync with GHL's real pipelines
+// (EP Pipeline/Gym Pipeline/Marketing Pipeline, real stage names), and a
+// fuzzy name-match between the two silently failed for EP Pipeline
+// specifically — the one holding the majority of real leads — so the board
+// showed it empty while GHL itself had every lead correctly staged. Render
+// straight from ghlData.pipelines (see renderGHL below) instead, so this
+// can never drift again.
 
 // ─── INSTAGRAM RENDER ─────────────────────────────────────────────
 function renderInstagram(ig) {
@@ -2982,61 +2986,36 @@ function renderGHL() {
     }
   }
 
-  // Build a lookup: GHL pipeline name → stage name → {count, stalledCount, criticalCount}
-  const ghlLookup = {};
-  (ghlData?.pipelines || []).forEach(p => {
-    const pipeKey = p.name.toLowerCase();
-    ghlLookup[pipeKey] = {};
-    (p.stages || []).forEach(s => {
-      ghlLookup[pipeKey][s.name.toLowerCase()] = {
-        count:         s.count || 0,
-        stalledCount:  s.stalledCount || 0,
-        criticalCount: s.criticalCount || 0,
-      };
-    });
-  });
-
-  // Resolve live counts for a pipeline + stage name
-  function getLiveCounts(pipelineName, stageName) {
-    const pipeKey  = pipelineName.toLowerCase();
-    const stageKey = stageName.toLowerCase();
-    // Try exact match first, then partial name match
-    for (const [k, stages] of Object.entries(ghlLookup)) {
-      if (k.includes(pipeKey.split(' ')[0]) || pipeKey.includes(k.split(' ')[0])) {
-        const s = stages[stageKey];
-        if (s !== undefined) return s;
-      }
-    }
-    return null;
-  }
-
-  // Render pipeline cards
+  // Render pipeline cards straight from the live API response — no
+  // hardcoded pipeline/stage names, so this can't drift out of sync with
+  // whatever pipelines actually exist in GHL (see note above GHL_PIPELINES).
   const grid = document.getElementById('ghl-pipelines-grid');
   if (grid) {
-    grid.innerHTML = GHL_PIPELINES.map(pipe => {
-      let totalLeads = 0, stalledTotal = 0, criticalTotal = 0;
+    const livePipelines = hasApi ? (ghlData?.pipelines || []) : [];
+    grid.innerHTML = (livePipelines.length ? livePipelines : [null]).map(pipe => {
+      if (!pipe) {
+        return `<div class="ghl-pipe-card"><div class="ghl-pipe-header"><div class="ghl-pipe-name">No pipelines</div><div class="ghl-pipe-meta"><span>GHL not connected</span></div></div></div>`;
+      }
 
-      const stagesHtml = pipe.stages.map(stageName => {
-        const live = getLiveCounts(pipe.name, stageName);
-        const count    = live?.count         ?? 0;
-        const stalled  = live?.stalledCount  ?? 0;
-        const critical = live?.criticalCount ?? 0;
-        totalLeads   += count;
-        stalledTotal += stalled;
-        criticalTotal += critical;
+      const totalLeads    = pipe.totalLeads || 0;
+      const stalledTotal   = (pipe.stalledLeads || 0) - (pipe.criticalLeads || 0);
+      const criticalTotal  = pipe.criticalLeads || 0;
 
+      const stagesHtml = (pipe.stages || []).map(s => {
+        const count    = s.count || 0;
+        const stalled  = s.stalledCount || 0;
+        const critical = s.criticalCount || 0;
         const dotClass = count === 0 ? '' : critical > 0 ? 'red' : stalled > 0 ? 'amber' : 'active';
-        const clickable = hasApi && count > 0;
-        return `<div class="ghl-stage-row${clickable ? ' ghl-stage-clickable' : ''}" ${clickable ? `onclick="filterGHLByStage('${pipe.name}','${stageName}')"` : ''} title="${clickable ? `Show ${count} contact${count!==1?'s':''} in ${stageName}` : ''}">
+        const clickable = count > 0;
+        return `<div class="ghl-stage-row${clickable ? ' ghl-stage-clickable' : ''}" ${clickable ? `onclick="filterGHLByStage('${pipe.name}','${s.name}')"` : ''} title="${clickable ? `Show ${count} contact${count!==1?'s':''} in ${s.name}` : ''}">
           <span class="ghl-stage-dot ${dotClass}"></span>
-          <span class="ghl-stage-name">${stageName}</span>
-          <span class="ghl-stage-count">${hasApi ? count : '—'}</span>
+          <span class="ghl-stage-name">${s.name}</span>
+          <span class="ghl-stage-count">${count}</span>
         </div>`;
       }).join('');
 
       const stallClass = criticalTotal > 0 ? 'critical' : stalledTotal > 0 ? 'warn' : 'clean';
-      const stallText  = !hasApi ? 'GHL not connected'
-        : criticalTotal > 0 ? `${criticalTotal} critical`
+      const stallText  = criticalTotal > 0 ? `${criticalTotal} critical`
         : stalledTotal  > 0 ? `${stalledTotal} stalled`
         : 'All clear';
 
@@ -3044,16 +3023,11 @@ function renderGHL() {
         <div class="ghl-pipe-header">
           <div class="ghl-pipe-name">${pipe.name}</div>
           <div class="ghl-pipe-meta">
-            <span>${pipe.subtitle}</span>
-            <span class="ghl-pipe-total-count">${hasApi ? totalLeads : '—'}</span>
+            <span class="ghl-pipe-total-count">${totalLeads}</span>
             <span class="ghl-pipe-stall ${stallClass}">${stallText}</span>
           </div>
         </div>
-        <div class="ghl-stages-list">${stagesHtml}</div>
-        <div class="ghl-daily-actions">
-          <div class="ghl-daily-label">Daily Actions</div>
-          <div class="ghl-daily-placeholder">No actions configured yet</div>
-        </div>
+        <div class="ghl-stages-list">${stagesHtml || '<div class="ghl-stage-row"><span class="ghl-stage-name" style="color:var(--text-muted)">No stages</span></div>'}</div>
       </div>`;
     }).join('');
   }
@@ -3438,7 +3412,8 @@ function openAdDetail(adName) {
   const ctr   = creative.ctr   ?? 0;
   const leads = creative.leads ?? 0;
   const cpl   = creative.cpl   ?? 0;
-  const dec   = leads>0?'KEEP':'WATCH';
+  const maxxDec = maxxDecisionFor(adName);
+  const dec   = maxxDec?.decision || (leads>0?'KEEP':'WATCH');
 
   const ageRows = (creative.age||[]).map((b, i) => `
     <tr class="${i===0?'top-row':''}">
