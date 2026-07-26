@@ -1,6 +1,13 @@
+// Confirmed 2026-07-26: this was calling PageSpeed Insights with NO API key,
+// which uses Google's shared anonymous quota (very low, easily 429'd — not a
+// credentials problem, there simply are no credentials). Get a free key at
+// https://console.cloud.google.com/apis/credentials (enable "PageSpeed
+// Insights API" first), then set PSI_API_KEY in Netlify env vars — no code
+// change needed after that, this already reads it if present.
 exports.handler = async function (event, context) {
   const url = process.env.PSI_URL || 'https://performotion.com.au';
   const categories = 'category=performance';
+  const keyParam = process.env.PSI_API_KEY ? `&key=${process.env.PSI_API_KEY}` : '';
 
   function gradeScore(score) {
     if (score >= 90) return 'Good';
@@ -23,7 +30,7 @@ exports.handler = async function (event, context) {
   }
 
   try {
-    const baseUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&${categories}`;
+    const baseUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&${categories}${keyParam}`;
 
     const [mobileRes, desktopRes] = await Promise.all([
       fetch(`${baseUrl}&strategy=mobile`),
