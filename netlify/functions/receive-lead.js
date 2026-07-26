@@ -9,9 +9,9 @@
  *  META_APP_SECRET       — App secret from Meta developer console (for signature verification)
  */
 
-const crypto    = require('crypto');
-const { getStore } = require('@netlify/blobs');
-const { createGhlContact } = require('./lib/ghl');
+import crypto from 'crypto';
+import { getStore } from '@netlify/blobs';
+import { createGhlContact } from './lib/ghl.js';
 
 const MAX_LEADS = 500;
 
@@ -67,7 +67,7 @@ function parseMetaPayload(payload) {
   return lead;
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   // ── GET: Meta webhook verification ────────────────────────────
   if (event.httpMethod === 'GET') {
     const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN;

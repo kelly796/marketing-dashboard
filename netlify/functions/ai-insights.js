@@ -5,7 +5,7 @@
  * Returns: { insights: { topWin, watchOut, summary, insights[], actions[] } }
  */
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

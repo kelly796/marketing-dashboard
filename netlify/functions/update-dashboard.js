@@ -8,13 +8,13 @@
  * The browser calls: POST /.netlify/functions/update-dashboard
  */
 
-const { handler: fetchMeta }         = require('./fetch-meta');
-const { handler: fetchGA4 }          = require('./fetch-ga4');
-const { handler: fetchWPAnalytics }  = require('./fetch-wordpress-analytics');
-const { handler: fetchGSC }          = require('./fetch-gsc');
-const { handler: fetchGHL }          = require('./fetch-ghl');
+import { handler as fetchMeta }         from './fetch-meta.js';
+import { handler as fetchGA4 }          from './fetch-ga4.js';
+import { handler as fetchWPAnalytics }  from './fetch-wordpress-analytics.js';
+import { handler as fetchGSC }          from './fetch-gsc.js';
+import { handler as fetchGHL }          from './fetch-ghl.js';
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   // Allow scheduled invocations (no httpMethod) and direct POST calls
   if (event.httpMethod && event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };

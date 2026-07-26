@@ -11,7 +11,7 @@ const HEADERS = {
   'Accept': 'text/html,application/xhtml+xml,application/xml',
 };
 
-exports.handler = async () => {
+export const handler = async () => {
   try {
     // ── 1. DISCOVER PAGES FROM SITEMAP ──────────────────────────────────────
     const urls = await discoverUrls();

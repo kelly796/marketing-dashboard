@@ -5,9 +5,9 @@
  * Used to debug why a data source shows "Not connected" on the dashboard.
  */
 
-const { getGoogleToken, getOAuthToken } = require('./google-auth');
+import { getGoogleToken, getOAuthToken } from './google-auth.js';
 
-exports.handler = async () => {
+export const handler = async () => {
   const results = {};
 
   await Promise.all([

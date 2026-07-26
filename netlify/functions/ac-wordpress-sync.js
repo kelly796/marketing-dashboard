@@ -38,10 +38,10 @@
  * 3. Add WP_USERNAME and WP_APP_PASSWORD to Netlify env vars.
  */
 
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────────
-exports.handler = async (event) => {
+export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }

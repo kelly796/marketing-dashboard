@@ -18,7 +18,7 @@
  *     https://www.performotion.net/wp-json/performotion/v1/analytics
  */
 
-exports.handler = async () => {
+export const handler = async () => {
   const siteUrl     = (process.env.WP_SITE_URL || '').replace(/\/$/, '');
   const username    = process.env.WP_USERNAME;
   const appPassword = process.env.WP_APP_PASSWORD;

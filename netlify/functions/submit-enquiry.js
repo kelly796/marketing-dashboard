@@ -6,7 +6,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-const { getStore } = require('@netlify/blobs');
+import { getStore } from '@netlify/blobs';
 
 const RATE_LIMIT        = 5;    // max submissions per IP
 const RATE_WINDOW_MS    = 60 * 60 * 1000; // 1 hour
@@ -59,7 +59,7 @@ function section(title, rows) {
     ${rows}`;
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',

@@ -20,7 +20,7 @@
  *  by matching against the BRAND_KEYWORDS map below — extend as needed.
  */
 
-const { getGoogleToken, getOAuthToken } = require('./google-auth');
+import { getGoogleToken, getOAuthToken } from './google-auth.js';
 const SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly'];
 
 // Keywords containing these strings → tagged to that brand
@@ -36,7 +36,7 @@ const BRAND_KEYWORDS = {
   ],
 };
 
-exports.handler = async () => {
+export const handler = async () => {
   const siteUrl       = process.env.GSC_SITE_URL;
   const clientId      = process.env.GSC_CLIENT_ID;
   const clientSecret  = process.env.GSC_CLIENT_SECRET;

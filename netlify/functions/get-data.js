@@ -15,18 +15,18 @@
  *  ✅ Go High Level          — GHL_API_KEY + GHL_LOCATION_ID
  */
 
-const { getStore }              = require('@netlify/blobs');
-const { handler: fetchMeta }        = require('./fetch-meta');
-const { handler: fetchGA4 }         = require('./fetch-ga4');
-const { handler: fetchWPAnalytics } = require('./fetch-wordpress-analytics');
-const { handler: fetchGSC }         = require('./fetch-gsc');
-const { handler: fetchClarity }     = require('./fetch-clarity');
-const { handler: fetchGHL }         = require('./fetch-ghl');
-const { handler: fetchPageSpeed }   = require('./fetch-pagespeed');
+import { getStore }              from '@netlify/blobs';
+import { handler as fetchMeta }        from './fetch-meta.js';
+import { handler as fetchGA4 }         from './fetch-ga4.js';
+import { handler as fetchWPAnalytics } from './fetch-wordpress-analytics.js';
+import { handler as fetchGSC }         from './fetch-gsc.js';
+import { handler as fetchClarity }     from './fetch-clarity.js';
+import { handler as fetchGHL }         from './fetch-ghl.js';
+import { handler as fetchPageSpeed }   from './fetch-pagespeed.js';
 
 const BLOBS_TTL = 4 * 60 * 60 * 1000; // 4 hours
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   // auto-refresh passes _bypass_blobs=1 to force a live fetch and update the cache
   const bypass = event?.queryStringParameters?._bypass_blobs === '1' || event?._bypassBlobs;
 

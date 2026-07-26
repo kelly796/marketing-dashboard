@@ -18,10 +18,10 @@
  *     private_key → GOOGLE_PRIVATE_KEY in Netlify environment variables
  */
 
-const { getGoogleToken } = require('./google-auth');
+import { getGoogleToken } from './google-auth.js';
 const SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
-exports.handler = async () => {
+export const handler = async () => {
   const propertyId  = process.env.GA4_PROPERTY_ID;
   const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
   const privateKey  = process.env.GOOGLE_PRIVATE_KEY;

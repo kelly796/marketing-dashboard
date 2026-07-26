@@ -4,7 +4,7 @@
 // https://console.cloud.google.com/apis/credentials (enable "PageSpeed
 // Insights API" first), then set PSI_API_KEY in Netlify env vars — no code
 // change needed after that, this already reads it if present.
-exports.handler = async function (event, context) {
+export const handler = async function (event, context) {
   const url = process.env.PSI_URL || 'https://performotion.com.au';
   const categories = 'category=performance';
   const keyParam = process.env.PSI_API_KEY ? `&key=${process.env.PSI_API_KEY}` : '';

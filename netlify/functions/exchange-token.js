@@ -14,7 +14,7 @@
 const CLIENT_ID = process.env.META_APP_ID || '1548741106832255';
 const GRAPH     = 'https://graph.facebook.com/v21.0';
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': 'https://monumental-syrniki-3b33aa.netlify.app',

@@ -22,7 +22,7 @@
 
 const BASE = 'https://www.clarity.ms/export-data/api/v1/project-live-insights';
 
-exports.handler = async () => {
+export const handler = async () => {
   const apiKey = process.env.CLARITY_API_KEY;
 
   // ── PLACEHOLDER — no API key configured ──────────────────────────

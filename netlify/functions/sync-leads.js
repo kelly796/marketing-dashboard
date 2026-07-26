@@ -8,8 +8,8 @@
  *  GHL_LOCATION_ID   — Sub-account / location ID
  */
 
-const { getStore } = require('@netlify/blobs');
-const { createGhlContact } = require('./lib/ghl');
+import { getStore } from '@netlify/blobs';
+import { createGhlContact } from './lib/ghl.js';
 
 async function getLeads(store) {
   try {
@@ -20,7 +20,7 @@ async function getLeads(store) {
   }
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }

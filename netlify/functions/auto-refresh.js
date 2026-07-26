@@ -10,10 +10,10 @@
  *   schedule = "@every 4h"
  */
 
-const { handler: getData }    = require('./get-data');
-const { handler: syncLeads }  = require('./sync-leads');
+import { handler as getData }    from './get-data.js';
+import { handler as syncLeads }  from './sync-leads.js';
 
-exports.handler = async () => {
+export const handler = async () => {
   console.log('[auto-refresh] Starting scheduled cache refresh at', new Date().toISOString());
 
   const result = await getData({ _bypassBlobs: true, queryStringParameters: { _bypass_blobs: '1' } });

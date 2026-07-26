@@ -5,7 +5,7 @@
  * Works with Node.js 18+ built-in crypto — no external packages needed.
  *
  * Usage:
- *   const { getGoogleToken } = require('./google-auth');
+ *   import { getGoogleToken } from './google-auth.js';
  *   const token = await getGoogleToken(
  *     process.env.GOOGLE_CLIENT_EMAIL,
  *     process.env.GOOGLE_PRIVATE_KEY,
@@ -13,9 +13,9 @@
  *   );
  */
 
-const crypto = require('crypto');
+import crypto from 'crypto';
 
-async function getGoogleToken(clientEmail, privateKey, scopes) {
+export async function getGoogleToken(clientEmail, privateKey, scopes) {
   // Netlify env vars store \n as literal backslash-n — convert to real newlines
   if (privateKey) privateKey = privateKey.replace(/\\n/g, '\n');
 
@@ -65,7 +65,7 @@ function b64url(str) {
   return Buffer.from(str).toString('base64url');
 }
 
-async function getOAuthToken(clientId, clientSecret, refreshToken) {
+export async function getOAuthToken(clientId, clientSecret, refreshToken) {
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -84,4 +84,3 @@ async function getOAuthToken(clientId, clientSecret, refreshToken) {
   return access_token;
 }
 
-module.exports = { getGoogleToken, getOAuthToken };

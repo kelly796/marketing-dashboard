@@ -18,7 +18,7 @@ const GHL_BASE   = 'https://services.leadconnectorhq.com';
 const AMBER_DAYS = 3;
 const RED_DAYS   = 7;
 
-exports.handler = async () => {
+export const handler = async () => {
   const apiKey     = process.env.GHL_API_KEY;
   const locationId = process.env.GHL_LOCATION_ID;
 

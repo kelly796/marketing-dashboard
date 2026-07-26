@@ -72,9 +72,9 @@ function tiersFor(membershipType) {
   return tiers;
 }
 
-const { getStore } = require('@netlify/blobs');
+import { getStore } from '@netlify/blobs';
 
-exports.handler = async () => {
+export const handler = async () => {
   let apiKey = process.env.GYMMASTER_API_KEY; // local-dev convenience only
   if (!apiKey) {
     try {

@@ -35,7 +35,7 @@
 const GRAPH   = 'https://graph.facebook.com/v21.0';
 const WINDSOR = 'https://connectors.windsor.ai/all';
 
-exports.handler = async () => {
+export const handler = async () => {
   const token        = process.env.META_ACCESS_TOKEN;
   const adAccountId  = (process.env.META_AD_ACCOUNT_ID || '').replace(/^act_/, '');
   const hqPageId     = process.env.META_HQ_PAGE_ID;

@@ -4,9 +4,9 @@
  * Called by the dashboard's Leads tab on load and on manual refresh.
  */
 
-const { getStore } = require('@netlify/blobs');
+import { getStore } from '@netlify/blobs';
 
-exports.handler = async () => {
+export const handler = async () => {
   try {
     const store = getStore('leads-store');
     const raw   = await store.get('all-leads');

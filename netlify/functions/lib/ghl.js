@@ -4,7 +4,7 @@
 
 const GHL_BASE = 'https://services.leadconnectorhq.com';
 
-async function createGhlContact(lead, apiKey, locationId) {
+export async function createGhlContact(lead, apiKey, locationId) {
   const [firstName, ...rest] = (lead.name || 'Unknown').split(' ');
 
   const res = await fetch(`${GHL_BASE}/contacts/`, {
@@ -30,5 +30,3 @@ async function createGhlContact(lead, apiKey, locationId) {
   const data = await res.json();
   return data?.contact?.id || data?.id || null;
 }
-
-module.exports = { createGhlContact };
