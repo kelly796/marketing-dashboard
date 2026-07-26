@@ -2,9 +2,19 @@
  * Fetch real Client Revenue data from GymMaster (Exercise Physiology
  * memberships: Perf Core / Perf Plus / Perf Prime).
  *
- * ─── REQUIRED ENV VARS ───────────────────────────────────────────
- *  GYMMASTER_API_KEY — Staff-level key (Settings → Integrations → API Key
- *                       for Staff). The Member-level key can't bulk-list.
+ * ─── CREDENTIAL LIVES IN NETLIFY BLOBS, NOT AN ENV VAR ───────────
+ * Confirmed 2026-07-26: this site's Netlify Functions already sit at 3657
+ * bytes of combined env vars (mostly GOOGLE_PRIVATE_KEY's 1624-byte PEM
+ * key). Netlify Functions run on AWS Lambda, which has a hard 4KB total
+ * env-var ceiling per function — adding literally any new env var (tested
+ * with two different single vars, both failed identically) pushed every
+ * function's build over that limit with a generic "exit code 2" error and
+ * no descriptive message. Storing this credential in Netlify Blobs (store
+ * `app-secrets`, key `gymmaster-api-key`) sidesteps the limit entirely —
+ * Blobs aren't subject to the Lambda env-var size cap. Set once via
+ * `netlify blobs:set app-secrets gymmaster-api-key <key>`. If any FUTURE
+ * function needs a new credential, use this same pattern — don't add
+ * another env var to this site without first checking total payload size.
  *
  * ─── REAL, KNOWN LIMITATIONS (2026-07-26) ────────────────────────
  * 1. Senior vs Junior EP-practitioner level is a Kelly-side rostering
@@ -62,8 +72,17 @@ function tiersFor(membershipType) {
   return tiers;
 }
 
+const { getStore } = require('@netlify/blobs');
+
 exports.handler = async () => {
-  const apiKey = process.env.GYMMASTER_API_KEY;
+  let apiKey = process.env.GYMMASTER_API_KEY; // local-dev convenience only
+  if (!apiKey) {
+    try {
+      apiKey = await getStore('app-secrets').get('gymmaster-api-key');
+    } catch (e) {
+      console.error('Blobs read failed:', e.message);
+    }
+  }
 
   if (!apiKey) {
     return {
